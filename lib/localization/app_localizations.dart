@@ -57,6 +57,44 @@ class AppLocalizations {
       'auth_terms_link': "Conditions d'utilisation",
       'auth_terms_and': 'et notre',
       'auth_privacy_link': 'Politique de confidentialité',
+
+      // Étapes multi-écrans
+      'step_word': 'Étape',
+      'of_word': 'sur',
+      'continue_button': 'Continuer',
+
+      // Inscription - téléphone
+      'register_title': 'Créez votre compte',
+      'register_subtitle':
+          'Entrez votre numéro de téléphone mobile pour commencer',
+      'register_helper':
+          'Nous vous enverrons un code de vérification pour confirmer votre numéro',
+      'already_account': 'Vous avez déjà un compte ?',
+      'login_link': 'Connectez-vous',
+
+      // Inscription - OTP
+      'otp_title': 'Vérifiez votre numéro de téléphone',
+      'otp_subtitle_prefix': 'Entrez le code à 6 chiffres envoyé au numéro',
+      'otp_edit_number': 'Modifier le numéro',
+      'otp_no_code': "Vous n'avez pas reçu le code ?",
+      'resend_prefix': 'Renvoyer dans',
+      'otp_resend_now': 'Renvoyer le code',
+      'verify_button': 'Vérifier mon numéro',
+
+      // Inscription - succès
+      'success_title': 'Numéro de téléphone vérifié',
+      'success_subtitle': 'Votre identité a été vérifiée avec succès',
+
+      // Inscription - PIN
+      'pin_create_title': 'Créez votre code PIN',
+      'pin_create_subtitle':
+          'Choisissez un code à 4 chiffres pour accéder à votre compte en toute sécurité.',
+      'pin_confirm_subtitle':
+          'Retapez le même code PIN à 4 chiffres pour confirmer',
+      'pin_tip':
+          'Utilisez un code facile à retenir pour vous, mais difficile à deviner pour les autres.',
+      'pin_confirm_button': 'Confirmer le code PIN',
+      'pin_mismatch': 'Les codes PIN ne correspondent pas',
     },
     'en': {
       'app_name': 'Njangi',
@@ -87,6 +125,42 @@ class AppLocalizations {
       'auth_terms_link': 'Terms of Use',
       'auth_terms_and': 'and our',
       'auth_privacy_link': 'Privacy Policy',
+
+      // Multi-step screens
+      'step_word': 'Step',
+      'of_word': 'of',
+      'continue_button': 'Continue',
+
+      // Registration - phone
+      'register_title': 'Create your account',
+      'register_subtitle': 'Enter your mobile phone number to get started',
+      'register_helper':
+          'We will send you a verification code to confirm your number',
+      'already_account': 'Already have an account?',
+      'login_link': 'Log in',
+
+      // Registration - OTP
+      'otp_title': 'Verify your phone number',
+      'otp_subtitle_prefix': 'Enter the 6-digit code sent to the number',
+      'otp_edit_number': 'Edit number',
+      'otp_no_code': "Didn't receive the code?",
+      'resend_prefix': 'Resend in',
+      'otp_resend_now': 'Resend code',
+      'verify_button': 'Verify my number',
+
+      // Registration - success
+      'success_title': 'Phone number verified',
+      'success_subtitle': 'Your identity has been successfully verified',
+
+      // Registration - PIN
+      'pin_create_title': 'Create your PIN code',
+      'pin_create_subtitle':
+          'Choose a 4-digit code to access your account securely.',
+      'pin_confirm_subtitle': 'Re-enter the same 4-digit PIN code to confirm',
+      'pin_tip':
+          'Use a code that is easy for you to remember, but hard for others to guess.',
+      'pin_confirm_button': 'Confirm PIN code',
+      'pin_mismatch': 'The PIN codes do not match',
     },
   };
 }

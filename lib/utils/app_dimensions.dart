@@ -1,6 +1,9 @@
 import 'package:flutter/widgets.dart';
 
-
+/// Dimensions de référence issues du Figma. Aucune valeur en dur ne doit
+/// apparaître directement dans un écran ou un widget : toujours passer
+/// par AppDimensions (valeurs fixes) ou l'extension .w / .h (valeurs
+/// adaptées à l'écran réel de l'utilisateur).
 class AppDimensions {
   AppDimensions._();
 
@@ -21,6 +24,8 @@ class AppDimensions {
   static const double radiusSm = 8;
   static const double radiusMd = 12;
   static const double radiusLg = 16;
+  static const double radiusCard = 20; // cards communauté
+  static const double radiusXl = 24; // carte synthèse d'activité
 
   // Espacements
   static const double spaceXs = 4;
@@ -30,7 +35,9 @@ class AppDimensions {
   static const double spaceXl = 32;
 }
 
-
+/// Scaling responsive basé sur la largeur/hauteur de référence Figma.
+/// À initialiser une fois par écran (ou au niveau racine) avant toute
+/// utilisation des extensions .w / .h ci-dessous.
 class AppScale {
   AppScale._();
 

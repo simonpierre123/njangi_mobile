@@ -8,7 +8,8 @@ import '../../../localization/app_localizations.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/app_dimensions.dart';
 
-/// Étape 2/4 de l'inscription : vérification du code OTP.
+/// Écran de vérification du code OTP, réutilisé par l'inscription
+/// (Étape 2/4) et la connexion (Étape 2/3) — step/totalSteps configurables.
 class VerifyOtpPage extends StatefulWidget {
   const VerifyOtpPage({
     super.key,
@@ -17,6 +18,8 @@ class VerifyOtpPage extends StatefulWidget {
     required this.onEditNumber,
     required this.onVerified,
     required this.onResend,
+    this.step = 2,
+    this.totalSteps = 4,
   });
 
   final String phoneNumber;
@@ -24,6 +27,8 @@ class VerifyOtpPage extends StatefulWidget {
   final VoidCallback onEditNumber;
   final ValueChanged<String> onVerified;
   final VoidCallback onResend;
+  final int step;
+  final int totalSteps;
 
   @override
   State<VerifyOtpPage> createState() => _VerifyOtpPageState();
@@ -70,7 +75,7 @@ class _VerifyOtpPageState extends State<VerifyOtpPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              StepHeader(step: 2, totalSteps: 4, onBack: widget.onBack),
+              StepHeader(step: widget.step, totalSteps: widget.totalSteps, onBack: widget.onBack),
               SizedBox(height: AppDimensions.spaceLg.h),
               Text(
                 AppLocalizations.t('otp_title'),

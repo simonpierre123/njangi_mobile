@@ -19,7 +19,7 @@ class LoanHowItWorksCard extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(AppDimensions.spaceLg.w),
       decoration: BoxDecoration(
-        color: AppColors.mintSurfaceLighter,
+        color: AppColors.profileBannerBg,
         borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
       ),
       child: Column(
@@ -27,7 +27,7 @@ class LoanHowItWorksCard extends StatelessWidget {
         children: [
           Text(
             AppLocalizations.t('how_loan_works_title'),
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.primaryDark),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.stepGreen),
           ),
           SizedBox(height: AppDimensions.spaceMd.h),
           for (var i = 0; i < steps.length; i++) ...[
@@ -67,9 +67,9 @@ class _StepRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+              Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.stepGreen)),
               const SizedBox(height: 2),
-              Text(description, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              Text(description, style: const TextStyle(fontSize: 12, color: AppColors.stepGreenText)),
             ],
           ),
         ),

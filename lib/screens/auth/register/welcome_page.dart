@@ -44,16 +44,22 @@ class WelcomePage extends StatelessWidget {
                 ),
               ),
               SizedBox(height: AppDimensions.spaceLg.h),
-              Text(
-                AppLocalizations.t('welcome_title'),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium,
+              SizedBox(
+                width: double.infinity,
+                child: Text(
+                  AppLocalizations.t('welcome_title'),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
               ),
               SizedBox(height: AppDimensions.spaceSm.h),
-              Text(
-                AppLocalizations.t('welcome_subtitle'),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
+              SizedBox(
+                width: double.infinity,
+                child: Text(
+                  AppLocalizations.t('welcome_subtitle'),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
               ),
               const Spacer(),
               AppButton(

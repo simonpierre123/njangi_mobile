@@ -47,8 +47,7 @@ class AppColors {
   static const Color iconBgMint = Color(0xFFEBFDF5);
   // Nouveau : fond des tags "Réunion demain" / "À jour".
   static const Color tagMintBg = Color(0xFFE6F5EE);
-  // Nouveau : fond du bandeau "Complétez votre profil".
- 
+
   // ===== Neutres / gris =====
   // Corrigé : valeur exacte (texte principal, teinte verdâtre).
   static const Color neutralDark = Color(0xFF1C2D27);
@@ -98,6 +97,9 @@ class AppColors {
   static const Color filterChipActiveBg = Color(0xFFB7E3D5); // chip de filtre sélectionné
   static const Color filterChipInactiveBg = Color(0x2918624A); // chip de filtre non sélectionné
   static const Color loanNoticeText = Color(0xFF3B6938); // icône + texte du rappel de remboursement
+  static const Color walletIconBg = Color(0x4DB9EDB0); // fond icône porte-monnaie (aucun prêt)
+  static const Color stepGreen = Color(0xFF3F6D3C); // titres carte "Comment fonctionne un prêt"
+  static const Color stepGreenText = Color(0xBD3F6D3C); // descriptions des étapes numérotées
 
   // ===================================================================
   // RÔLES SÉMANTIQUES — à utiliser dans les écrans/widgets

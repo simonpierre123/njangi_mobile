@@ -22,7 +22,7 @@ class RequestLoanButton extends StatelessWidget {
           backgroundColor: AppColors.primaryDark,
           foregroundColor: AppColors.white,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusMd)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusLg)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

@@ -22,13 +22,13 @@ class NoActiveLoanCard extends StatelessWidget {
           Container(
             width: 56,
             height: 56,
-            decoration: const BoxDecoration(color: AppColors.tagMintBg, shape: BoxShape.circle),
-            child: const Icon(Icons.credit_card_outlined, color: AppColors.primaryDark, size: 26),
+            decoration: const BoxDecoration(color: AppColors.walletIconBg, shape: BoxShape.circle),
+            child: const Icon(Icons.account_balance_wallet_outlined, color: AppColors.loanNoticeText, size: 26),
           ),
           SizedBox(height: AppDimensions.spaceMd.h),
           Text(
             AppLocalizations.t('no_active_loan_title'),
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.primaryContainer),
           ),
           SizedBox(height: AppDimensions.spaceSm.h),
           Text(
@@ -40,12 +40,12 @@ class NoActiveLoanCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.primaryDark,
+              color: AppColors.mintPale,
               borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
             ),
             child: Text(
               AppLocalizations.t('eligible_badge'),
-              style: const TextStyle(color: AppColors.white, fontSize: 12, fontWeight: FontWeight.w700),
+              style: const TextStyle(color: AppColors.primaryDeepest, fontSize: 12, fontWeight: FontWeight.w700),
             ),
           ),
           SizedBox(height: AppDimensions.spaceSm.h),

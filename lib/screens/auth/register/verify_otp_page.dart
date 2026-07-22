@@ -108,7 +108,8 @@ class _VerifyOtpPageState extends State<VerifyOtpPage> {
                 onCompleted: (v) => _code = v,
               ),
               SizedBox(height: AppDimensions.spaceMd.h),
-              Row(
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(
                     '${AppLocalizations.t('otp_no_code')} ',

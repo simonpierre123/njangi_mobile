@@ -46,16 +46,22 @@ class _PhoneVerifiedPageState extends State<PhoneVerifiedPage> {
                 child: const Icon(Icons.check, color: AppColors.white, size: 32),
               ),
               SizedBox(height: AppDimensions.spaceLg.h),
-              Text(
-                AppLocalizations.t('success_title'),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineMedium,
+              SizedBox(
+                width: double.infinity,
+                child: Text(
+                  AppLocalizations.t('success_title'),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
               ),
               SizedBox(height: AppDimensions.spaceSm.h),
-              Text(
-                AppLocalizations.t('success_subtitle'),
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
+              SizedBox(
+                width: double.infinity,
+                child: Text(
+                  AppLocalizations.t('success_subtitle'),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
               ),
             ],
           ),

@@ -235,8 +235,8 @@ class AppRouter {
           memberContributions: CommunityTreasuryMockDatasource.memberContributions,
           // TODO (Njoya) : mets loan/loanDue à CommunityTreasuryMockDatasource.loan /
           // .loanDue (au lieu de null) pour retester l'état "prêt actif".
-   loan: CommunityTreasuryMockDatasource.loan,
-loanDue: CommunityTreasuryMockDatasource.loanDue,
+loan: null,
+loanDue: null,
           eligibility: CommunityTreasuryMockDatasource.eligibility,
           repaymentHistory: CommunityTreasuryMockDatasource.repaymentHistory,
           onBack: _pop,

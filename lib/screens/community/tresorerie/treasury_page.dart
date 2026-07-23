@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../common/basewidget/member_filter_chips.dart';
 import '../../../Models/treasury_model.dart';
 import '../../../common/basewidget/app_bottom_nav_bar.dart';
 import '../../../localization/app_localizations.dart';
@@ -10,13 +11,12 @@ import 'widgets/contribution_history_list.dart';
 import 'widgets/contribution_receipt_card.dart';
 import 'widgets/financial_position_card.dart';
 import 'widgets/loan_due_card.dart';
-import './widgets/loan_eligibility_card.dart';
+import 'widgets/loan_eligibility_card.dart';
 import 'widgets/loan_how_it_works_card.dart';
 import 'widgets/loan_notice_banner.dart';
 import 'widgets/loan_summary_card.dart';
 import 'widgets/member_contribution_row.dart';
-import 'widgets/member_filter_chips.dart';
-import './widgets/no_active_loan_card.dart';
+import 'widgets/no_active_loan_card.dart';
 import 'widgets/request_loan_button.dart';
 import 'widgets/treasury_tab_selector.dart';
 
@@ -49,6 +49,8 @@ class TreasuryPage extends StatefulWidget {
     required this.onSeeAllHistory,
     required this.onSeeAllMembers,
     required this.onRequestLoan,
+    required this.onOpenDashboard,
+    required this.onOpenMembers,
   });
 
   final String communityName;
@@ -69,6 +71,8 @@ class TreasuryPage extends StatefulWidget {
   final VoidCallback onSeeAllHistory;
   final VoidCallback onSeeAllMembers;
   final VoidCallback onRequestLoan;
+  final VoidCallback onOpenDashboard;
+  final VoidCallback onOpenMembers;
 
   @override
   State<TreasuryPage> createState() => _TreasuryPageState();
@@ -94,7 +98,11 @@ class _TreasuryPageState extends State<TreasuryPage> {
         currentIndex: _navIndex,
         onTap: (i) {
           if (i == 0) {
-            Navigator.of(context).pop();
+            widget.onOpenDashboard();
+            return;
+          }
+          if (i == 2) {
+            widget.onOpenMembers();
             return;
           }
           setState(() => _navIndex = i);

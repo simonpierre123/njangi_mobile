@@ -13,6 +13,7 @@ import '../widgets/quick_actions_grid.dart';
 import '../widgets/recent_activity_card.dart';
 import '../widgets/required_action_card.dart';
 
+/// Tableau de bord d'une communauté pour un membre non-admin. Réutilise
 /// GroupHealthCard, RecentActivityCard, QuickActionsGrid et
 /// AppBottomNavBar tels quels (identiques à la vue admin) ; le reste
 /// (actions requises, cycle, membres) a une présentation différente et
@@ -37,8 +38,9 @@ class MemberDashboardPage extends StatefulWidget {
     required this.onSeeAllMembers,
     required this.onSeeAllActivity,
     required this.onOpenTreasury,
+    required this.onOpenMembers,
   });
- 
+
   final String communityName;
   final String cycleLabel;
   final GroupHealthStats health;
@@ -53,18 +55,19 @@ class MemberDashboardPage extends StatefulWidget {
   final VoidCallback onSeeAllMembers;
   final VoidCallback onSeeAllActivity;
   final VoidCallback onOpenTreasury;
- 
+  final VoidCallback onOpenMembers;
+
   @override
   State<MemberDashboardPage> createState() => _MemberDashboardPageState();
 }
- 
+
 class _MemberDashboardPageState extends State<MemberDashboardPage> {
   int _navIndex = 0;
- 
+
   @override
   Widget build(BuildContext context) {
     AppScale.init(context);
- 
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: CommunityAppBar(
@@ -77,6 +80,10 @@ class _MemberDashboardPageState extends State<MemberDashboardPage> {
         onTap: (i) {
           if (i == 1) {
             widget.onOpenTreasury();
+            return;
+          }
+          if (i == 2) {
+            widget.onOpenMembers();
             return;
           }
           setState(() => _navIndex = i);
@@ -153,12 +160,12 @@ class _MemberDashboardPageState extends State<MemberDashboardPage> {
     );
   }
 }
- 
+
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle(this.title);
- 
+
   final String title;
- 
+
   @override
   Widget build(BuildContext context) {
     return Text(

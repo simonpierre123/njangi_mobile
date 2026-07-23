@@ -234,6 +234,18 @@ class AppLocalizations {
       'step2_desc': 'Votre demande est examinée par les administrateurs du cycle.',
       'step3_title': 'Versement',
       'step3_desc': 'Une fois approuvé, les fonds sont versés sur votre compte.',
+
+      // Onglet Membres
+      'the_community': 'La communauté',
+      'active_label': 'actifs',
+      'late_label': 'en retard',
+      'current_cycle_label': 'Cycle actuel',
+      'search_member_hint': 'Rechercher un membre...',
+      'filter_admin': 'Administrateur',
+      'filter_member': 'Membre',
+      'trust_score_title': 'Score de Confiance du Groupe',
+      'growth_title': 'Croissance mensuelle',
+      'invite_member_button': 'Inviter un membre',
     },
     'en': {
       'app_name': 'Njangi',
@@ -438,6 +450,18 @@ class AppLocalizations {
       'step2_desc': 'Your request is reviewed by the cycle administrators.',
       'step3_title': 'Disbursement',
       'step3_desc': 'Once approved, the funds are transferred to your account.',
+
+      // Members tab
+      'the_community': 'The community',
+      'active_label': 'active',
+      'late_label': 'late',
+      'current_cycle_label': 'Current cycle',
+      'search_member_hint': 'Search for a member...',
+      'filter_admin': 'Administrator',
+      'filter_member': 'Member',
+      'trust_score_title': 'Group Trust Score',
+      'growth_title': 'Monthly growth',
+      'invite_member_button': 'Invite a member',
     },
   };
 }

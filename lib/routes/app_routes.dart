@@ -25,6 +25,8 @@ class AppRoutes {
   static const communityAdmin = '/community/admin';
   static const communityMember = '/community/member';
   static const communityTreasury = '/community/treasury';
+  static const communityMembersAdmin = '/community/members/admin';
+  static const communityMembers = '/community/members';
 
   static const comingSoon = '/coming-soon';
 }

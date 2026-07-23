@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../utils/app_colors.dart';
-import '../../../../utils/app_dimensions.dart';
+import '../../utils/app_colors.dart';
+import '../../utils/app_dimensions.dart';
 
 /// Chips de filtre horizontal scrollable, réutilisé dans plusieurs
 /// écrans (Trésorerie > Contributions, Membres).

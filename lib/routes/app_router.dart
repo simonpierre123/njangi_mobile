@@ -3,6 +3,7 @@ import '../Models/community_model.dart';
 import '../common/basewidget/coming_soon_page.dart';
 import '../datasource/community_admin_mock_datasource.dart';
 import '../datasource/community_member_mock_datasource.dart';
+import '../datasource/community_members_mock_datasource.dart';
 import '../datasource/community_mock_datasource.dart';
 import '../datasource/community_treasury_mock_datasource.dart';
 import '../localization/app_localizations.dart';
@@ -18,6 +19,8 @@ import '../screens/auth/register/verify_otp_page.dart';
 import '../screens/auth/register/welcome_page.dart';
 import '../screens/community/home/admin_dashboard_page.dart';
 import '../screens/community/home/member_dashboard_page.dart';
+import '../screens/community/membres/admin_members_page.dart';
+import '../screens/community/membres/members_page.dart';
 import '../screens/community/tresorerie/treasury_page.dart';
 import '../screens/home/home_page.dart';
 import '../screens/onboarding/onboarding_page.dart';
@@ -27,18 +30,8 @@ import 'app_routes.dart';
 /// callbacks (onFinish, onContinue...) — c'est ici, et seulement ici,
 /// que ces callbacks sont traduits en navigation réelle.
 ///
-/// pour voir linterface de pret non disponible pour le user et vise verssa effectué ca : 
-/// Change ça (lignes 228-229) : sur la route TreasurePage
-
-/// dart
-/// loan: null,
-/// loanDue: null,
-
-/// En ça :
-
-/// dart
-/// loan: CommunityTreasuryMockDatasource.loan,
-/// loanDue: CommunityTreasuryMockDatasource.loanDue,
+/// Provisoire : à étoffer (ou remplacer par go_router) au fur et à
+/// mesure que le reste de l'app (dashboard...) est construit.
 class AppRouter {
   AppRouter._();
 
@@ -194,7 +187,8 @@ class AppRouter {
           onSeeLoanFiles: () => _push(AppRoutes.comingSoon, arguments: 'Dossiers de prêts'),
           onSeeAllActivity: () =>
               _push(AppRoutes.comingSoon, arguments: "Historique d'activité"),
-          onOpenTreasury: () => _push(AppRoutes.communityTreasury, arguments: community),
+          onOpenTreasury: () => _replace(AppRoutes.communityTreasury, arguments: community),
+          onOpenMembers: () => _replace(AppRoutes.communityMembersAdmin, arguments: community),
         ));
 
       case AppRoutes.communityMember:
@@ -217,7 +211,8 @@ class AppRouter {
           onSeeAllMembers: () => _push(AppRoutes.comingSoon, arguments: 'Tous les membres'),
           onSeeAllActivity: () =>
               _push(AppRoutes.comingSoon, arguments: "Historique d'activité"),
-          onOpenTreasury: () => _push(AppRoutes.communityTreasury, arguments: community),
+          onOpenTreasury: () => _replace(AppRoutes.communityTreasury, arguments: community),
+          onOpenMembers: () => _replace(AppRoutes.communityMembers, arguments: community),
         ));
 
       case AppRoutes.communityTreasury:
@@ -235,8 +230,8 @@ class AppRouter {
           memberContributions: CommunityTreasuryMockDatasource.memberContributions,
           // TODO (Njoya) : mets loan/loanDue à CommunityTreasuryMockDatasource.loan /
           // .loanDue (au lieu de null) pour retester l'état "prêt actif".
-loan: null,
-loanDue: null,
+          loan: null,
+          loanDue: null,
           eligibility: CommunityTreasuryMockDatasource.eligibility,
           repaymentHistory: CommunityTreasuryMockDatasource.repaymentHistory,
           onBack: _pop,
@@ -246,6 +241,50 @@ loanDue: null,
               _push(AppRoutes.comingSoon, arguments: 'Historique complet'),
           onSeeAllMembers: () => _push(AppRoutes.comingSoon, arguments: 'Tous les membres'),
           onRequestLoan: () => _push(AppRoutes.comingSoon, arguments: 'Demander un prêt'),
+          onOpenDashboard: () => _replace(
+            community.role == 'ADMIN' ? AppRoutes.communityAdmin : AppRoutes.communityMember,
+            arguments: community,
+          ),
+          onOpenMembers: () => _replace(
+            community.role == 'ADMIN' ? AppRoutes.communityMembersAdmin : AppRoutes.communityMembers,
+            arguments: community,
+          ),
+        ));
+
+      case AppRoutes.communityMembersAdmin:
+        final community = settings.arguments as CommunityModel;
+        return _page(AdminMembersPage(
+          communityName: community.name,
+          cycleLabel: 'Cycle ${community.cycleCurrent}/${community.cycleTotal}',
+          // TODO (Njoya) : mock commun à toutes les communautés pour
+          // l'instant — à remplacer par les vraies données par
+          // communauté une fois l'API branchée.
+          summary: CommunityMembersMockDatasource.summaryAdmin,
+          directory: CommunityMembersMockDatasource.adminDirectory,
+          growth: CommunityMembersMockDatasource.growth,
+          onBack: _pop,
+          onOpenDashboard: () => _replace(AppRoutes.communityAdmin, arguments: community),
+          onOpenTreasury: () => _replace(AppRoutes.communityTreasury, arguments: community),
+          onInviteMember: () => _push(AppRoutes.comingSoon, arguments: 'Inviter un membre'),
+          onMemberMenuTap: (m) => _push(AppRoutes.comingSoon, arguments: m.name),
+          onMemberUrgentAction: (m) => _push(AppRoutes.comingSoon, arguments: 'Relancer ${m.name}'),
+        ));
+
+      case AppRoutes.communityMembers:
+        final community = settings.arguments as CommunityModel;
+        return _page(MembersPage(
+          communityName: community.name,
+          cycleLabel: 'Cycle ${community.cycleCurrent}/${community.cycleTotal}',
+          // TODO (Njoya) : mock commun à toutes les communautés pour
+          // l'instant — à remplacer par les vraies données par
+          // communauté une fois l'API branchée.
+          summary: CommunityMembersMockDatasource.summaryMember,
+          directory: CommunityMembersMockDatasource.directory,
+          trustScore: CommunityMembersMockDatasource.trustScore,
+          onBack: _pop,
+          onOpenDashboard: () => _replace(AppRoutes.communityMember, arguments: community),
+          onOpenTreasury: () => _replace(AppRoutes.communityTreasury, arguments: community),
+          onMemberTap: (m) => _push(AppRoutes.comingSoon, arguments: m.name),
         ));
 
       // ---------------- Partagé ----------------

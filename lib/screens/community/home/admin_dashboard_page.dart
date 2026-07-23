@@ -38,6 +38,7 @@ class AdminDashboardPage extends StatefulWidget {
     required this.onSeeLoanFiles,
     required this.onSeeAllActivity,
     required this.onOpenTreasury,
+    required this.onOpenMembers,
   });
  
   final String communityName;
@@ -55,6 +56,7 @@ class AdminDashboardPage extends StatefulWidget {
   final VoidCallback onSeeLoanFiles;
   final VoidCallback onSeeAllActivity;
   final VoidCallback onOpenTreasury;
+  final VoidCallback onOpenMembers;
  
   @override
   State<AdminDashboardPage> createState() => _AdminDashboardPageState();
@@ -80,6 +82,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         onTap: (i) {
           if (i == 1) {
             widget.onOpenTreasury();
+            return;
+          }
+          if (i == 2) {
+            widget.onOpenMembers();
             return;
           }
           setState(() => _navIndex = i);

@@ -47,6 +47,7 @@ class AppColors {
   static const Color iconBgMint = Color(0xFFEBFDF5);
   // Nouveau : fond des tags "Réunion demain" / "À jour".
   static const Color tagMintBg = Color(0xFFE6F5EE);
+  // Nouveau : fond du bandeau "Complétez votre profil".
 
   // ===== Neutres / gris =====
   // Corrigé : valeur exacte (texte principal, teinte verdâtre).
@@ -100,6 +101,16 @@ class AppColors {
   static const Color walletIconBg = Color(0x4DB9EDB0); // fond icône porte-monnaie (aucun prêt)
   static const Color stepGreen = Color(0xFF3F6D3C); // titres carte "Comment fonctionne un prêt"
   static const Color stepGreenText = Color(0xBD3F6D3C); // descriptions des étapes numérotées
+  static const Color merchantIconBg = Color(0xFF95D3B8); // icône "Commerçants Marché" (profil)
+  static const Color merchantIconColor = Color(0xFF0D513C);
+  static const Color settingsSectionBg = Color(0x33BFC9C2); // bloc "Paramètres" (profil)
+  static const Color toggleInactiveTrack = Color(0xFFDCE2DF); // fond des interrupteurs désactivés
+  static const Color ruleEnabledBg = Color(0xFFB9EDB0); // cercle checklist règle activée
+  static const Color ruleDisabledBg = Color(0xFFD5E5F1); // cercle checklist règle désactivée
+  static const Color contributionRecordedIconColor = Color(0xFF00513B); // icône "Cotisation enregistrée"
+  static const Color notificationIconBgMuted = Color(0x4DC9E6D7); // fond icône "Nouveau membre"/"Rappel de réunion"
+  static const Color paymentMethodUnselectedBg = Color(0x3318624A); // fond carte mode de paiement non sélectionnée
+  static const Color contributionAmountEmphasis = Color(0xFF003022); // montant mis en avant (cotisation attendue)
 
   // ===================================================================
   // RÔLES SÉMANTIQUES — à utiliser dans les écrans/widgets

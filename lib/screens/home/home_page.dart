@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../Models/community_model.dart';
 import '../../common/basewidget/activity_summary_card.dart';
-import '../../common/basewidget/app_bottom_nav_bar.dart';
-import '../../common/basewidget/app_fab.dart';
 import '../../common/basewidget/app_search_field.dart';
 import '../../common/basewidget/community_card.dart';
 import '../../common/basewidget/stat_chip.dart';
@@ -12,6 +10,16 @@ import '../../utils/app_dimensions.dart';
 import 'widgets/greeting_header.dart';
 import 'widgets/profile_incomplete_banner.dart';
 
+/// Contenu de l'onglet "Accueil" — S'adapte automatiquement selon que
+/// [communities] est vide ou non (les deux états visuels du Figma).
+///
+/// Ne possède plus de Scaffold/FAB/bottom nav propres : c'est
+/// [HomeShell] qui les fournit désormais (pattern shell — un seul
+/// Scaffold pour Accueil/Notifications/Profil).
+///
+/// TODO (Njoya) : remplacer [communities]/[userName]/[isProfileComplete]
+/// par le vrai flux venant de l'API une fois branché — actuellement
+/// alimenté par datasource/community_mock_datasource.dart.
 class HomePage extends StatefulWidget {
   const HomePage({
     super.key,
@@ -20,7 +28,6 @@ class HomePage extends StatefulWidget {
     required this.isProfileComplete,
     required this.onIdentify,
     required this.onCommunityTap,
-    required this.onAddCommunity,
   });
 
   final String userName;
@@ -28,7 +35,6 @@ class HomePage extends StatefulWidget {
   final bool isProfileComplete;
   final VoidCallback onIdentify;
   final ValueChanged<CommunityModel> onCommunityTap;
-  final VoidCallback onAddCommunity;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -37,7 +43,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   static const _previewCount = 2;
 
-  int _navIndex = 0;
   bool _bannerDismissed = false;
   bool _showAllCommunities = false;
 
@@ -47,64 +52,41 @@ class _HomePageState extends State<HomePage> {
     final hasCommunities = widget.communities.isNotEmpty;
     final showBanner = !widget.isProfileComplete && !_bannerDismissed;
 
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      floatingActionButton: AppFab(onPressed: widget.onAddCommunity),
-      bottomNavigationBar: AppBottomNavBar(
-        currentIndex: _navIndex,
-        onTap: (i) => setState(() => _navIndex = i),
-        items: [
-          AppNavItem(
-            icon: Icons.home_outlined,
-            activeIcon: Icons.home_filled,
-            label: AppLocalizations.t('nav_home'),
-          ),
-          AppNavItem(
-            icon: Icons.notifications_none_outlined,
-            label: AppLocalizations.t('nav_notifications'),
-            showDot: true,
-          ),
-          AppNavItem(icon: Icons.person_outline, label: AppLocalizations.t('nav_profile')),
-        ],
+    return SingleChildScrollView(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppDimensions.screenPaddingH.w,
+        vertical: AppDimensions.spaceMd.h,
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppDimensions.screenPaddingH.w,
-            vertical: AppDimensions.spaceMd.h,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GreetingHeader(userName: widget.userName),
-              if (showBanner) ...[
-                SizedBox(height: AppDimensions.spaceMd.h),
-                ProfileIncompleteBanner(
-                  onIdentify: widget.onIdentify,
-                  onDismiss: () => setState(() => _bannerDismissed = true),
-                ),
-              ],
-              SizedBox(height: AppDimensions.spaceMd.h),
-              _buildSummary(hasCommunities),
-              SizedBox(height: AppDimensions.spaceMd.h),
-              AppSearchField(hint: AppLocalizations.t('search_community_hint')),
-              SizedBox(height: AppDimensions.spaceLg.h),
-              if (!hasCommunities)
-                _EmptyCommunities()
-              else
-                _CommunitiesList(
-                  allCommunities: widget.communities,
-                  visibleCommunities: _showAllCommunities || widget.communities.length <= _previewCount
-                      ? widget.communities
-                      : widget.communities.take(_previewCount).toList(),
-                  isExpanded: _showAllCommunities,
-                  onTap: widget.onCommunityTap,
-                  onToggle: () => setState(() => _showAllCommunities = !_showAllCommunities),
-                ),
-              SizedBox(height: AppDimensions.spaceXl.h),
-            ],
-          ),
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GreetingHeader(userName: widget.userName),
+          if (showBanner) ...[
+            SizedBox(height: AppDimensions.spaceMd.h),
+            ProfileIncompleteBanner(
+              onIdentify: widget.onIdentify,
+              onDismiss: () => setState(() => _bannerDismissed = true),
+            ),
+          ],
+          SizedBox(height: AppDimensions.spaceMd.h),
+          _buildSummary(hasCommunities),
+          SizedBox(height: AppDimensions.spaceMd.h),
+          AppSearchField(hint: AppLocalizations.t('search_community_hint')),
+          SizedBox(height: AppDimensions.spaceLg.h),
+          if (!hasCommunities)
+            _EmptyCommunities()
+          else
+            _CommunitiesList(
+              allCommunities: widget.communities,
+              visibleCommunities: _showAllCommunities || widget.communities.length <= _previewCount
+                  ? widget.communities
+                  : widget.communities.take(_previewCount).toList(),
+              isExpanded: _showAllCommunities,
+              onTap: widget.onCommunityTap,
+              onToggle: () => setState(() => _showAllCommunities = !_showAllCommunities),
+            ),
+          SizedBox(height: AppDimensions.spaceXl.h),
+        ],
       ),
     );
   }

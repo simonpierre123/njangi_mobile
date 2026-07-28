@@ -14,6 +14,7 @@ class AppButton extends StatelessWidget {
     required this.onPressed,
     this.variant = AppButtonVariant.primary,
     this.icon,
+    this.iconLeading = false,
     this.fullWidth = true,
   });
 
@@ -21,6 +22,7 @@ class AppButton extends StatelessWidget {
   final VoidCallback onPressed;
   final AppButtonVariant variant;
   final IconData? icon;
+  final bool iconLeading;
   final bool fullWidth;
 
   @override
@@ -43,8 +45,12 @@ class AppButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            if (icon != null && iconLeading) ...[
+              Icon(icon, size: 18),
+              const SizedBox(width: AppDimensions.spaceSm),
+            ],
             Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-            if (icon != null) ...[
+            if (icon != null && !iconLeading) ...[
               const SizedBox(width: AppDimensions.spaceSm),
               Icon(icon, size: 18),
             ],

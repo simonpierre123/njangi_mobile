@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../common/basewidget/member_filter_chips.dart';
 import '../../../Models/treasury_model.dart';
-import '../../../common/basewidget/app_bottom_nav_bar.dart';
+import '../../../common/basewidget/app_segmented_control.dart';
+import '../../../common/basewidget/member_filter_chips.dart';
 import '../../../localization/app_localizations.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/app_dimensions.dart';
-import '../../widgets/community_app_bar.dart';
 import 'widgets/collection_status_card.dart';
 import 'widgets/contribution_history_list.dart';
 import 'widgets/contribution_receipt_card.dart';
@@ -18,22 +17,19 @@ import 'widgets/loan_summary_card.dart';
 import 'widgets/member_contribution_row.dart';
 import 'widgets/no_active_loan_card.dart';
 import 'widgets/request_loan_button.dart';
-import 'widgets/treasury_tab_selector.dart';
 
-/// Écran "Trésorerie" d'une communauté — 3 onglets internes (Ma
-/// Trésorerie / Contributions / Prêts). Chaque onglet défile
-/// verticalement indépendamment.
+/// Contenu de l'onglet "Trésorerie" — 3 sous-onglets internes (Ma
+/// Trésorerie / Contributions / Prêts), gérés localement puisqu'ils
+/// n'existent qu'à l'intérieur de cet onglet, pas au niveau du shell.
+///
+/// Ne possède plus de Scaffold/AppBar/bottom nav propres : c'est
+/// [CommunityShell] qui les fournit désormais.
 ///
 /// TODO (Njoya) : remplacer les paramètres par le vrai flux de l'API —
 /// alimenté pour l'instant par datasource/community_treasury_mock_datasource.dart.
-/// TODO (Njoya) : la bottom nav ne fait pour l'instant que mettre à jour
-/// son état visuel local (sauf retour au Tableau de Bord) — le
-/// branchement vers Membres / Profil viendra avec ces écrans.
 class TreasuryPage extends StatefulWidget {
   const TreasuryPage({
     super.key,
-    required this.communityName,
-    required this.cycleLabel,
     required this.financialPosition,
     required this.receipt,
     required this.history,
@@ -43,18 +39,14 @@ class TreasuryPage extends StatefulWidget {
     required this.loanDue,
     required this.eligibility,
     required this.repaymentHistory,
-    required this.onBack,
     required this.onSeeReceipt,
     required this.onHistoryItemTap,
     required this.onSeeAllHistory,
     required this.onSeeAllMembers,
+    required this.onOpenDetailedReport,
     required this.onRequestLoan,
-    required this.onOpenDashboard,
-    required this.onOpenMembers,
   });
 
-  final String communityName;
-  final String cycleLabel;
   final FinancialPosition financialPosition;
   final ContributionReceipt receipt;
   final List<ContributionHistoryItem> history;
@@ -65,79 +57,43 @@ class TreasuryPage extends StatefulWidget {
   final LoanDueInfo? loanDue;
   final LoanEligibility eligibility;
   final List<MemberContribution> repaymentHistory;
-  final VoidCallback onBack;
   final VoidCallback onSeeReceipt;
   final ValueChanged<ContributionHistoryItem> onHistoryItemTap;
   final VoidCallback onSeeAllHistory;
   final VoidCallback onSeeAllMembers;
+  final VoidCallback onOpenDetailedReport;
   final VoidCallback onRequestLoan;
-  final VoidCallback onOpenDashboard;
-  final VoidCallback onOpenMembers;
 
   @override
   State<TreasuryPage> createState() => _TreasuryPageState();
 }
 
 class _TreasuryPageState extends State<TreasuryPage> {
-  int _navIndex = 1; // Trésorerie
   int _tabIndex = 0;
   int _filterIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    AppScale.init(context);
-
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      appBar: CommunityAppBar(
-        name: widget.communityName,
-        cycleLabel: widget.cycleLabel,
-        onBack: widget.onBack,
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: AppDimensions.screenPaddingH.w,
+        vertical: AppDimensions.spaceSm.h,
       ),
-      bottomNavigationBar: AppBottomNavBar(
-        currentIndex: _navIndex,
-        onTap: (i) {
-          if (i == 0) {
-            widget.onOpenDashboard();
-            return;
-          }
-          if (i == 2) {
-            widget.onOpenMembers();
-            return;
-          }
-          setState(() => _navIndex = i);
-        },
-        items: [
-          AppNavItem(icon: Icons.grid_view_rounded, label: AppLocalizations.t('community_nav_dashboard')),
-          AppNavItem(icon: Icons.history, label: AppLocalizations.t('community_nav_treasury')),
-          AppNavItem(icon: Icons.people_outline, label: AppLocalizations.t('community_nav_members')),
-          AppNavItem(icon: Icons.person_outline, label: AppLocalizations.t('nav_profile')),
-        ],
-      ),
-      body: SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppDimensions.screenPaddingH.w,
-            vertical: AppDimensions.spaceSm.h,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TreasuryTabSelector(
-                labels: [
-                  AppLocalizations.t('treasury_tab_mine'),
-                  AppLocalizations.t('treasury_tab_contributions'),
-                  AppLocalizations.t('treasury_tab_loans'),
-                ],
-                currentIndex: _tabIndex,
-                onChanged: (i) => setState(() => _tabIndex = i),
-              ),
-              SizedBox(height: AppDimensions.spaceLg.h),
-              Expanded(child: _buildTabContent()),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppSegmentedControl(
+            labels: [
+              AppLocalizations.t('treasury_tab_mine'),
+              AppLocalizations.t('treasury_tab_contributions'),
+              AppLocalizations.t('treasury_tab_loans'),
             ],
+            currentIndex: _tabIndex,
+            onChanged: (i) => setState(() => _tabIndex = i),
           ),
-        ),
+          SizedBox(height: AppDimensions.spaceLg.h),
+          Expanded(child: _buildTabContent()),
+        ],
       ),
     );
   }
@@ -160,6 +116,7 @@ class _TreasuryPageState extends State<TreasuryPage> {
           filterIndex: _filterIndex,
           onFilterChanged: (i) => setState(() => _filterIndex = i),
           onSeeAllMembers: widget.onSeeAllMembers,
+          onOpenDetailedReport: widget.onOpenDetailedReport,
         );
       default:
         return _LoansTab(
@@ -237,6 +194,7 @@ class _ContributionsTab extends StatelessWidget {
     required this.filterIndex,
     required this.onFilterChanged,
     required this.onSeeAllMembers,
+    required this.onOpenDetailedReport,
   });
 
   final CollectionStatus collection;
@@ -244,6 +202,7 @@ class _ContributionsTab extends StatelessWidget {
   final int filterIndex;
   final ValueChanged<int> onFilterChanged;
   final VoidCallback onSeeAllMembers;
+  final VoidCallback onOpenDetailedReport;
 
   @override
   Widget build(BuildContext context) {
@@ -266,6 +225,25 @@ class _ContributionsTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CollectionStatusCard(status: collection),
+          SizedBox(height: AppDimensions.spaceSm.h),
+          GestureDetector(
+            onTap: onOpenDetailedReport,
+            child: Row(
+              children: [
+                const Icon(Icons.insert_chart_outlined, size: 14, color: AppColors.secondaryGreen),
+                const SizedBox(width: 4),
+                Text(
+                  AppLocalizations.t('see_detailed_report_link'),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.secondaryGreen,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ],
+            ),
+          ),
           SizedBox(height: AppDimensions.spaceLg.h),
           MemberFilterChips(labels: filterLabels, currentIndex: filterIndex, onChanged: onFilterChanged),
           SizedBox(height: AppDimensions.spaceLg.h),

@@ -21,12 +21,39 @@ class AppRoutes {
 
   static const pinCreated = '/register/pin/created';
   static const welcome = '/register/welcome';
+
+  // Shell de l'accueil (Accueil/Notifications/Profil) — 1 seule route.
   static const home = '/home';
-  static const communityAdmin = '/community/admin';
-  static const communityMember = '/community/member';
-  static const communityTreasury = '/community/treasury';
-  static const communityMembersAdmin = '/community/members/admin';
-  static const communityMembers = '/community/members';
+
+  // Shell de l'espace communauté (Tableau de Bord/Trésorerie/Membres/
+  // Profil) — 1 SEULE route pour ce qui prenait 5 routes avant
+  // (communityAdmin/communityMember/communityTreasury/
+  // communityMembersAdmin/communityMembers). La bascule admin/membre se
+  // fait à l'intérieur du shell selon CommunityModel.role.
+  static const communityShell = '/community';
+
+  // Profil n'est plus une route à part — c'est un onglet embarqué dans
+  // HomeShell ET CommunityShell (même widget, deux shells). Seules ses
+  // sous-pages de consultation/édition restent de vraies routes poussées.
+  static const myProfile = '/profile/me';
+  static const editProfile = '/profile/edit';
+  static const security = '/profile/security';
+  static const notifications = '/profile/notifications';
+  static const preferences = '/profile/preferences';
+
+  // Créer une communauté (5 étapes prévues, 1 et 2 construites pour
+  // l'instant). Le brouillon (CommunityDraft) est porté d'étape en
+  // étape via les arguments de route.
+  static const createCommunityStep1 = '/community/create/1';
+  static const createCommunityStep2 = '/community/create/2';
+  static const createCommunityStep3 = '/community/create/3';
+  static const createCommunityStep4 = '/community/create/4';
+  static const createCommunityStep5 = '/community/create/5';
+
+  static const contributionDetail = '/community/contribution/detail';
+
+  static const financialSummary = '/community/report/summary';
+  static const detailedReport = '/community/report/detailed';
 
   static const comingSoon = '/coming-soon';
 }

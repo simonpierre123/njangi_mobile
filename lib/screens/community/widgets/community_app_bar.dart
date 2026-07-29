@@ -77,4 +77,4 @@ class CommunityAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
     );
   }
-}
+} 

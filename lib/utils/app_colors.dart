@@ -47,7 +47,6 @@ class AppColors {
   static const Color iconBgMint = Color(0xFFEBFDF5);
   // Nouveau : fond des tags "Réunion demain" / "À jour".
   static const Color tagMintBg = Color(0xFFE6F5EE);
-  // Nouveau : fond du bandeau "Complétez votre profil".
 
   // ===== Neutres / gris =====
   // Corrigé : valeur exacte (texte principal, teinte verdâtre).
@@ -111,6 +110,8 @@ class AppColors {
   static const Color notificationIconBgMuted = Color(0x4DC9E6D7); // fond icône "Nouveau membre"/"Rappel de réunion"
   static const Color paymentMethodUnselectedBg = Color(0x3318624A); // fond carte mode de paiement non sélectionnée
   static const Color contributionAmountEmphasis = Color(0xFF003022); // montant mis en avant (cotisation attendue)
+  static const Color adminHintBg = Color(0xFFE6F0E9); // fond du badge "Vue Admin · Glisser pour réorganiser"
+  static const Color cycleBadgeBg = Color(0xFFB1F0D4); // fond du badge "Cycle X en cours" (bénéficiaire actuel)
 
   // ===================================================================
   // RÔLES SÉMANTIQUES — à utiliser dans les écrans/widgets

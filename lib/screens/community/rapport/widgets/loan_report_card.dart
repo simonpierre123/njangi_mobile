@@ -25,7 +25,12 @@ class LoanReportCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.description_outlined, size: 16, color: AppColors.primaryDark),
+              Container(
+                width: 28,
+                height: 28,
+                decoration: const BoxDecoration(color: AppColors.mintPale, shape: BoxShape.circle),
+                child: const Icon(Icons.description_outlined, size: 15, color: AppColors.primaryDeepest),
+              ),
               SizedBox(width: AppDimensions.spaceXs.w),
               Text(
                 AppLocalizations.t('loan_details_section'),
@@ -39,20 +44,34 @@ class LoanReportCard extends StatelessWidget {
               Expanded(
                 child: _MiniStat(label: AppLocalizations.t('active_loans_word'), value: '${data.activeLoans}'),
               ),
+              SizedBox(width: AppDimensions.spaceSm.w),
               Expanded(
                 child: _MiniStat(label: AppLocalizations.t('repayment_word'), value: data.repaymentRateLabel),
               ),
             ],
           ),
-          SizedBox(height: AppDimensions.spaceMd.h),
-          Text(
-            AppLocalizations.t('total_loan_amount_label').toUpperCase(),
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            data.totalLoanAmount,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          SizedBox(height: AppDimensions.spaceSm.h),
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(horizontal: AppDimensions.spaceSm.w, vertical: AppDimensions.spaceSm.h),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppLocalizations.t('total_loan_amount_label').toUpperCase(),
+                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  data.totalLoanAmount,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -61,20 +80,28 @@ class LoanReportCard extends StatelessWidget {
 }
 
 class _MiniStat extends StatelessWidget {
-  const _MiniStat({required this.label, required this.value});
+  const _MiniStat({required this.label, required this.value, this.valueColor});
 
   final String label;
   final String value;
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-        const SizedBox(height: 2),
-        Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-      ],
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: AppDimensions.spaceSm.w, vertical: AppDimensions.spaceSm.h),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+          const SizedBox(height: 2),
+          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: valueColor ?? AppColors.textPrimary)),
+        ],
+      ),
     );
   }
 }

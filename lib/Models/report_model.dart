@@ -64,7 +64,7 @@ class RecentReportActivity {
     required this.titlePrefix,
     required this.personName,
     required this.amountLabel,
-    required this.isPositive,
+    required this.amountColor,
     required this.timeLabel,
   });
 
@@ -74,7 +74,7 @@ class RecentReportActivity {
   final String titlePrefix; // "Cotisation de" / "Décaissement de" / "Remboursement de"
   final String personName;
   final String amountLabel; // déjà signé, ex: "+ 50 000 FCFA"
-  final bool isPositive;
+  final Color amountColor;
   final String timeLabel;
 }
 

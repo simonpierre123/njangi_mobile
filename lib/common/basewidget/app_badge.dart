@@ -11,20 +11,25 @@ class AppBadge extends StatelessWidget {
     required this.label,
     this.icon,
     this.variant = AppBadgeVariant.outline,
+    this.backgroundColor,
+    this.textColor,
   });
 
   final String label;
   final IconData? icon;
   final AppBadgeVariant variant;
+  final Color? backgroundColor;
+  final Color? textColor;
 
   @override
   Widget build(BuildContext context) {
     final isFilled = variant == AppBadgeVariant.filled;
+    final resolvedTextColor = textColor ?? AppColors.primaryDark;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: isFilled ? AppColors.mintSurface : AppColors.white,
+        color: backgroundColor ?? (isFilled ? AppColors.mintSurface : AppColors.white),
         borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         border: isFilled ? null : Border.all(color: AppColors.border),
       ),
@@ -32,7 +37,7 @@ class AppBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 14, color: AppColors.primaryDark),
+            Icon(icon, size: 14, color: resolvedTextColor),
             const SizedBox(width: 6),
           ],
           Text(
@@ -41,7 +46,7 @@ class AppBadge extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w600,
               letterSpacing: isFilled ? 0.5 : 0,
-              color: AppColors.primaryDark,
+              color: resolvedTextColor,
             ),
           ),
         ],

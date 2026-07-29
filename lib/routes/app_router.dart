@@ -5,12 +5,14 @@ import '../Models/community_model.dart';
 import '../Models/create_community_model.dart';
 import '../common/basewidget/coming_soon_page.dart';
 import '../datasource/community_admin_mock_datasource.dart';
+import '../datasource/community_beneficiary_mock_datasource.dart';
 import '../datasource/community_member_mock_datasource.dart';
 import '../datasource/community_members_mock_datasource.dart';
 import '../datasource/community_mock_datasource.dart';
 import '../datasource/community_treasury_mock_datasource.dart';
 import '../datasource/contribution_mock_datasource.dart';
 import '../datasource/create_community_mock_datasource.dart';
+import '../datasource/cycle_completion_mock_datasource.dart';
 import '../datasource/notification_feed_mock_datasource.dart';
 import '../datasource/notification_settings_mock_datasource.dart';
 import '../datasource/preferences_mock_datasource.dart';
@@ -36,6 +38,8 @@ import '../screens/community/creation/create_community_step5_page.dart';
 import '../screens/community/rapport/detailed_report_page.dart';
 import '../screens/community/rapport/financial_summary_page.dart';
 import '../screens/community/tresorerie/contribution_detail_page.dart';
+import '../screens/community/tresorerie/cycle_completed_page.dart';
+import '../screens/community/tresorerie/disburse_funds_sheet.dart';
 import '../screens/community/tresorerie/record_contribution_sheet.dart';
 import '../screens/home/home_shell.dart';
 import '../screens/onboarding/onboarding_page.dart';
@@ -108,6 +112,42 @@ class AppRouter {
                 onSave: () {
                   Navigator.of(sheetContext).pop();
                   _push(AppRoutes.contributionDetail);
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static void _showDisburseFundsSheet(CommunityModel community) {
+    showModalBottomSheet(
+      context: navigatorKey.currentState!.context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.08),
+      builder: (sheetContext) => Stack(
+        children: [
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: const SizedBox.expand(),
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(sheetContext).size.height * 0.9,
+              ),
+              child: DisburseFundsSheet(
+                communityName: community.name,
+                beneficiary: CommunityBeneficiaryMockDatasource.current,
+                onCancel: () => Navigator.of(sheetContext).pop(),
+                onConfirm: () {
+                  Navigator.of(sheetContext).pop();
+                  _push(AppRoutes.cycleCompleted, arguments: community);
                 },
               ),
             ),
@@ -261,7 +301,8 @@ class AppRouter {
       // les variantes admin/membre selon community.role.
 
       case AppRoutes.communityShell:
-        final community = settings.arguments as CommunityModel;
+        final community = settings.arguments as CommunityModel?;
+        if (community == null) return page(const _MissingCommunityRedirect());
         final isAdmin = community.role == 'ADMIN';
         return page(CommunityShell(
           community: community,
@@ -312,6 +353,13 @@ class AppRouter {
               _push(AppRoutes.comingSoon, arguments: 'Historique complet'),
           onOpenDetailedReport: () => _push(AppRoutes.detailedReport, arguments: community),
           onRequestLoan: () => _push(AppRoutes.comingSoon, arguments: 'Demander un prêt'),
+          currentBeneficiary: CommunityBeneficiaryMockDatasource.current,
+          beneficiaryStats: CommunityBeneficiaryMockDatasource.stats,
+          passageOrder: CommunityBeneficiaryMockDatasource.passageOrder,
+          payoutHistory: CommunityBeneficiaryMockDatasource.payoutHistory,
+          onDisburse: () => _showDisburseFundsSheet(community),
+          onSeeAllPayoutHistory: () =>
+              _push(AppRoutes.comingSoon, arguments: 'Historique des versements'),
           // Membres
           adminSummary: CommunityMembersMockDatasource.summaryAdmin,
           memberSummary: CommunityMembersMockDatasource.summaryMember,
@@ -448,7 +496,8 @@ class AppRouter {
         ));
 
       case AppRoutes.financialSummary:
-        final community = settings.arguments as CommunityModel;
+        final community = settings.arguments as CommunityModel?;
+        if (community == null) return page(const _MissingCommunityRedirect());
         return page(FinancialSummaryPage(
           communityName: community.name,
           cycleLabel: 'Cycle ${community.cycleCurrent}/${community.cycleTotal}',
@@ -465,7 +514,8 @@ class AppRouter {
         ));
 
       case AppRoutes.detailedReport:
-        final community = settings.arguments as CommunityModel;
+        final community = settings.arguments as CommunityModel?;
+        if (community == null) return page(const _MissingCommunityRedirect());
         return page(DetailedReportPage(
           communityName: community.name,
           role: community.role,
@@ -475,6 +525,23 @@ class AppRouter {
           onBack: _pop,
           onSeeAllTransactions: () => _push(AppRoutes.comingSoon, arguments: 'Toutes les opérations'),
           onExport: () => _push(AppRoutes.comingSoon, arguments: 'Exporter PDF'),
+        ));
+
+      case AppRoutes.cycleCompleted:
+        final community = settings.arguments as CommunityModel?;
+        if (community == null) return page(const _MissingCommunityRedirect());
+        return page(CycleCompletedPage(
+          communityName: community.name,
+          cycleLabel: 'Cycle ${community.cycleCurrent}/${community.cycleTotal}',
+          role: community.role,
+          closedDateLabel: CycleCompletionMockDatasource.closedDateLabel,
+          stats: CycleCompletionMockDatasource.stats,
+          beneficiaryHistory: CycleCompletionMockDatasource.beneficiaryHistory,
+          onBack: _pop,
+          onSeeFullList: () => _push(AppRoutes.comingSoon, arguments: 'Liste complète des bénéficiaires'),
+          onExportReport: () => _push(AppRoutes.comingSoon, arguments: 'Exporter le rapport'),
+          onStartNewCycle: () => _push(AppRoutes.comingSoon, arguments: 'Démarrer un nouveau cycle'),
+          onSeeCyclesHistory: () => _push(AppRoutes.comingSoon, arguments: 'Historique des cycles'),
         ));
 
       // ---------------- Partagé ----------------
@@ -496,4 +563,32 @@ class AppRouter {
     }
   }
 
+}
+
+/// Filet de sécurité pour le web : après un hot restart (ou un
+/// rafraîchissement de page) alors que l'URL du navigateur pointe vers
+/// une route de communauté, Flutter reconstruit cette route à partir de
+/// l'URL seule — l'objet CommunityModel qui était en mémoire (passé en
+/// argument) est perdu, settings.arguments devient null. Plutôt que de
+/// planter (TypeError: Null n'est pas CommunityModel), on redirige
+/// proprement vers l'accueil, le temps que l'utilisateur re-sélectionne
+/// sa communauté.
+class _MissingCommunityRedirect extends StatefulWidget {
+  const _MissingCommunityRedirect();
+
+  @override
+  State<_MissingCommunityRedirect> createState() => _MissingCommunityRedirectState();
+}
+
+class _MissingCommunityRedirectState extends State<_MissingCommunityRedirect> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => AppRouter._replaceAll(AppRoutes.home));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+  }
 }

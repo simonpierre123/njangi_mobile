@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/app_dimensions.dart';
 
-/// Contenu d'une slide d'onboarding : illustration + titre + description.
-/// L'illustration réelle (image/lottie) sera intégrée plus tard — un
-/// dégradé neutre tient sa place pour l'instant.
+/// Contenu d'une slide d'onboarding : illustration (asset réel fourni
+/// par Njoya, assets/images/onboarding{1,2,3}.png) + titre + description.
 class OnboardingSlide extends StatelessWidget {
   const OnboardingSlide({
     super.key,
+    required this.imagePath,
     required this.title,
     required this.description,
   });
 
+  final String imagePath;
   final String title;
   final String description;
 
@@ -26,13 +27,23 @@ class OnboardingSlide extends StatelessWidget {
             child: Container(
               width: double.infinity,
               margin: EdgeInsets.only(top: AppDimensions.spaceLg.h),
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [AppColors.mintSurfaceLighter, AppColors.white],
-                ),
+                color: AppColors.mintSurfaceLighter,
                 borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+              ),
+              child: Image.asset(
+                imagePath,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [AppColors.mintSurfaceLighter, AppColors.white],
+                    ),
+                  ),
+                ),
               ),
             ),
           ),

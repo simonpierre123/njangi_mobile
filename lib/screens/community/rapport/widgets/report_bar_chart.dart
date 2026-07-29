@@ -31,7 +31,7 @@ class ReportBarChart extends StatelessWidget {
                     child: Container(
                       decoration: BoxDecoration(
                         color: p.value == maxValue ? AppColors.primaryDark : AppColors.primaryDark10,
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
                       ),
                     ),
                   ),

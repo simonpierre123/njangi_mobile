@@ -141,23 +141,39 @@ class FinancialSummaryPage extends StatelessWidget {
                 style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
               ),
               SizedBox(height: AppDimensions.spaceSm.h),
-              for (var i = 0; i < recentActivity.length; i++) ...[
-                RecentReportActivityRow(activity: recentActivity[i]),
-                if (i != recentActivity.length - 1) SizedBox(height: AppDimensions.spaceSm.h),
-              ],
-              SizedBox(height: AppDimensions.spaceMd.h),
-              Center(
-                child: GestureDetector(
-                  onTap: onSeeFullHistory,
-                  child: Text(
-                    AppLocalizations.t('see_full_history'),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.secondaryGreen,
-                      decoration: TextDecoration.underline,
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(AppDimensions.spaceMd.w),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+                  border: Border.all(color: AppColors.inputBorder),
+                ),
+                child: Column(
+                  children: [
+                    for (var i = 0; i < recentActivity.length; i++) ...[
+                      RecentReportActivityRow(activity: recentActivity[i]),
+                      SizedBox(height: AppDimensions.spaceSm.h),
+                    ],
+                    GestureDetector(
+                      onTap: onSeeFullHistory,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.mintPale34,
+                          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+                        ),
+                        child: Text(
+                          AppLocalizations.t('see_full_history'),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryContainer,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
               SizedBox(height: AppDimensions.spaceLg.h),

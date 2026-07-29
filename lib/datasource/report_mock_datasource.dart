@@ -47,7 +47,7 @@ class ReportMockDatasource {
       titlePrefix: 'Cotisation de',
       personName: 'Marie',
       amountLabel: '+ 50 000 FCFA',
-      isPositive: true,
+      amountColor: AppColors.secondaryGreen,
       timeLabel: "Aujourd'hui, 10:45",
     ),
     RecentReportActivity(
@@ -57,7 +57,7 @@ class ReportMockDatasource {
       titlePrefix: 'Décaissement de',
       personName: 'Jean',
       amountLabel: '- 150 000 FCFA',
-      isPositive: false,
+      amountColor: AppColors.alertRed,
       timeLabel: 'Hier, 16:20',
     ),
     RecentReportActivity(
@@ -67,7 +67,7 @@ class ReportMockDatasource {
       titlePrefix: 'Remboursement de',
       personName: 'Thomas',
       amountLabel: '+ 25 000 FCFA',
-      isPositive: true,
+      amountColor: AppColors.purple,
       timeLabel: 'Il y a 2 jours',
     ),
   ];

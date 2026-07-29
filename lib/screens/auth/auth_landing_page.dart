@@ -8,6 +8,10 @@ import '../../utils/app_colors.dart';
 import '../../utils/app_dimensions.dart';
 import 'widgets/stat_pill.dart';
 
+/// Écran d'accueil / entrée d'authentification (4e écran de l'ouverture).
+/// La navigation réelle (inscription, connexion, CGU, politique de
+/// confidentialité, changement de langue) est déléguée via les callbacks —
+/// ce widget ne connaît pas les routes ni la logique de langue.
 class AuthLandingPage extends StatelessWidget {
   const AuthLandingPage({
     super.key,
@@ -43,38 +47,54 @@ class AuthLandingPage extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: StatPill(value: '+12%'),
               ),
-              SizedBox(height: AppDimensions.spaceMd.h),
-              AppBadge(
-                label: AppLocalizations.t('auth_community_tag'),
-                icon: Icons.people_outline,
-              ),
               Expanded(
                 child: Container(
                   width: double.infinity,
                   margin: EdgeInsets.symmetric(vertical: AppDimensions.spaceLg.h),
+                  clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [AppColors.mintSurfaceLighter, AppColors.white],
-                    ),
                     borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+                  ),
+                  child: Image.asset(
+                    'assets/images/onboarding4.png',
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [AppColors.mintSurfaceLighter, AppColors.white],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
-              AppBadge(
-                label: AppLocalizations.t('auth_welcome_ribbon'),
-                variant: AppBadgeVariant.filled,
+              Center(
+                child: AppBadge(
+                  label: AppLocalizations.t('auth_welcome_ribbon'),
+                  variant: AppBadgeVariant.filled,
+                  backgroundColor: AppColors.mintPale,
+                  textColor: AppColors.primaryDeepest,
+                ),
               ),
               SizedBox(height: AppDimensions.spaceSm.h),
-              Text(
-                AppLocalizations.t('auth_welcome_title'),
-                style: Theme.of(context).textTheme.headlineMedium,
+              SizedBox(
+                width: double.infinity,
+                child: Text(
+                  AppLocalizations.t('auth_welcome_title'),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
               ),
               SizedBox(height: AppDimensions.spaceSm.h),
-              Text(
-                AppLocalizations.t('auth_welcome_desc'),
-                style: Theme.of(context).textTheme.bodyMedium,
+              SizedBox(
+                width: double.infinity,
+                child: Text(
+                  AppLocalizations.t('auth_welcome_desc'),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
               ),
               SizedBox(height: AppDimensions.spaceLg.h),
               AppButton(

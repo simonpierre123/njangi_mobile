@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../Models/beneficiary_model.dart';
 import '../../Models/community_admin_dashboard_model.dart';
 import '../../Models/community_member_dashboard_model.dart';
 import '../../Models/community_members_model.dart';
@@ -65,6 +66,12 @@ class CommunityShell extends StatefulWidget {
     required this.onSeeAllHistory,
     required this.onOpenDetailedReport,
     required this.onRequestLoan,
+    required this.currentBeneficiary,
+    required this.beneficiaryStats,
+    required this.passageOrder,
+    required this.payoutHistory,
+    required this.onDisburse,
+    required this.onSeeAllPayoutHistory,
     // Membres
     required this.adminSummary,
     required this.memberSummary,
@@ -122,6 +129,12 @@ class CommunityShell extends StatefulWidget {
   final VoidCallback onSeeAllHistory;
   final VoidCallback onOpenDetailedReport;
   final VoidCallback onRequestLoan;
+  final CurrentBeneficiary currentBeneficiary;
+  final BeneficiaryStats beneficiaryStats;
+  final List<PassageOrderEntry> passageOrder;
+  final List<PayoutHistoryEntry> payoutHistory;
+  final VoidCallback onDisburse;
+  final VoidCallback onSeeAllPayoutHistory;
 
   final CommunitySummary adminSummary;
   final CommunitySummary memberSummary;
@@ -217,6 +230,7 @@ class _CommunityShellState extends State<CommunityShell> {
                       onSeeAllActivity: widget.onSeeAllActivity,
                     ),
               TreasuryPage(
+                isAdmin: _isAdmin,
                 financialPosition: widget.financialPosition,
                 receipt: widget.receipt,
                 history: widget.history,
@@ -232,6 +246,12 @@ class _CommunityShellState extends State<CommunityShell> {
                 onOpenDetailedReport: widget.onOpenDetailedReport,
                 onSeeAllMembers: () => _goToTab(2),
                 onRequestLoan: widget.onRequestLoan,
+                currentBeneficiary: widget.currentBeneficiary,
+                beneficiaryStats: widget.beneficiaryStats,
+                passageOrder: widget.passageOrder,
+                payoutHistory: widget.payoutHistory,
+                onDisburse: widget.onDisburse,
+                onSeeAllPayoutHistory: widget.onSeeAllPayoutHistory,
               ),
               _isAdmin
                   ? AdminMembersPage(

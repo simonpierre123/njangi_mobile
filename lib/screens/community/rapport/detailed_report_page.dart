@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../Models/report_model.dart';
-import '../../../common/basewidget/app_segmented_control.dart';
 import '../../../common/basewidget/member_avatars_stack.dart';
+import '../../../common/basewidget/member_filter_chips.dart';
 import '../../../common/basewidget/simple_app_bar.dart';
 import '../../../localization/app_localizations.dart';
 import '../../../utils/app_colors.dart';
@@ -74,7 +74,7 @@ class _DetailedReportPageState extends State<DetailedReportPage> {
                 ],
               ),
               SizedBox(height: AppDimensions.spaceMd.h),
-              AppSegmentedControl(
+              MemberFilterChips(
                 labels: [
                   AppLocalizations.t('filter_all'),
                   AppLocalizations.t('filter_today'),
@@ -136,20 +136,34 @@ class _DetailedReportPageState extends State<DetailedReportPage> {
                 ),
               ),
               SizedBox(height: AppDimensions.spaceLg.h),
-              Text(
-                AppLocalizations.t('transactions_word'),
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-              ),
-              SizedBox(height: AppDimensions.spaceXs.h),
-              Row(
-                children: [
-                  Text(
-                    '${widget.summary.transactionsCount}',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-                  ),
-                  const Spacer(),
-                  MemberAvatarsStack(count: widget.summary.transactionsCount),
-                ],
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(AppDimensions.spaceMd.w),
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
+                  border: Border.all(color: AppColors.inputBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.t('transactions_word'),
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                    ),
+                    SizedBox(height: AppDimensions.spaceXs.h),
+                    Row(
+                      children: [
+                        Text(
+                          '${widget.summary.transactionsCount}',
+                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                        ),
+                        const Spacer(),
+                        MemberAvatarsStack(count: widget.summary.transactionsCount),
+                      ],
+                    ),
+                  ],
+                ),
               ),
               SizedBox(height: AppDimensions.spaceLg.h),
               Row(

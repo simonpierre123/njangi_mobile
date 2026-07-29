@@ -44,7 +44,7 @@ class RecentReportActivityRow extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: activity.isPositive ? AppColors.secondaryGreen : AppColors.alertRed,
+            color: activity.amountColor,
           ),
         ),
       ],

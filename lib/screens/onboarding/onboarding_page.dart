@@ -25,14 +25,17 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   List<Map<String, String>> get _slides => [
         {
+          'image': 'assets/images/onboarding1.png',
           'title': AppLocalizations.t('onboarding_1_title'),
           'desc': AppLocalizations.t('onboarding_1_desc'),
         },
         {
+          'image': 'assets/images/onboarding2.png',
           'title': AppLocalizations.t('onboarding_2_title'),
           'desc': AppLocalizations.t('onboarding_2_desc'),
         },
         {
+          'image': 'assets/images/onboarding3.png',
           'title': AppLocalizations.t('onboarding_3_title'),
           'desc': AppLocalizations.t('onboarding_3_desc'),
         },
@@ -73,6 +76,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 itemCount: _slides.length,
                 onPageChanged: (i) => setState(() => _index = i),
                 itemBuilder: (context, i) => OnboardingSlide(
+                  imagePath: _slides[i]['image']!,
                   title: _slides[i]['title']!,
                   description: _slides[i]['desc']!,
                 ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../Models/beneficiary_model.dart';
+import '../../../../common/basewidget/network_avatar.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
@@ -23,11 +24,7 @@ class BeneficiaryDueCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const CircleAvatar(
-            radius: 20,
-            backgroundColor: AppColors.neutralGrayLighter,
-            child: Icon(Icons.person, color: AppColors.neutralGray, size: 20),
-          ),
+          const NetworkAvatar(radius: 20, seed: 12),
           SizedBox(width: AppDimensions.spaceSm.w),
           Expanded(
             child: Column(

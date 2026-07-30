@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../Models/report_model.dart';
+import '../../../../common/basewidget/network_avatar.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
 
@@ -20,11 +21,7 @@ class ReportTransactionRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.neutralGrayLighter,
-            child: Icon(Icons.person, size: 18, color: AppColors.neutralGray),
-          ),
+          NetworkAvatar(radius: 18, seed: transaction.memberName.hashCode.abs() % 70 + 1),
           SizedBox(width: AppDimensions.spaceSm.w),
           Expanded(
             child: Column(

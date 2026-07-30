@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../Models/beneficiary_model.dart';
+import '../../../../common/basewidget/network_avatar.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
 
@@ -32,11 +33,7 @@ class PassageOrderRow extends StatelessWidget {
             SizedBox(width: AppDimensions.spaceXs.w),
           ],
           if (!entry.isCurrent) ...[
-            const CircleAvatar(
-              radius: 16,
-              backgroundColor: AppColors.neutralGrayLighter,
-              child: Icon(Icons.person, size: 16, color: AppColors.neutralGray),
-            ),
+            NetworkAvatar(radius: 16, seed: entry.order),
             SizedBox(width: AppDimensions.spaceSm.w),
           ],
           Expanded(

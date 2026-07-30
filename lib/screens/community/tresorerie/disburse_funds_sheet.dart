@@ -118,8 +118,7 @@ class _DisburseFundsSheetState extends State<DisburseFundsSheet> {
                   style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5),
                 ),
                 SizedBox(height: AppDimensions.spaceSm.h),
-                // TODO (Njoya) : aucun vrai sélecteur d'image/caméra branché.
-                ReceiptSourceGrid(onTakePhoto: () {}, onFromGallery: () {}),
+                ReceiptSourceGrid(onFilePicked: (path) {}),
                 SizedBox(height: AppDimensions.spaceMd.h),
                 Text(
                   AppLocalizations.t('observation_section').toUpperCase(),

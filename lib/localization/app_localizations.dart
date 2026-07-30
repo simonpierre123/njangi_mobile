@@ -1,15 +1,12 @@
 import 'package:flutter/foundation.dart';
 
-/// Système de localisation custom (pas d'ARB / gen-l10n).
-/// La détection automatique de la langue du téléphone et le déclenchement
-/// du changement de langue sont gérés ailleurs (Njoya) — cette classe se
-/// contente de stocker les traductions et d'exposer la langue active.
+
+
+
 class AppLocalizations {
   AppLocalizations._();
 
-  /// Langue active ('fr' ou 'en'). Écouter ce notifier au niveau racine
-  /// (ex: ValueListenableBuilder autour du MaterialApp) pour rebuild
-  /// l'app entière quand la langue change.
+
   static final ValueNotifier<String> locale = ValueNotifier<String>('fr');
 
   static void setLocale(String code) {
@@ -553,6 +550,46 @@ class AppLocalizations {
           'Configurez les paramètres de la prochaine session pour les membres de votre groupe.',
       'start_new_cycle_button': 'Démarrer un nouveau cycle',
       'see_cycles_history_link': "Consulter l'historique des cycles",
+
+      // Vérification d'identité (KYC)
+      'kyc_verification_title': "Vérification d'identité",
+      'kyc1_title': 'Vérifiez votre identité',
+      'kyc1_desc':
+          "La vérification d'identité protège votre compte et renforce la confiance au sein de votre communauté.",
+      'kyc_benefit_secure_account': 'Compte plus sécurisé',
+      'kyc_benefit_loan_access': 'Accès aux demandes de prêt',
+      'kyc_benefit_trusted_community': 'Communautés plus fiables',
+      'kyc_time_estimate': 'Temps estimé : 5 minutes',
+      'kyc_prerequisites_section': 'Prérequis',
+      'kyc_prereq_valid_id': "Une pièce d'identité valide",
+      'kyc_prereq_lighting': 'Un bon éclairage',
+      'kyc_prereq_internet': 'Une connexion Internet',
+      'kyc_start_button': 'Commencer',
+      'kyc_later_link': 'Plus tard',
+      'kyc2_title': 'Choisissez votre pièce d\'identité',
+      'kyc2_desc':
+          "Sélectionnez le document officiel que vous souhaitez utiliser pour valider votre compte iTech Njangi.",
+      'kyc_doc_national_id': "Carte Nationale d'identité",
+      'kyc_doc_national_id_sub': 'Recto et verso requis.',
+      'kyc_doc_passport': 'Passeport',
+      'kyc_doc_passport_sub': 'Page contenant votre photo.',
+      'kyc_doc_license': 'Permis de conduire',
+      'kyc_doc_license_sub': 'Recto et verso requis.',
+      'kyc_doc_requirements_title': 'Votre document doit être :',
+      'kyc_doc_req_valid': 'Valide',
+      'kyc_doc_req_readable': 'Lisible et bien éclairé',
+      'kyc_doc_req_not_expired': 'Non expiré',
+      'kyc3_title': "Photographiez votre pièce d'identité",
+      'kyc3_desc':
+          "Placez votre document dans le cadre et assurez-vous que toutes les informations soient lisibles.",
+      'kyc_tips_section': 'Conseils pour réussir',
+      'kyc_tip_lighting': 'Bon éclairage',
+      'kyc_tip_no_glare': 'Sans reflet',
+      'kyc_tip_corners_visible': 'Les quatre coins visibles',
+      'kyc_choose_from_gallery': 'Choisir depuis la galerie',
+      'kyc_take_photo': 'Prendre une photo',
+      'kyc_privacy_footer':
+          'Vos données sont cryptées et traitées de manière sécurisée conformément à notre politique de confidentialité.',
     },
     'en': {
       'app_name': 'Njangi',
@@ -1074,6 +1111,44 @@ class AppLocalizations {
       'ready_new_cycle_desc': "Set up the parameters for your group's next session.",
       'start_new_cycle_button': 'Start a new cycle',
       'see_cycles_history_link': 'View cycle history',
+
+      // Identity verification (KYC)
+      'kyc_verification_title': 'Identity verification',
+      'kyc1_title': 'Verify your identity',
+      'kyc1_desc':
+          'Identity verification protects your account and strengthens trust within your community.',
+      'kyc_benefit_secure_account': 'More secure account',
+      'kyc_benefit_loan_access': 'Access to loan requests',
+      'kyc_benefit_trusted_community': 'More trusted communities',
+      'kyc_time_estimate': 'Estimated time: 5 minutes',
+      'kyc_prerequisites_section': 'Prerequisites',
+      'kyc_prereq_valid_id': 'A valid ID document',
+      'kyc_prereq_lighting': 'Good lighting',
+      'kyc_prereq_internet': 'An internet connection',
+      'kyc_start_button': 'Start',
+      'kyc_later_link': 'Later',
+      'kyc2_title': 'Choose your ID document',
+      'kyc2_desc': 'Select the official document you want to use to verify your iTech Njangi account.',
+      'kyc_doc_national_id': 'National ID card',
+      'kyc_doc_national_id_sub': 'Front and back required.',
+      'kyc_doc_passport': 'Passport',
+      'kyc_doc_passport_sub': 'Page containing your photo.',
+      'kyc_doc_license': "Driver's license",
+      'kyc_doc_license_sub': 'Front and back required.',
+      'kyc_doc_requirements_title': 'Your document must be:',
+      'kyc_doc_req_valid': 'Valid',
+      'kyc_doc_req_readable': 'Readable and well lit',
+      'kyc_doc_req_not_expired': 'Not expired',
+      'kyc3_title': 'Photograph your ID document',
+      'kyc3_desc': 'Place your document in the frame and make sure all information is readable.',
+      'kyc_tips_section': 'Tips for success',
+      'kyc_tip_lighting': 'Good lighting',
+      'kyc_tip_no_glare': 'No glare',
+      'kyc_tip_corners_visible': 'All four corners visible',
+      'kyc_choose_from_gallery': 'Choose from gallery',
+      'kyc_take_photo': 'Take a photo',
+      'kyc_privacy_footer':
+          'Your data is encrypted and processed securely in accordance with our privacy policy.',
     },
   };
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../common/basewidget/network_avatar.dart';
 import '../../../localization/app_localizations.dart';
 import '../../../utils/app_colors.dart';
 
@@ -12,10 +13,11 @@ class GreetingHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const CircleAvatar(
+        const NetworkAvatar(
           radius: 20,
-          backgroundColor: AppColors.mintSurface,
-          child: Icon(Icons.person, color: AppColors.primaryDark),
+          seed: 68,
+          fallbackBg: AppColors.mintSurface,
+          fallbackIconColor: AppColors.primaryDark,
         ),
         const SizedBox(width: 10),
         Column(

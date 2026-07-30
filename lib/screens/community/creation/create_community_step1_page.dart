@@ -31,6 +31,7 @@ class _CreateCommunityStep1PageState extends State<CreateCommunityStep1Page> {
   late final TextEditingController _nameController = TextEditingController(text: widget.draft.name);
   late final TextEditingController _descController = TextEditingController(text: widget.draft.description);
   late CommunityType? _type = widget.draft.type;
+  late String? _photoPath = widget.draft.photoPath;
 
   @override
   void dispose() {
@@ -44,6 +45,7 @@ class _CreateCommunityStep1PageState extends State<CreateCommunityStep1Page> {
       name: _nameController.text,
       description: _descController.text,
       type: _type,
+      photoPath: _photoPath,
     ));
   }
 
@@ -83,7 +85,9 @@ class _CreateCommunityStep1PageState extends State<CreateCommunityStep1Page> {
                     ),
                     SizedBox(height: AppDimensions.spaceLg.h),
                     // TODO (Njoya) : brancher un vrai sélecteur d'image ici.
-                    CommunityPhotoPicker(onTap: () {}),
+                    CommunityPhotoPicker(
+                      onImagePicked: (path) => setState(() => _photoPath = path),
+                    ),
                     SizedBox(height: AppDimensions.spaceLg.h),
                     AppTextField(
                       label: AppLocalizations.t('community_name_label').toUpperCase(),

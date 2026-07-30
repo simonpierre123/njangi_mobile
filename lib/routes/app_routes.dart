@@ -57,5 +57,9 @@ class AppRoutes {
 
   static const cycleCompleted = '/community/cycle-completed';
 
+  static const kycIntro = '/kyc/intro';
+  static const kycDocumentType = '/kyc/document-type';
+  static const kycCapture = '/kyc/capture';
+
   static const comingSoon = '/coming-soon';
 }

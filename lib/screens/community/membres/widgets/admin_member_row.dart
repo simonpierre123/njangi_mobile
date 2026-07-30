@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../Models/community_members_model.dart';
+import '../../../../common/basewidget/network_avatar.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
 
@@ -30,7 +31,7 @@ class AdminMemberRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const CircleAvatar(radius: 20, backgroundColor: AppColors.neutralGrayLight),
+          NetworkAvatar(radius: 20, seed: entry.name.hashCode.abs() % 70 + 1, fallbackIcon: null, fallbackBg: AppColors.neutralGrayLight),
           SizedBox(width: AppDimensions.spaceSm.w),
           Expanded(
             child: Column(

@@ -3,6 +3,7 @@ import '../../../Models/profile_model.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/app_dimensions.dart';
 import 'avatar_with_badge.dart';
+import 'verified_badge.dart';
 
 /// En-tête du hub profil : avatar, nom, téléphone, badge de rôle global.
 class ProfileHeader extends StatelessWidget {
@@ -23,21 +24,7 @@ class ProfileHeader extends StatelessWidget {
         const SizedBox(height: 2),
         Text(user.phone, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
         SizedBox(height: AppDimensions.spaceSm.h),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(AppDimensions.radiusXl)),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.shield_outlined, size: 12, color: AppColors.textSecondary),
-              const SizedBox(width: 4),
-              Text(
-                user.roleSummaryLabel,
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
-              ),
-            ],
-          ),
-        ),
+        VerifiedBadge(label: user.roleSummaryLabel),
       ],
     );
   }

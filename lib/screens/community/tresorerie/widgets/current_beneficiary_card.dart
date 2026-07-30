@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../Models/beneficiary_model.dart';
+import '../../../../common/basewidget/network_avatar.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
@@ -37,10 +38,11 @@ class CurrentBeneficiaryCard extends StatelessWidget {
               Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  const CircleAvatar(
+                  const NetworkAvatar(
                     radius: 32,
-                    backgroundColor: Colors.white24,
-                    child: Icon(Icons.person, size: 30, color: AppColors.white),
+                    seed: 12,
+                    fallbackBg: Colors.white24,
+                    fallbackIconColor: AppColors.white,
                   ),
                   Positioned(
                     right: -2,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../common/basewidget/network_avatar.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
@@ -28,11 +29,7 @@ class RecordedByCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.neutralGrayLighter,
-            child: Icon(Icons.person, size: 18, color: AppColors.neutralGray),
-          ),
+          const NetworkAvatar(radius: 18, seed: 33),
           SizedBox(width: AppDimensions.spaceSm.w),
           Expanded(
             child: Column(

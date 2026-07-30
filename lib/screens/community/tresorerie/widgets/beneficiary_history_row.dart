@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../Models/cycle_completion_model.dart';
+import '../../../../common/basewidget/network_avatar.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
@@ -15,11 +16,7 @@ class BeneficiaryHistoryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const CircleAvatar(
-          radius: 18,
-          backgroundColor: AppColors.neutralGrayLighter,
-          child: Icon(Icons.person, size: 18, color: AppColors.neutralGray),
-        ),
+        NetworkAvatar(radius: 18, seed: entry.name.hashCode.abs() % 70 + 1),
         SizedBox(width: AppDimensions.spaceSm.w),
         Expanded(
           child: Column(

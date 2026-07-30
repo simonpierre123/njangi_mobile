@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../Models/community_model.dart';
 import '../Models/create_community_model.dart';
+import '../Models/kyc_model.dart';
 import '../common/basewidget/coming_soon_page.dart';
 import '../datasource/community_admin_mock_datasource.dart';
 import '../datasource/community_beneficiary_mock_datasource.dart';
@@ -13,6 +14,7 @@ import '../datasource/community_treasury_mock_datasource.dart';
 import '../datasource/contribution_mock_datasource.dart';
 import '../datasource/create_community_mock_datasource.dart';
 import '../datasource/cycle_completion_mock_datasource.dart';
+import '../datasource/kyc_mock_datasource.dart';
 import '../datasource/notification_feed_mock_datasource.dart';
 import '../datasource/notification_settings_mock_datasource.dart';
 import '../datasource/preferences_mock_datasource.dart';
@@ -42,6 +44,9 @@ import '../screens/community/tresorerie/cycle_completed_page.dart';
 import '../screens/community/tresorerie/disburse_funds_sheet.dart';
 import '../screens/community/tresorerie/record_contribution_sheet.dart';
 import '../screens/home/home_shell.dart';
+import '../screens/kyc/kyc_capture_page.dart';
+import '../screens/kyc/kyc_document_type_page.dart';
+import '../screens/kyc/kyc_intro_page.dart';
 import '../screens/onboarding/onboarding_page.dart';
 import '../screens/profil/edit_profile_page.dart';
 import '../screens/profil/my_profile_page.dart';
@@ -275,7 +280,7 @@ class AppRouter {
           userName: 'Alex',
           communities: CommunityMockDatasource.sample,
           isProfileComplete: false,
-          onIdentify: () => _push(AppRoutes.comingSoon, arguments: 'Identification'),
+          onIdentify: () => _push(AppRoutes.kycIntro),
           // Une seule route pour toute communauté, quel que soit son
           // rôle — le shell décide lui-même de la variante à afficher.
           onCommunityTap: (c) => _push(AppRoutes.communityShell, arguments: c),
@@ -400,7 +405,6 @@ class AppRouter {
           user: ProfileMockDatasource.user,
           onCancel: _pop,
           onSave: _pop,
-          onChangePhoto: () => _push(AppRoutes.comingSoon, arguments: 'Modifier la photo'),
           onChangeNumber: () => _push(AppRoutes.comingSoon, arguments: 'Modifier le numéro'),
         ));
 
@@ -542,6 +546,28 @@ class AppRouter {
           onExportReport: () => _push(AppRoutes.comingSoon, arguments: 'Exporter le rapport'),
           onStartNewCycle: () => _push(AppRoutes.comingSoon, arguments: 'Démarrer un nouveau cycle'),
           onSeeCyclesHistory: () => _push(AppRoutes.comingSoon, arguments: 'Historique des cycles'),
+        ));
+
+      case AppRoutes.kycIntro:
+        return page(KycIntroPage(
+          onBack: _pop,
+          onStart: () => _push(AppRoutes.kycDocumentType),
+          onLater: _pop,
+        ));
+
+      case AppRoutes.kycDocumentType:
+        return page(KycDocumentTypePage(
+          options: KycMockDatasource.documentOptions,
+          onBack: _pop,
+          onContinue: (docType) => _push(AppRoutes.kycCapture, arguments: docType),
+        ));
+
+      case AppRoutes.kycCapture:
+        // TODO (Njoya) : Étape 4/4 (revue/soumission) pas encore construite.
+        return page(KycCapturePage(
+          onBack: _pop,
+          // TODO (Njoya) : Étape 4/4 (revue/soumission) pas encore construite.
+          onPhotoReady: (path) => _push(AppRoutes.comingSoon, arguments: 'Étape 4 sur 4'),
         ));
 
       // ---------------- Partagé ----------------

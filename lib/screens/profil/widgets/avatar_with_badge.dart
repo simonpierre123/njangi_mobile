@@ -1,22 +1,31 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../utils/app_colors.dart';
+import '../../../common/basewidget/network_avatar.dart';
 
 /// Avatar circulaire avec un badge en overlay (coche de vérification par
 /// défaut, ou icône appareil photo en mode édition).
 ///
-/// TODO (Njoya) : pas de vraie photo utilisateur pour l'instant (pas de
-/// stockage/upload branché) — icône placeholder générique.
+/// [imageFile] optionnel — si fourni, affiche la vraie photo choisie
+/// par l'utilisateur ; sinon, visage de démonstration (NetworkAvatar,
+/// avec repli automatique sur l'icône générique hors-ligne).
+///
+/// NB : dart:io File ne fonctionne pas sur Flutter Web (pas de système
+/// de fichiers dans le navigateur) — l'aperçu photo réellement choisie
+/// fonctionnera sur Android/iOS/desktop mais pas dans Chrome/Edge.
 class AvatarWithBadge extends StatelessWidget {
   const AvatarWithBadge({
     super.key,
     this.size = 80,
     this.badgeIcon = Icons.check,
     this.onBadgeTap,
+    this.imageFile,
   });
 
   final double size;
   final IconData badgeIcon;
   final VoidCallback? onBadgeTap;
+  final File? imageFile;
 
   @override
   Widget build(BuildContext context) {
@@ -29,8 +38,11 @@ class AvatarWithBadge extends StatelessWidget {
           Container(
             width: size,
             height: size,
+            clipBehavior: Clip.antiAlias,
             decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.neutralGrayLight),
-            child: Icon(Icons.person, color: AppColors.white, size: size * 0.45),
+            child: imageFile != null
+                ? Image.file(imageFile!, fit: BoxFit.cover, width: size, height: size)
+                : NetworkAvatar(radius: size / 2, seed: 68),
           ),
           Positioned(
             right: -2,

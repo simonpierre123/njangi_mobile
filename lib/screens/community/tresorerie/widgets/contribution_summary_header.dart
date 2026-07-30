@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../common/basewidget/network_avatar.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
@@ -32,11 +33,7 @@ class ContributionSummaryHeader extends StatelessWidget {
           Stack(
             clipBehavior: Clip.none,
             children: [
-              const CircleAvatar(
-                radius: 36,
-                backgroundColor: AppColors.neutralGrayLighter,
-                child: Icon(Icons.person, size: 34, color: AppColors.neutralGray),
-              ),
+              const NetworkAvatar(radius: 36, seed: 12),
               Positioned(
                 top: -4,
                 right: -16,

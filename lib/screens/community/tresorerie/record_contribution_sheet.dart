@@ -136,7 +136,7 @@ class _RecordContributionSheetState extends State<RecordContributionSheet> {
                 ),
                 SizedBox(height: AppDimensions.spaceSm.h),
                 // TODO (Njoya) : aucun vrai sélecteur de fichier branché.
-                AttachReceiptButton(onTap: () {}),
+                AttachReceiptButton(onFilePicked: (path) {}),
                 SizedBox(height: AppDimensions.spaceMd.h),
                 TextField(
                   controller: _notesController,

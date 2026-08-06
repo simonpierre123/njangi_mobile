@@ -8,19 +8,19 @@ enum NotificationType { contribution, member, loan, meeting }
 ///
 /// TODO (Njoya) : à remplacer par le vrai flux de l'API — alimenté pour
 /// l'instant par datasource/notification_feed_mock_datasource.dart.
-/// Titre/description/horodatage ne sont volontairement pas traduits via
-/// AppLocalizations (contenu dynamique, pas texte d'interface) — même
-/// convention que le reste des données mock de l'app.
+/// Contrairement à d'autres contenus mock de l'app, titre/description/
+/// horodatage/groupe passent ici par des clés AppLocalizations (pas du
+/// texte brut) pour que le changement de langue s'applique bien.
 class NotificationItem {
   const NotificationItem({
     required this.type,
     required this.icon,
     required this.iconBg,
     required this.iconColor,
-    required this.title,
-    required this.description,
-    required this.timeLabel,
-    required this.dayGroup,
+    required this.titleKey,
+    required this.descriptionKey,
+    required this.timeLabelKey,
+    required this.dayGroupKey,
     this.isUnread = false,
   });
 
@@ -28,9 +28,9 @@ class NotificationItem {
   final IconData icon;
   final Color iconBg;
   final Color iconColor;
-  final String title;
-  final String description;
-  final String timeLabel;
-  final String dayGroup; // libellé de la section (déjà localisé côté datasource)
+  final String titleKey;
+  final String descriptionKey;
+  final String timeLabelKey;
+  final String dayGroupKey;
   final bool isUnread;
 }

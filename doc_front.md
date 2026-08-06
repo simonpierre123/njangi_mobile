@@ -141,6 +141,9 @@ njangi/
             └── membres/                     ⚠️ PAS ENCORE CONSTRUIT (prochaine étape prévue)
 ```
 
+
+
+
 ---
 
 ## 3. Table de routage complète

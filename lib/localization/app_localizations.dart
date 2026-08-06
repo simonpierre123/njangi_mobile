@@ -1,12 +1,15 @@
 import 'package:flutter/foundation.dart';
 
-
-
-
+/// Système de localisation custom (pas d'ARB / gen-l10n).
+/// La détection automatique de la langue du téléphone et le déclenchement
+/// du changement de langue sont gérés ailleurs (Njoya) — cette classe se
+/// contente de stocker les traductions et d'exposer la langue active.
 class AppLocalizations {
   AppLocalizations._();
 
-
+  /// Langue active ('fr' ou 'en'). Écouter ce notifier au niveau racine
+  /// (ex: ValueListenableBuilder autour du MaterialApp) pour rebuild
+  /// l'app entière quand la langue change.
   static final ValueNotifier<String> locale = ValueNotifier<String>('fr');
 
   static void setLocale(String code) {
@@ -443,6 +446,16 @@ class AppLocalizations {
       'today_label': "Aujourd'hui",
       'yesterday_label': 'Hier',
       'no_notifications_yet': 'Aucune notification pour le moment',
+      'notif_feed_contribution_title': 'Cotisation enregistrée',
+      'notif_feed_contribution_desc': 'Votre cotisation de 50 000 FCFA a été enregistrée avec succès.',
+      'notif_feed_new_member_title': 'Nouveau membre',
+      'notif_feed_new_member_desc': 'Marie Ndzié a rejoint votre communauté.',
+      'notif_feed_loan_request_title': 'Demande de prêt',
+      'notif_feed_loan_request_desc': 'Votre demande est en attente de validation.',
+      'notif_feed_meeting_reminder_title': 'Rappel de réunion',
+      'notif_feed_meeting_reminder_desc': 'La réunion mensuelle est prévue pour ce samedi à 14h.',
+      'notif_time_5min_ago': 'Il y a 5 minutes',
+      'notif_time_2h_ago': 'Il y a 2h',
 
       // Enregistrer une cotisation (modal)
       'record_contribution_title': 'Enregistrer une cotisation',
@@ -1005,6 +1018,16 @@ class AppLocalizations {
       'today_label': 'Today',
       'yesterday_label': 'Yesterday',
       'no_notifications_yet': 'No notifications yet',
+      'notif_feed_contribution_title': 'Contribution recorded',
+      'notif_feed_contribution_desc': 'Your contribution of 50,000 FCFA has been successfully recorded.',
+      'notif_feed_new_member_title': 'New member',
+      'notif_feed_new_member_desc': 'Marie Ndzié has joined your community.',
+      'notif_feed_loan_request_title': 'Loan request',
+      'notif_feed_loan_request_desc': 'Your request is pending approval.',
+      'notif_feed_meeting_reminder_title': 'Meeting reminder',
+      'notif_feed_meeting_reminder_desc': 'The monthly meeting is scheduled for this Saturday at 2pm.',
+      'notif_time_5min_ago': '5 minutes ago',
+      'notif_time_2h_ago': '2h ago',
 
       // Record contribution (modal)
       'record_contribution_title': 'Record a contribution',

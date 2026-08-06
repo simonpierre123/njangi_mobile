@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../Models/notification_feed_model.dart';
+import '../../../localization/app_localizations.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/app_dimensions.dart';
 
@@ -36,7 +37,7 @@ class NotificationFeedCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.title,
+                      AppLocalizations.t(item.titleKey),
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
@@ -44,9 +45,9 @@ class NotificationFeedCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(item.description, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    Text(AppLocalizations.t(item.descriptionKey), style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                     const SizedBox(height: 4),
-                    Text(item.timeLabel, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    Text(AppLocalizations.t(item.timeLabelKey), style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                   ],
                 ),
               ),

@@ -109,14 +109,14 @@ class _NotificationFeedPageState extends State<NotificationFeedPage> {
     final widgets = <Widget>[];
     String? lastGroup;
     for (final item in items) {
-      if (item.dayGroup != lastGroup) {
+      if (item.dayGroupKey != lastGroup) {
         if (lastGroup != null) widgets.add(SizedBox(height: AppDimensions.spaceLg.h));
         widgets.add(Text(
-          item.dayGroup.toUpperCase(),
+          AppLocalizations.t(item.dayGroupKey).toUpperCase(),
           style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5),
         ));
         widgets.add(SizedBox(height: AppDimensions.spaceSm.h));
-        lastGroup = item.dayGroup;
+        lastGroup = item.dayGroupKey;
       } else {
         widgets.add(SizedBox(height: AppDimensions.spaceSm.h));
       }

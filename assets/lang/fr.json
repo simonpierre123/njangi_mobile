@@ -247,6 +247,10 @@
       "change_pin_title": "Modifier le code PIN",
       "change_pin_subtitle": "Changez votre code PIN à tout moment",
       "biometric_auth_title": "Authentification biométrique",
+      "biometric_disabled_title": "Biométrie désactivée",
+      "biometric_disabled_message":
+          "Connectez-vous avec votre code PIN, puis activez l'authentification biométrique dans Profil > Sécurité.",
+      "dialog_ok": "Compris",
       "access_section": "Accès",
       "connected_devices_title": "Appareils connectés",
       "connected_devices_subtitle":

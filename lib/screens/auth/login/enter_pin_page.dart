@@ -6,6 +6,7 @@ import 'package:local_auth/local_auth.dart';
 import '../../../Controllers_distant/AuthController.dart';
 import '../../../localization/app_localizations.dart';
 import '../../../utils/app_colors.dart';
+import '../../../utils/management/storage_manager.dart';
 
 /// Étape 3/3 de la connexion : Saisie du code PIN & Authentification Biométrique
 class EnterPinPage extends StatefulWidget {
@@ -36,6 +37,7 @@ class _EnterPinPageState extends State<EnterPinPage>
   bool _isLoading = false;
   bool _isAuthenticating = false;
   bool _canCheckBiometrics = false;
+  bool _biometricEnabled = true;
 
   // Animation pour secouer les dots en cas d'erreur de PIN
   late AnimationController _shakeController;
@@ -71,18 +73,15 @@ class _EnterPinPageState extends State<EnterPinPage>
     if (!widget.allowBiometricUnlock) return;
 
     try {
+      final biometricEnabled = await StorageManager.getBiometricEnabled();
       final canCheck = await _localAuth.canCheckBiometrics;
       final isDeviceSupported = await _localAuth.isDeviceSupported();
 
       if (mounted) {
         setState(() {
+          _biometricEnabled = biometricEnabled;
           _canCheckBiometrics = canCheck && isDeviceSupported;
         });
-      }
-
-      // Propose automatiquement la biométrie au chargement si disponible
-      if (canCheck && isDeviceSupported) {
-        await _authenticateWithBiometrics();
       }
     } catch (e) {
       debugPrint('Erreur vérification biométrique: $e');
@@ -91,7 +90,30 @@ class _EnterPinPageState extends State<EnterPinPage>
 
   /// Déclenche la vérification Biométrique (Empreinte / FaceID)
   Future<void> _authenticateWithBiometrics() async {
-    if (_isLoading || _isAuthenticating || !widget.allowBiometricUnlock) return;
+    if (!widget.allowBiometricUnlock || !_canCheckBiometrics) return;
+
+    if (!_biometricEnabled) {
+      await showDialog<void>(
+        context: context,
+        builder:
+            (dialogContext) => AlertDialog(
+              icon: const Icon(Icons.fingerprint_rounded),
+              title: Text(AppLocalizations.t('biometric_disabled_title')),
+              content: Text(AppLocalizations.t('biometric_disabled_message')),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text(AppLocalizations.t('dialog_ok')),
+                ),
+              ],
+            ),
+      );
+      return;
+    }
+
+    if (_isLoading || _isAuthenticating || !widget.allowBiometricUnlock) {
+      return;
+    }
 
     setState(() => _isAuthenticating = true);
     try {

@@ -205,8 +205,20 @@ class AppRouter {
     // vrai nom (settings), ce qui est indispensable pour que
     // _popUntil (utilisé par "Modifier" en Étape 5) puisse la
     // retrouver dans la pile de navigation.
-    PageRoute page(Widget child) =>
-        MaterialPageRoute(settings: settings, builder: (_) => child);
+    PageRoute page(Widget child) => MaterialPageRoute(
+      settings: settings,
+      builder:
+          (context) => ValueListenableBuilder<String>(
+            valueListenable: AppLocalizations.locale,
+            builder: (context, languageCode, _) {
+              final isCurrent = ModalRoute.of(context)?.isCurrent ?? true;
+              return KeyedSubtree(
+                key: ValueKey(isCurrent ? languageCode : 'inactive-route'),
+                child: child,
+              );
+            },
+          ),
+    );
 
     switch (settings.name) {
       case AppRoutes.onboarding:

@@ -224,6 +224,10 @@
       "change_pin_title": "Change PIN code",
       "change_pin_subtitle": "Change your PIN code anytime",
       "biometric_auth_title": "Biometric authentication",
+      "biometric_disabled_title": "Biometrics are disabled",
+      "biometric_disabled_message":
+          "Sign in with your PIN, then enable biometric authentication under Profile > Security.",
+      "dialog_ok": "Got it",
       "access_section": "Access",
       "connected_devices_title": "Connected devices",
       "connected_devices_subtitle":

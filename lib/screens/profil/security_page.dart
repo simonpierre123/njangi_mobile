@@ -4,6 +4,7 @@ import '../../common/basewidget/simple_app_bar.dart';
 import '../../localization/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_dimensions.dart';
+import '../../utils/management/storage_manager.dart';
 import 'widgets/security_action_row.dart';
 import 'widgets/security_status_card.dart';
 
@@ -31,16 +32,41 @@ class SecurityPage extends StatefulWidget {
 }
 
 class _SecurityPageState extends State<SecurityPage> {
-  // TODO (Njoya) : état local uniquement pour l'instant — brancher sur
-  // la vraie préférence utilisateur (et le vrai capteur biométrique)
-  // une fois l'API/le device disponibles.
   bool _biometricEnabled = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBiometricPreference();
+  }
+
+  Future<void> _loadBiometricPreference() async {
+    try {
+      final enabled = await StorageManager.getBiometricEnabled();
+      if (mounted) setState(() => _biometricEnabled = enabled);
+    } catch (error) {
+      debugPrint('Erreur de lecture de la préférence biométrique: $error');
+    }
+  }
+
+  Future<void> _setBiometricPreference(bool enabled) async {
+    setState(() => _biometricEnabled = enabled);
+    try {
+      await StorageManager.setBiometricEnabled(enabled);
+    } catch (error) {
+      if (mounted) setState(() => _biometricEnabled = !enabled);
+      debugPrint('Erreur de sauvegarde de la préférence biométrique: $error');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
-      appBar: SimpleAppBar(title: AppLocalizations.t('security_title'), onBack: widget.onBack),
+      appBar: SimpleAppBar(
+        title: AppLocalizations.t('security_title'),
+        onBack: widget.onBack,
+      ),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -55,7 +81,12 @@ class _SecurityPageState extends State<SecurityPage> {
               SizedBox(height: AppDimensions.spaceLg.h),
               Text(
                 AppLocalizations.t('authentication_section').toUpperCase(),
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 0.5,
+                ),
               ),
               SizedBox(height: AppDimensions.spaceSm.h),
               SecurityActionRow(
@@ -69,12 +100,17 @@ class _SecurityPageState extends State<SecurityPage> {
                 icon: Icons.fingerprint,
                 title: AppLocalizations.t('biometric_auth_title'),
                 toggleValue: _biometricEnabled,
-                onToggleChanged: (v) => setState(() => _biometricEnabled = v),
+                onToggleChanged: _setBiometricPreference,
               ),
               SizedBox(height: AppDimensions.spaceLg.h),
               Text(
                 AppLocalizations.t('access_section').toUpperCase(),
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 0.5,
+                ),
               ),
               SizedBox(height: AppDimensions.spaceSm.h),
               SecurityActionRow(
@@ -90,11 +126,19 @@ class _SecurityPageState extends State<SecurityPage> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.logout, size: 14, color: AppColors.alertRed),
+                      const Icon(
+                        Icons.logout,
+                        size: 14,
+                        color: AppColors.alertRed,
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         AppLocalizations.t('logout_all_devices'),
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.alertRed),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.alertRed,
+                        ),
                       ),
                     ],
                   ),

@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class StorageManager {
   static const String _tokenKey = AppConstants.userToken;
   static const String _userKey = AppConstants.userData;
+  static const String _biometricEnabledKey = 'biometric_auth_enabled';
 
   // --- TOKEN ---
   static Future<bool> saveToken(String token) async {
@@ -44,6 +45,16 @@ class StorageManager {
   static Future<bool> clearUser() async {
     final prefs = await SharedPreferences.getInstance();
     return await prefs.remove(_userKey);
+  }
+
+  static Future<bool> getBiometricEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_biometricEnabledKey) ?? true;
+  }
+
+  static Future<bool> setBiometricEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.setBool(_biometricEnabledKey, enabled);
   }
 
   static Future<bool> consumeFirstHomeWelcome(String userId) async {

@@ -72,6 +72,13 @@ class AppRouter {
   static void _push(String route, {Object? arguments}) =>
       navigatorKey.currentState!.pushNamed(route, arguments: arguments);
 
+  static Future<void> _pushAndWait(String route, {Object? arguments}) async {
+    await navigatorKey.currentState!.pushNamed<Object?>(
+      route,
+      arguments: arguments,
+    );
+  }
+
   static void _replace(String route, {Object? arguments}) => navigatorKey
       .currentState!
       .pushReplacementNamed(route, arguments: arguments);
@@ -406,7 +413,7 @@ class AppRouter {
             profileCommunities: ProfileMockDatasource.communities,
             onProfileCommunityTap:
                 (c) => _push(AppRoutes.communityShell, arguments: c.community),
-            onOpenMyProfile: () => _push(AppRoutes.myProfile),
+            onOpenMyProfile: () => _pushAndWait(AppRoutes.myProfile),
             onOpenSecurity: () => _push(AppRoutes.security),
             onOpenNotifications: () => _push(AppRoutes.notifications),
             onOpenPreferences: () => _push(AppRoutes.preferences),
@@ -531,7 +538,7 @@ class AppRouter {
             profileCommunities: ProfileMockDatasource.communities,
             onProfileCommunityTap:
                 (c) => _push(AppRoutes.communityShell, arguments: c.community),
-            onOpenMyProfile: () => _push(AppRoutes.myProfile),
+            onOpenMyProfile: () => _pushAndWait(AppRoutes.myProfile),
             onOpenSecurity: () => _push(AppRoutes.security),
             onOpenNotifications: () => _push(AppRoutes.notifications),
             onOpenPreferences: () => _push(AppRoutes.preferences),
@@ -549,14 +556,13 @@ class AppRouter {
           MyProfilePage(
             user: ProfileMockDatasource.user,
             onBack: _pop,
-            onEditInfo: () => _push(AppRoutes.editProfile),
+            onEditInfo: () => _pushAndWait(AppRoutes.editProfile),
           ),
         );
 
       case AppRoutes.editProfile:
         return page(
           EditProfilePage(
-            user: ProfileMockDatasource.user,
             onCancel: _pop,
             onSave: _pop,
             onChangeNumber:

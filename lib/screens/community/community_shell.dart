@@ -10,6 +10,7 @@ import '../../common/basewidget/app_bottom_nav_bar.dart';
 import '../../localization/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_dimensions.dart';
+import '../../utils/management/storage_manager.dart';
 import '../profil/profile_page.dart';
 import 'home/admin_dashboard_page.dart';
 import 'home/member_dashboard_page.dart';
@@ -151,7 +152,7 @@ class CommunityShell extends StatefulWidget {
   final ProfileActivity profileActivity;
   final List<ProfileCommunityEntry> profileCommunities;
   final ValueChanged<ProfileCommunityEntry> onProfileCommunityTap;
-  final VoidCallback onOpenMyProfile;
+  final Future<void> Function() onOpenMyProfile;
   final VoidCallback onOpenSecurity;
   final VoidCallback onOpenNotifications;
   final VoidCallback onOpenPreferences;
@@ -165,6 +166,25 @@ class CommunityShell extends StatefulWidget {
 
 class _CommunityShellState extends State<CommunityShell> {
   int _tabIndex = 0;
+  late UserProfile _profileUser;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileUser = widget.user;
+    _loadProfileUser();
+  }
+
+  Future<void> _loadProfileUser() async {
+    final user = await StorageManager.getUser();
+    if (!mounted || user == null) return;
+    setState(() => _profileUser = UserProfile.fromUserModel(user));
+  }
+
+  Future<void> _openMyProfile() async {
+    await widget.onOpenMyProfile();
+    await _loadProfileUser();
+  }
 
   bool get _isAdmin => widget.community.role == 'ADMIN';
 
@@ -178,22 +198,36 @@ class _CommunityShellState extends State<CommunityShell> {
       backgroundColor: AppColors.surface,
       // Le Profil n'a pas d'en-tête communauté (nom/cycle/rôle) — c'est
       // une section globale, pas propre à cette communauté.
-      appBar: _tabIndex == 3
-          ? null
-          : CommunityAppBar(
-              name: widget.community.name,
-              cycleLabel: 'Cycle ${widget.community.cycleCurrent}/${widget.community.cycleTotal}',
-              role: widget.community.role,
-              onBack: widget.onBack,
-            ),
+      appBar:
+          _tabIndex == 3
+              ? null
+              : CommunityAppBar(
+                name: widget.community.name,
+                cycleLabel:
+                    'Cycle ${widget.community.cycleCurrent}/${widget.community.cycleTotal}',
+                role: widget.community.role,
+                onBack: widget.onBack,
+              ),
       bottomNavigationBar: AppBottomNavBar(
         currentIndex: _tabIndex,
         onTap: _goToTab,
         items: [
-          AppNavItem(icon: Icons.grid_view_rounded, label: AppLocalizations.t('community_nav_dashboard')),
-          AppNavItem(icon: Icons.history, label: AppLocalizations.t('community_nav_treasury')),
-          AppNavItem(icon: Icons.people_outline, label: AppLocalizations.t('community_nav_members')),
-          AppNavItem(icon: Icons.person_outline, label: AppLocalizations.t('nav_profile')),
+          AppNavItem(
+            icon: Icons.grid_view_rounded,
+            label: AppLocalizations.t('community_nav_dashboard'),
+          ),
+          AppNavItem(
+            icon: Icons.history,
+            label: AppLocalizations.t('community_nav_treasury'),
+          ),
+          AppNavItem(
+            icon: Icons.people_outline,
+            label: AppLocalizations.t('community_nav_members'),
+          ),
+          AppNavItem(
+            icon: Icons.person_outline,
+            label: AppLocalizations.t('nav_profile'),
+          ),
         ],
       ),
       body: SafeArea(
@@ -201,89 +235,89 @@ class _CommunityShellState extends State<CommunityShell> {
         child: IndexedStack(
           index: _tabIndex,
           children: [
-              _isAdmin
-                  ? AdminDashboardPage(
-                      health: widget.health,
-                      priorities: widget.adminPriorities,
-                      cycle: widget.adminCycle,
-                      memberStatus: widget.adminMemberStatus,
-                      loans: widget.loans,
-                      activity: widget.dashboardActivity,
-                      onQuickAction: widget.onQuickAction,
-                      onPriorityTap: widget.onPriorityTap,
-                      // Bonus shell : bascule directement sur les onglets
-                      // concernés au lieu d'un placeholder.
-                      onManageMembers: () => _goToTab(2),
-                      onSeeLoanFiles: () => _goToTab(1),
-                      onSeeAllActivity: widget.onSeeAllActivity,
-                    )
-                  : MemberDashboardPage(
-                      health: widget.health,
-                      requiredActions: widget.memberRequiredActions,
-                      cycle: widget.memberCycle,
-                      memberStatus: widget.memberMemberStatus,
-                      activity: widget.dashboardActivity,
-                      onQuickAction: widget.onQuickAction,
-                      onActionPay: widget.onActionPay,
-                      onActionTap: widget.onActionTap,
-                      onSeeAllMembers: () => _goToTab(2),
-                      onSeeAllActivity: widget.onSeeAllActivity,
-                    ),
-              TreasuryPage(
-                isAdmin: _isAdmin,
-                financialPosition: widget.financialPosition,
-                receipt: widget.receipt,
-                history: widget.history,
-                collection: widget.collection,
-                memberContributions: widget.memberContributions,
-                loan: widget.loan,
-                loanDue: widget.loanDue,
-                eligibility: widget.eligibility,
-                repaymentHistory: widget.repaymentHistory,
-                onSeeReceipt: widget.onSeeReceipt,
-                onHistoryItemTap: widget.onHistoryItemTap,
-                onSeeAllHistory: widget.onSeeAllHistory,
-                onOpenDetailedReport: widget.onOpenDetailedReport,
-                onSeeAllMembers: () => _goToTab(2),
-                onRequestLoan: widget.onRequestLoan,
-                currentBeneficiary: widget.currentBeneficiary,
-                beneficiaryStats: widget.beneficiaryStats,
-                passageOrder: widget.passageOrder,
-                payoutHistory: widget.payoutHistory,
-                onDisburse: widget.onDisburse,
-                onSeeAllPayoutHistory: widget.onSeeAllPayoutHistory,
-              ),
-              _isAdmin
-                  ? AdminMembersPage(
-                      summary: widget.adminSummary,
-                      directory: widget.adminDirectory,
-                      growth: widget.growth,
-                      onInviteMember: widget.onInviteMember,
-                      onMemberMenuTap: widget.onMemberMenuTap,
-                      onMemberUrgentAction: widget.onMemberUrgentAction,
-                    )
-                  : MembersPage(
-                      summary: widget.memberSummary,
-                      directory: widget.memberDirectory,
-                      trustScore: widget.trustScore,
-                      onMemberTap: widget.onMemberTap,
-                    ),
-              ProfilePage(
-                user: widget.user,
-                activity: widget.profileActivity,
-                communities: widget.profileCommunities,
-                onCommunityTap: widget.onProfileCommunityTap,
-                onOpenMyProfile: widget.onOpenMyProfile,
-                onOpenSecurity: widget.onOpenSecurity,
-                onOpenNotifications: widget.onOpenNotifications,
-                onOpenPreferences: widget.onOpenPreferences,
-                onOpenHelp: widget.onOpenHelp,
-                onOpenAbout: widget.onOpenAbout,
-                onLogout: widget.onLogout,
-              ),
-            ],
-          ),
+            _isAdmin
+                ? AdminDashboardPage(
+                  health: widget.health,
+                  priorities: widget.adminPriorities,
+                  cycle: widget.adminCycle,
+                  memberStatus: widget.adminMemberStatus,
+                  loans: widget.loans,
+                  activity: widget.dashboardActivity,
+                  onQuickAction: widget.onQuickAction,
+                  onPriorityTap: widget.onPriorityTap,
+                  // Bonus shell : bascule directement sur les onglets
+                  // concernés au lieu d'un placeholder.
+                  onManageMembers: () => _goToTab(2),
+                  onSeeLoanFiles: () => _goToTab(1),
+                  onSeeAllActivity: widget.onSeeAllActivity,
+                )
+                : MemberDashboardPage(
+                  health: widget.health,
+                  requiredActions: widget.memberRequiredActions,
+                  cycle: widget.memberCycle,
+                  memberStatus: widget.memberMemberStatus,
+                  activity: widget.dashboardActivity,
+                  onQuickAction: widget.onQuickAction,
+                  onActionPay: widget.onActionPay,
+                  onActionTap: widget.onActionTap,
+                  onSeeAllMembers: () => _goToTab(2),
+                  onSeeAllActivity: widget.onSeeAllActivity,
+                ),
+            TreasuryPage(
+              isAdmin: _isAdmin,
+              financialPosition: widget.financialPosition,
+              receipt: widget.receipt,
+              history: widget.history,
+              collection: widget.collection,
+              memberContributions: widget.memberContributions,
+              loan: widget.loan,
+              loanDue: widget.loanDue,
+              eligibility: widget.eligibility,
+              repaymentHistory: widget.repaymentHistory,
+              onSeeReceipt: widget.onSeeReceipt,
+              onHistoryItemTap: widget.onHistoryItemTap,
+              onSeeAllHistory: widget.onSeeAllHistory,
+              onOpenDetailedReport: widget.onOpenDetailedReport,
+              onSeeAllMembers: () => _goToTab(2),
+              onRequestLoan: widget.onRequestLoan,
+              currentBeneficiary: widget.currentBeneficiary,
+              beneficiaryStats: widget.beneficiaryStats,
+              passageOrder: widget.passageOrder,
+              payoutHistory: widget.payoutHistory,
+              onDisburse: widget.onDisburse,
+              onSeeAllPayoutHistory: widget.onSeeAllPayoutHistory,
+            ),
+            _isAdmin
+                ? AdminMembersPage(
+                  summary: widget.adminSummary,
+                  directory: widget.adminDirectory,
+                  growth: widget.growth,
+                  onInviteMember: widget.onInviteMember,
+                  onMemberMenuTap: widget.onMemberMenuTap,
+                  onMemberUrgentAction: widget.onMemberUrgentAction,
+                )
+                : MembersPage(
+                  summary: widget.memberSummary,
+                  directory: widget.memberDirectory,
+                  trustScore: widget.trustScore,
+                  onMemberTap: widget.onMemberTap,
+                ),
+            ProfilePage(
+              user: _profileUser,
+              activity: widget.profileActivity,
+              communities: widget.profileCommunities,
+              onCommunityTap: widget.onProfileCommunityTap,
+              onOpenMyProfile: _openMyProfile,
+              onOpenSecurity: widget.onOpenSecurity,
+              onOpenNotifications: widget.onOpenNotifications,
+              onOpenPreferences: widget.onOpenPreferences,
+              onOpenHelp: widget.onOpenHelp,
+              onOpenAbout: widget.onOpenAbout,
+              onLogout: widget.onLogout,
+            ),
+          ],
         ),
+      ),
     );
   }
 }

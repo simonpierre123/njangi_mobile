@@ -48,7 +48,7 @@ class HomeShell extends StatefulWidget {
   final ProfileActivity profileActivity;
   final List<ProfileCommunityEntry> profileCommunities;
   final ValueChanged<ProfileCommunityEntry> onProfileCommunityTap;
-  final VoidCallback onOpenMyProfile;
+  final Future<void> Function() onOpenMyProfile;
   final VoidCallback onOpenSecurity;
   final VoidCallback onOpenNotifications;
   final VoidCallback onOpenPreferences;
@@ -64,10 +64,12 @@ class _HomeShellState extends State<HomeShell> {
   int _tabIndex = 0;
   String _userName = '';
   String? _greetingSubtitleKey;
+  late UserProfile _profileUser;
 
   @override
   void initState() {
     super.initState();
+    _profileUser = widget.user;
     _loadGreeting();
   }
 
@@ -81,8 +83,19 @@ class _HomeShellState extends State<HomeShell> {
     if (!mounted) return;
     setState(() {
       _userName = user?.prenom?.trim() ?? '';
+      if (user != null) _profileUser = UserProfile.fromUserModel(user);
       _greetingSubtitleKey =
           isFirstHomeVisit ? 'welcome_title' : 'greeting_subtitle';
+    });
+  }
+
+  Future<void> _openMyProfile() async {
+    await widget.onOpenMyProfile();
+    final user = await StorageManager.getUser();
+    if (!mounted || user == null) return;
+    setState(() {
+      _userName = user.prenom?.trim() ?? '';
+      _profileUser = UserProfile.fromUserModel(user);
     });
   }
 
@@ -131,11 +144,11 @@ class _HomeShellState extends State<HomeShell> {
               onBackToHome: () => setState(() => _tabIndex = 0),
             ),
             ProfilePage(
-              user: widget.user,
+              user: _profileUser,
               activity: widget.profileActivity,
               communities: widget.profileCommunities,
               onCommunityTap: widget.onProfileCommunityTap,
-              onOpenMyProfile: widget.onOpenMyProfile,
+              onOpenMyProfile: _openMyProfile,
               onOpenSecurity: widget.onOpenSecurity,
               onOpenNotifications: widget.onOpenNotifications,
               onOpenPreferences: widget.onOpenPreferences,

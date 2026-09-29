@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'community_model.dart';
+import 'user_model.dart';
 
 /// Modèles pour la section "Profil" (compte utilisateur, sécurité).
 ///
@@ -25,6 +26,24 @@ class UserProfile {
   final String memberSinceLabel;
   final bool isPhoneVerified;
   final String roleSummaryLabel; // ex: "Administrateur de 2 communautés"
+
+  factory UserProfile.fromUserModel(UserModel user) {
+    final name = [user.prenom, user.nom]
+        .whereType<String>()
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty)
+        .join(' ');
+
+    return UserProfile(
+      name: name.isEmpty ? user.telephone : name,
+      phone: user.telephone,
+      email: user.email ?? '',
+      gender: user.sexe ?? '',
+      memberSinceLabel: user.createdAt ?? '',
+      isPhoneVerified: user.statut == 1,
+      roleSummaryLabel: '',
+    );
+  }
 }
 
 class ProfileActivity {

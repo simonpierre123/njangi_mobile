@@ -7,6 +7,7 @@ class StorageManager {
   static const String _tokenKey = AppConstants.userToken;
   static const String _userKey = AppConstants.userData;
   static const String _biometricEnabledKey = 'biometric_auth_enabled';
+  static const String _TokenFireBase = 'token_firebase';
 
   // --- TOKEN ---
   static Future<bool> saveToken(String token) async {
@@ -64,6 +65,19 @@ class StorageManager {
 
     await prefs.setBool(key, true);
     return true;
+  }
+
+  static Future<void> saveTokenFireBase(String tokenFireBase) async {
+    // 1. Obtient une instance de SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    // 2. Sauvegarde le jeton en utilisant la clé définie
+    await prefs.setString(_TokenFireBase, tokenFireBase);
+    print('Jeton Firebase sauvegardé: $tokenFireBase');
+  }
+
+  static Future<String?> getTokenFireBase() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_TokenFireBase);
   }
 
   // --- LOGOUT / CLEAR ALL AUTH ---

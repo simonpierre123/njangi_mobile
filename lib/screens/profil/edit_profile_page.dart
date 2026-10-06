@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../Controllers_distant/UserController.dart';
+import '../../Models/profile_model.dart';
 import '../../Models/user_model.dart';
 import '../../common/basewidget/app_button.dart';
 import '../../common/basewidget/app_text_field.dart';
@@ -9,9 +10,11 @@ import '../../common/basewidget/simple_app_bar.dart';
 import '../../localization/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_dimensions.dart';
+import '../../utils/media_picker.dart';
 import '../../utils/management/storage_manager.dart';
 import 'widgets/avatar_with_badge.dart';
 import 'widgets/phone_edit_row.dart';
+import 'widgets/profile_skeleton.dart';
 
 /// Écran "Modifier mes informations" (écran 3) — formulaire d'édition
 /// du profil. Le changement de photo est fonctionnel (caméra/galerie
@@ -84,9 +87,29 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> _changePhoto() async {
-    final file = await showMediaSourceSheet(context);
-    if (file == null) return;
-    setState(() => _photo = File(file.path));
+    try {
+      final file = await showMediaSourceSheet(context);
+      if (file == null || !mounted) return;
+      setState(() => _photo = File(file.path));
+    } catch (error) {
+      debugPrint('Erreur de sélection de la photo de profil: $error');
+      if (mounted) {
+        _showMessage(AppLocalizations.t('profile_photo_pick_error'));
+      }
+    }
+  }
+
+  Future<void> _pickPhotoFromGallery() async {
+    try {
+      final file = await MediaPicker.pickFromGallery();
+      if (file == null || !mounted) return;
+      setState(() => _photo = File(file.path));
+    } catch (error) {
+      debugPrint('Erreur de sélection de la photo de profil: $error');
+      if (mounted) {
+        _showMessage(AppLocalizations.t('profile_photo_pick_error'));
+      }
+    }
   }
 
   Future<void> _saveProfile() async {
@@ -107,6 +130,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     setState(() => _isSaving = true);
     final result = await UserController.updateProfile(
       userId: user.id,
+      photo: _photo,
       data: {
         'prenom': firstName,
         'nom': lastName,
@@ -152,7 +176,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     AppScale.init(context);
 
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(body: SafeArea(child: ProfileSkeleton()));
     }
 
     if (_user == null) {
@@ -187,7 +211,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       size: 90,
                       badgeIcon: Icons.camera_alt_outlined,
                       onBadgeTap: _changePhoto,
+                      onImageTap: _pickPhotoFromGallery,
                       imageFile: _photo,
+                      imageUrl:
+                          _user == null
+                              ? null
+                              : UserProfile.fromUserModel(_user!).photoUrl,
                     ),
                     SizedBox(height: AppDimensions.spaceSm.h),
                     TextButton(

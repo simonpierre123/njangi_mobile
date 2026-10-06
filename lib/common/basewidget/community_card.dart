@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../Models/community_model.dart';
+import '../../localization/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_dimensions.dart';
 import 'member_avatars_stack.dart';
+import 'shimmer_loading.dart';
 
 /// Card représentant une communauté sur le tableau de bord. Cliquable —
 /// la navigation vers l'écran dédié à la communauté est déléguée via
@@ -22,6 +24,7 @@ class CommunityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isOverdue = community.actionLabel != null;
+    final cycleNotConfigured = community.cyclesLoaded && !community.hasCycle;
 
     return InkWell(
       onTap: onTap,
@@ -49,12 +52,36 @@ class CommunityCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  width: 48,
+                  height: 48,
+                  padding:
+                      community.logoUrl == null
+                          ? const EdgeInsets.all(12)
+                          : EdgeInsets.zero,
+                  clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
                     color: AppColors.iconBgMint,
                     borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                   ),
-                  child: Icon(community.icon, color: AppColors.primaryDark, size: 24),
+                  child:
+                      community.logoUrl == null
+                          ? Icon(
+                            community.icon,
+                            color: AppColors.primaryDark,
+                            size: 24,
+                          )
+                          : ShimmerNetworkImage(
+                            url: community.logoUrl!,
+                            width: 48,
+                            height: 48,
+                            fit: BoxFit.cover,
+                            errorBuilder:
+                                (context, error, stackTrace) => Icon(
+                                  community.icon,
+                                  color: AppColors.primaryDark,
+                                  size: 24,
+                                ),
+                          ),
                 ),
                 SizedBox(width: AppDimensions.spaceSm.w),
                 Expanded(
@@ -72,18 +99,26 @@ class CommunityCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       RichText(
                         text: TextSpan(
-                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
                           children: [
                             if (community.role != null)
                               TextSpan(
-                                text: '${community.role}  •  ',
+                                text: '${_localizedRole(community.role!)}  •  ',
                                 style: const TextStyle(
                                   color: AppColors.roleText,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
                             TextSpan(
-                              text: 'Cycle ${community.cycleCurrent}/${community.cycleTotal}',
+                              text:
+                                  cycleNotConfigured
+                                      ? AppLocalizations.t(
+                                        'community_cycle_not_configured',
+                                      )
+                                      : '${AppLocalizations.t('cycle_word')} ${community.cycleCurrent}/${community.cycleTotal}',
                             ),
                           ],
                         ),
@@ -101,9 +136,15 @@ class CommunityCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'MEMBRES',
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+                      Text(
+                        AppLocalizations.t(
+                          'community_members_label',
+                        ).toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       MemberAvatarsStack(count: community.memberCount),
@@ -113,14 +154,24 @@ class CommunityCard extends StatelessWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'COTISATION',
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+                    Text(
+                      AppLocalizations.t(
+                        'community_contribution_label',
+                      ).toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Text(
                       '${community.contributionAmount}/${community.contributionFrequency}',
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ],
                 ),
@@ -130,13 +181,21 @@ class CommunityCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'PROGRESSION',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+                Text(
+                  AppLocalizations.t('community_progress_label').toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 Text(
                   '${(community.progressPercent * 100).round()}%',
-                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11, color: AppColors.textPrimary),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ],
             ),
@@ -158,11 +217,18 @@ class CommunityCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.calendar_month_outlined, color: AppColors.textSecondary, size: 16),
+                    const Icon(
+                      Icons.calendar_month_outlined,
+                      color: AppColors.textSecondary,
+                      size: 16,
+                    ),
                     const SizedBox(width: 6),
                     Text(
-                      community.lastUpdateLabel,
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                      community.meetingDay ?? community.lastUpdateLabel,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -186,10 +252,15 @@ class CommunityCard extends StatelessWidget {
                   )
                 else if (community.statusLabel != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.blueSurface,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusSm,
+                      ),
                     ),
                     child: Text(
                       community.statusLabel!,
@@ -208,6 +279,13 @@ class CommunityCard extends StatelessWidget {
     );
   }
 }
+
+String _localizedRole(String role) => switch (role.toUpperCase()) {
+  'ADMIN' => AppLocalizations.t('role_admin'),
+  'CO_ADMIN' => AppLocalizations.t('role_co_admin'),
+  'MEMBRE' => AppLocalizations.t('role_member'),
+  _ => role,
+};
 
 class _Badge extends StatelessWidget {
   const _Badge({required this.community});

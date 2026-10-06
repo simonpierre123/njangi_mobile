@@ -6,14 +6,21 @@ class AppConstants {
   static const String baseUrlProd = 'http://62.169.27.128:8000/api/';
   static const String baseUrlDev = 'http://62.169.27.128:8001/api/';
   static const String baseUrl = baseUrlDev;
-  static const String imageBaseUrl = 'http://109.199.117.169:8500/storage/';
+  static String get imageBaseUrl => baseUrl.replaceFirst('/api/', '/storage/');
 
   // Endpoints Auth
   static const String sendOtp = 'auth/send-otp';
   static const String register = 'auth/register';
   static const String setPin = 'auth/set-pin';
   static const String login = 'auth/login';
+  static const String verifyLoginOtp = 'auth/verify-login-otp';
+  static const String verifyResetOtp = 'auth/verify-reset-otp';
+  static const String resetPin = 'auth/reset-pin';
   static const String refreshToken = 'auth/refresh-token';
+
+  // Groupes
+  static const String groupes = 'groupes';
+  static const String utilisateurs = 'utilisateurs';
 
   // Storage Keys
   static const String userToken = 'user_token';

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'community_model.dart';
 import 'user_model.dart';
+import '../utils/app_constants.dart';
 
 /// Modèles pour la section "Profil" (compte utilisateur, sécurité).
 ///
@@ -17,6 +18,10 @@ class UserProfile {
     required this.memberSinceLabel,
     required this.isPhoneVerified,
     required this.roleSummaryLabel,
+    this.photoUrl,
+    this.cniRecto,
+    this.cniVerso,
+    this.passport,
   });
 
   final String name;
@@ -26,6 +31,15 @@ class UserProfile {
   final String memberSinceLabel;
   final bool isPhoneVerified;
   final String roleSummaryLabel; // ex: "Administrateur de 2 communautés"
+  final String? photoUrl;
+  final String? cniRecto;
+  final String? cniVerso;
+  final String? passport;
+
+  bool get isKycComplete =>
+      (passport?.trim().isNotEmpty ?? false) ||
+      ((cniRecto?.trim().isNotEmpty ?? false) &&
+          (cniVerso?.trim().isNotEmpty ?? false));
 
   factory UserProfile.fromUserModel(UserModel user) {
     final name = [user.prenom, user.nom]
@@ -33,6 +47,13 @@ class UserProfile {
         .map((part) => part.trim())
         .where((part) => part.isNotEmpty)
         .join(' ');
+    final storedPhoto = user.photo?.trim();
+    final photoUrl =
+        storedPhoto == null || storedPhoto.isEmpty
+            ? null
+            : storedPhoto.startsWith('http')
+            ? storedPhoto
+            : '${AppConstants.imageBaseUrl}${storedPhoto.replaceFirst(RegExp(r'^/+'), '')}';
 
     return UserProfile(
       name: name.isEmpty ? user.telephone : name,
@@ -42,6 +63,10 @@ class UserProfile {
       memberSinceLabel: user.createdAt ?? '',
       isPhoneVerified: user.statut == 1,
       roleSummaryLabel: '',
+      photoUrl: photoUrl,
+      cniRecto: user.cniRecto,
+      cniVerso: user.cniVerso,
+      passport: user.passport,
     );
   }
 }

@@ -3,6 +3,7 @@ import '../../Models/community_model.dart';
 import '../../common/basewidget/activity_summary_card.dart';
 import '../../common/basewidget/app_search_field.dart';
 import '../../common/basewidget/community_card.dart';
+import '../../common/basewidget/community_card_skeleton.dart';
 import '../../common/basewidget/stat_chip.dart';
 import '../../localization/app_localizations.dart';
 import '../../utils/app_colors.dart';
@@ -24,16 +25,20 @@ class HomePage extends StatefulWidget {
   const HomePage({
     super.key,
     required this.userName,
+    required this.userPhotoUrl,
     required this.greetingSubtitleKey,
     required this.communities,
+    this.isLoadingCommunities = false,
     required this.isProfileComplete,
     required this.onIdentify,
     required this.onCommunityTap,
   });
 
   final String userName;
+  final String? userPhotoUrl;
   final String? greetingSubtitleKey;
   final List<CommunityModel> communities;
+  final bool isLoadingCommunities;
   final bool isProfileComplete;
   final VoidCallback onIdentify;
   final ValueChanged<CommunityModel> onCommunityTap;
@@ -64,6 +69,7 @@ class _HomePageState extends State<HomePage> {
         children: [
           GreetingHeader(
             userName: widget.userName,
+            photoUrl: widget.userPhotoUrl,
             subtitleKey: widget.greetingSubtitleKey,
           ),
           if (showBanner) ...[
@@ -75,10 +81,21 @@ class _HomePageState extends State<HomePage> {
           ],
           SizedBox(height: AppDimensions.spaceMd.h),
           _buildSummary(hasCommunities),
-          SizedBox(height: AppDimensions.spaceMd.h),
+          SizedBox(
+            height:
+                (hasCommunities ? AppDimensions.spaceMd : AppDimensions.spaceSm)
+                    .h,
+          ),
           AppSearchField(hint: AppLocalizations.t('search_community_hint')),
-          SizedBox(height: AppDimensions.spaceLg.h),
-          if (!hasCommunities)
+          SizedBox(
+            height:
+                (hasCommunities ? AppDimensions.spaceLg : AppDimensions.spaceSm)
+                    .h,
+          ),
+          if (widget.isLoadingCommunities) ...[
+            const CommunityCardSkeleton(),
+            const CommunityCardSkeleton(),
+          ] else if (!hasCommunities)
             _EmptyCommunities()
           else
             _CommunitiesList(
@@ -104,18 +121,28 @@ class _HomePageState extends State<HomePage> {
   Widget _buildSummary(bool hasCommunities) {
     if (!hasCommunities) {
       return ActivitySummaryCard(
+        variant: ActivitySummaryVariant.filled,
         eyebrow: AppLocalizations.t('activity_summary_eyebrow'),
         title: AppLocalizations.t('activity_empty_title'),
         chips: [
-          StatChip(label: AppLocalizations.t('stat_communities'), count: 0),
-          StatChip(label: AppLocalizations.t('stat_actions'), count: 0),
+          StatChip(
+            label: AppLocalizations.t('stat_communities'),
+            count: 0,
+            tone: StatChipTone.dark,
+          ),
+          StatChip(
+            label: AppLocalizations.t('stat_actions'),
+            count: 0,
+            tone: StatChipTone.dark,
+          ),
           StatChip(
             label: AppLocalizations.t('stat_no_meeting'),
             icon: Icons.event_busy_outlined,
+            tone: StatChipTone.dark,
           ),
         ],
         pendingAmountLabel: AppLocalizations.t('pending_contributions_label'),
-        pendingAmount: '0 FCFA',
+        pendingAmount: '0 ${AppLocalizations.t('currency_xaf')}',
       );
     }
 
@@ -157,12 +184,48 @@ class _EmptyCommunities extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: AppDimensions.spaceXl.h),
-      child: Center(
-        child: Text(
-          AppLocalizations.t('no_community_yet'),
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
+      padding: EdgeInsets.only(bottom: AppDimensions.spaceXl.h),
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            constraints: BoxConstraints(minHeight: 52.h),
+            alignment: Alignment.center,
+            padding: EdgeInsets.symmetric(
+              horizontal: AppDimensions.spaceMd.w,
+              vertical: AppDimensions.spaceSm.h,
+            ),
+            decoration: BoxDecoration(
+              color: AppColors.mintSurface,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+              border: Border.all(color: AppColors.borderMint),
+            ),
+            child: Text(
+              AppLocalizations.t('advertising_space'),
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          SizedBox(height: AppDimensions.spaceLg.h),
+          SizedBox(
+            width: double.infinity,
+            height: 64.h,
+            child: Center(
+              child: Text(
+                AppLocalizations.t('no_community_yet'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.neutralGreenGray,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

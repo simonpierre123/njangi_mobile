@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../utils/app_colors.dart';
+import 'shimmer_loading.dart';
 
 /// Avatar chargé depuis internet (service de photos de démonstration
 /// pravatar.cc) — pour donner un visage réaliste aux avatars encore
@@ -29,18 +30,26 @@ class NetworkAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = radius * 2;
     return ClipOval(
-      child: Image.network(
-        'https://i.pravatar.cc/150?img=$seed',
+      child: ShimmerNetworkImage(
+        url: 'https://i.pravatar.cc/150?img=$seed',
         width: size,
         height: size,
         fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => Container(
-          width: size,
-          height: size,
-          color: fallbackBg,
-          alignment: Alignment.center,
-          child: fallbackIcon != null ? Icon(fallbackIcon, size: radius, color: fallbackIconColor) : null,
-        ),
+        errorBuilder:
+            (context, error, stackTrace) => Container(
+              width: size,
+              height: size,
+              color: fallbackBg,
+              alignment: Alignment.center,
+              child:
+                  fallbackIcon != null
+                      ? Icon(
+                        fallbackIcon,
+                        size: radius,
+                        color: fallbackIconColor,
+                      )
+                      : null,
+            ),
       ),
     );
   }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "240799428528",
+    "project_id": "njangi-8c174",
+    "storage_bucket": "njangi-8c174.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:240799428528:android:439f6c7c5e4b1366a2b075",
+        "android_client_info": {
+          "package_name": "com.example.njangi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlNZiVoNY9wbxY6Ew4u_WgZP8i4Nm9ULk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

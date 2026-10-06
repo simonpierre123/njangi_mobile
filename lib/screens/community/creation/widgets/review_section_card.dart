@@ -10,13 +10,13 @@ class ReviewSectionCard extends StatelessWidget {
     super.key,
     required this.icon,
     required this.title,
-    required this.onEdit,
+    this.onEdit,
     required this.child,
   });
 
   final IconData icon;
   final String title;
-  final VoidCallback onEdit;
+  final VoidCallback? onEdit;
   final Widget child;
 
   @override
@@ -39,21 +39,29 @@ class ReviewSectionCard extends StatelessWidget {
                 children: [
                   Icon(icon, size: 16, color: AppColors.primaryDark),
                   SizedBox(width: AppDimensions.spaceXs.w),
-                  Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
                 ],
               ),
-              GestureDetector(
-                onTap: onEdit,
-                child: Text(
-                  AppLocalizations.t('edit_link'),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.secondaryGreen,
-                    decoration: TextDecoration.underline,
+              if (onEdit != null)
+                GestureDetector(
+                  onTap: onEdit,
+                  child: Text(
+                    AppLocalizations.t('edit_link'),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.secondaryGreen,
+                      decoration: TextDecoration.underline,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           SizedBox(height: AppDimensions.spaceSm.h),

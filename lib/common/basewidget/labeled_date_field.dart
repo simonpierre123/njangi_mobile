@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../localization/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_dimensions.dart';
 
@@ -11,13 +12,13 @@ class LabeledDateField extends StatelessWidget {
     required this.label,
     required this.value,
     required this.onChanged,
-    this.hint = 'mm/dd/yyyy',
+    this.hint,
   });
 
   final String label;
   final DateTime? value;
   final ValueChanged<DateTime> onChanged;
-  final String hint;
+  final String? hint;
 
   Future<void> _pick(BuildContext context) async {
     final now = DateTime.now();
@@ -30,15 +31,27 @@ class LabeledDateField extends StatelessWidget {
     if (picked != null) onChanged(picked);
   }
 
-  String _format(DateTime d) =>
-      '${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}/${d.year}';
+  String _format(DateTime d) {
+    final day = d.day.toString().padLeft(2, '0');
+    final month = d.month.toString().padLeft(2, '0');
+    return AppLocalizations.locale.value == 'fr'
+        ? '$day/$month/${d.year}'
+        : '$month/$day/${d.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
         SizedBox(height: AppDimensions.spaceXs.h),
         InkWell(
           onTap: () => _pick(context),
@@ -54,14 +67,23 @@ class LabeledDateField extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    value != null ? _format(value!) : hint,
+                    value != null
+                        ? _format(value!)
+                        : hint ?? AppLocalizations.t('date_format_hint'),
                     style: TextStyle(
                       fontSize: 13,
-                      color: value != null ? AppColors.textPrimary : AppColors.textSecondary,
+                      color:
+                          value != null
+                              ? AppColors.textPrimary
+                              : AppColors.textSecondary,
                     ),
                   ),
                 ),
-                const Icon(Icons.calendar_today_outlined, size: 16, color: AppColors.textSecondary),
+                const Icon(
+                  Icons.calendar_today_outlined,
+                  size: 16,
+                  color: AppColors.textSecondary,
+                ),
               ],
             ),
           ),

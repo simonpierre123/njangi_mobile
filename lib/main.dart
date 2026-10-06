@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:njangi/api/firebase_api.dart';
 import 'package:njangi/datasource/api_service.dart';
 import 'localization/app_localizations.dart';
 import 'routes/app_router.dart';
@@ -69,6 +71,8 @@ class _SessionTimeoutState extends State<_SessionTimeout>
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   ApiService.initializeInterceptors();
+  await Firebase.initializeApp();
+  await FirebaseApi.initializeFCM();
 
   final savedLocale = await LocaleManager.getSavedLocale();
   AppLocalizations.setLocale(savedLocale.languageCode);

@@ -24,23 +24,20 @@ class AuthController extends ChangeNotifier {
       notifyListeners();
 
       // Si le serveur a retourné un code d'erreur (ex: TOO_MANY_REQUESTS)
-      if (response['code'] != null) {
-        final errorCode = response['code'].toString();
-
-        // Cherche la traduction dans fr.json (ex: AppLocalizations.t('TOO_MANY_REQUESTS'))
-        final translatedMessage = AppLocalizations.t(errorCode);
-
-        if (translatedMessage.isNotEmpty) {
-          response['translated_message'] = translatedMessage;
-        } else {
-          // Si le code n'est pas trouvé dans fr.json, on affiche le message brut du serveur ou SERVER_ERROR
-          response['translated_message'] =
-              response['message'] ?? AppLocalizations.t('SERVER_ERROR');
-        }
+      if (response['success'] != true) {
+        final code = response['code']?.toString();
+        response['translated_message'] =
+            code == null
+                ? AppLocalizations.t('otp_send_error')
+                : ApiService.localizedMessageForCode(
+                  code,
+                  fallbackKey: 'otp_send_error',
+                );
       }
 
       return response;
     } catch (e) {
+      ApiService.logUnexpectedError('AuthController.sendOtp', e);
       _isLoading = false;
       notifyListeners();
 
@@ -72,6 +69,7 @@ class AuthController extends ChangeNotifier {
 
       return response;
     } catch (e) {
+      ApiService.logUnexpectedError('AuthController.register', e);
       _isLoading = false;
       notifyListeners();
 
@@ -80,6 +78,128 @@ class AuthController extends ChangeNotifier {
         'code': 'UNKNOWN_ERROR',
         'message': AppLocalizations.t('register_error'),
       };
+    }
+  }
+
+  Future<Map<String, dynamic>> verifyLoginOtp({
+    required String telephone,
+    required String code,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await ApiService.post(
+        endpoint: AppConstants.verifyLoginOtp,
+        data: {'telephone': telephone, 'code': code},
+      );
+      final responseData = response['data'];
+      final data = responseData is Map ? responseData['data'] : null;
+
+      if (response['success'] != true ||
+          data is! Map ||
+          data['has_pin'] is! bool ||
+          (data['has_pin'] == false &&
+              (data['reset_token'] is! String ||
+                  (data['reset_token'] as String).isEmpty))) {
+        return {
+          'success': false,
+          'message':
+              response['message'] ??
+              AppLocalizations.t('pin_status_unavailable'),
+        };
+      }
+
+      return {
+        'success': true,
+        'has_pin': data['has_pin'],
+        'reset_token': data['reset_token'],
+        'message': response['message'],
+      };
+    } catch (error) {
+      ApiService.logUnexpectedError('AuthController.verifyLoginOtp', error);
+      return {'success': false, 'message': AppLocalizations.t('UNKNOWN_ERROR')};
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<Map<String, dynamic>> verifyResetOtp({
+    required String telephone,
+    required String code,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await ApiService.post(
+        endpoint: AppConstants.verifyResetOtp,
+        data: {'telephone': telephone, 'code': code},
+      );
+      final responseData = response['data'];
+      final data = responseData is Map ? responseData['data'] : null;
+      final resetToken = data is Map ? data['reset_token'] : null;
+
+      if (response['success'] != true ||
+          resetToken is! String ||
+          resetToken.isEmpty) {
+        return {
+          'success': false,
+          'message':
+              response['message'] ??
+              AppLocalizations.t('pin_status_unavailable'),
+        };
+      }
+
+      return {'success': true, 'reset_token': resetToken};
+    } catch (error) {
+      ApiService.logUnexpectedError('AuthController.verifyResetOtp', error);
+      return {'success': false, 'message': AppLocalizations.t('UNKNOWN_ERROR')};
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<Map<String, dynamic>> resetPin({
+    required String telephone,
+    required String resetToken,
+    required String pin,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final response = await ApiService.post(
+        endpoint: AppConstants.resetPin,
+        data: {
+          'telephone': telephone,
+          'reset_token': resetToken,
+          'pin': pin,
+          'pin_confirmation': pin,
+        },
+      );
+
+      return {
+        'success': response['success'] == true,
+        'message':
+            response['message'] ??
+            AppLocalizations.t(
+              response['success'] == true
+                  ? 'pin_reset_success'
+                  : 'pin_reset_error',
+            ),
+      };
+    } catch (error) {
+      ApiService.logUnexpectedError('AuthController.resetPin', error);
+      return {
+        'success': false,
+        'message': AppLocalizations.t('pin_reset_error'),
+      };
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -119,6 +239,7 @@ class AuthController extends ChangeNotifier {
 
       return response;
     } catch (e) {
+      ApiService.logUnexpectedError('AuthController.setPin', e);
       _isLoading = false;
       notifyListeners();
 

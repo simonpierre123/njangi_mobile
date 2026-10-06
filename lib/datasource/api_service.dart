@@ -30,11 +30,21 @@ class ApiService {
         },
         onError: (DioException error, handler) async {
           // Gestion de l'expiration de token (401) et auto-refresh
+          final nonRefreshableAuthEndpoints = [
+            AppConstants.login,
+            AppConstants.sendOtp,
+            AppConstants.register,
+            AppConstants.verifyLoginOtp,
+            AppConstants.verifyResetOtp,
+            AppConstants.resetPin,
+          ];
+          final isNonRefreshableAuthRequest = nonRefreshableAuthEndpoints.any(
+            error.requestOptions.path.contains,
+          );
           if (error.response?.statusCode == 401 &&
-              !error.requestOptions.path.contains(AppConstants.login)) {
+              !isNonRefreshableAuthRequest) {
             bool refreshed = await _refreshToken();
             if (refreshed) {
-              final newPath = error.requestOptions.path;
               final newOptions = error.requestOptions;
               final newToken = await StorageManager.getToken();
 
@@ -54,6 +64,55 @@ class ApiService {
         },
       ),
     );
+  }
+
+  static void logServerError(DioException error) {
+    debugPrint(
+      '[API] ${error.requestOptions.method} ${error.requestOptions.uri} '
+      'failed (status: ${error.response?.statusCode ?? 'network'}): '
+      '${error.response?.data ?? error.message}',
+    );
+  }
+
+  static void logUnexpectedError(String operation, Object error) {
+    debugPrint('[API] $operation failed unexpectedly: $error');
+  }
+
+  static String localizedMessageForCode(
+    String? code, {
+    String fallbackKey = 'UNKNOWN_ERROR',
+  }) {
+    if (code != null && code.isNotEmpty) {
+      final translated = AppLocalizations.t(code);
+      if (translated != code) return translated;
+    }
+    return AppLocalizations.t(fallbackKey);
+  }
+
+  static String localizedErrorMessage(
+    DioException error, {
+    String fallbackKey = 'UNKNOWN_ERROR',
+  }) {
+    final responseData = error.response?.data;
+    if (responseData is Map) {
+      final code = responseData['code']?.toString();
+      if (code != null && code.isNotEmpty) {
+        final translated = AppLocalizations.t(code);
+        if (translated != code) return translated;
+      }
+    }
+
+    final statusCode = error.response?.statusCode;
+    if (statusCode == null) return AppLocalizations.t('NETWORK_ERROR');
+    if (statusCode == 401) return AppLocalizations.t('INVALID_CREDENTIALS');
+    if (statusCode == 403) return AppLocalizations.t('FORBIDDEN_ERROR');
+    if (statusCode == 404) return AppLocalizations.t('NOT_FOUND_ERROR');
+    if (statusCode == 422 || statusCode == 400) {
+      return AppLocalizations.t('VALIDATION_ERROR');
+    }
+    if (statusCode == 429) return AppLocalizations.t('TOO_MANY_ATTEMPTS');
+    if (statusCode >= 500) return AppLocalizations.t('SERVER_ERROR');
+    return AppLocalizations.t(fallbackKey);
   }
 
   static Future<bool> _refreshToken() async {
@@ -86,39 +145,50 @@ class ApiService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = response.data;
+        if (responseData is Map && responseData['success'] == false) {
+          final code = responseData['code']?.toString();
+          debugPrint(
+            '[API] POST ${response.requestOptions.uri} returned failure '
+            '(status: ${response.statusCode}, code: $code, body: $responseData)',
+          );
+          return {
+            'success': false,
+            'message': localizedMessageForCode(code),
+            'data': responseData,
+            if (code != null) 'code': code,
+          };
+        }
         return {
           'success': true,
-          'message': responseData['message'] ?? 'Succès',
+          'message':
+              responseData is Map
+                  ? responseData['message'] ??
+                      AppLocalizations.t('request_success')
+                  : AppLocalizations.t('request_success'),
           'data': responseData,
         };
       } else {
+        debugPrint(
+          '[API] POST ${response.requestOptions.uri} failed '
+          '(status: ${response.statusCode}, body: ${response.data})',
+        );
         return {
           'success': false,
           'message': AppLocalizations.t('SERVER_ERROR'),
         };
       }
-    } catch (e) {
-      debugPrint('API Error: $e');
-
-      String errorMessage = AppLocalizations.t('UNKNOWN_ERROR');
-
-      if (e is DioException) {
-        if (e.response?.statusCode == 429) {
-          errorMessage =
-              e.response?.data['message'] ??
-              AppLocalizations.t('TOO_MANY_ATTEMPTS');
-        } else if (e.response?.statusCode == 401) {
-          errorMessage =
-              e.response?.data['message'] ??
-              AppLocalizations.t('INVALID_CREDENTIALS');
-        } else if (e.response?.data is Map<String, dynamic>) {
-          errorMessage =
-              e.response?.data['message'] ??
-              AppLocalizations.t('UNKNOWN_ERROR');
-        }
-      }
-
-      return {'success': false, 'message': errorMessage};
+    } on DioException catch (error) {
+      logServerError(error);
+      final responseData = error.response?.data;
+      return {
+        'success': false,
+        'message': localizedErrorMessage(error),
+        if (responseData is Map && responseData['code'] != null)
+          'code': responseData['code'].toString(),
+      };
+    } catch (error) {
+      logUnexpectedError('POST $endpoint', error);
+      return {'success': false, 'message': AppLocalizations.t('UNKNOWN_ERROR')};
     }
   }
 }

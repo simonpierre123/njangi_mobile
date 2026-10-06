@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../Models/community_members_model.dart';
 import '../../../../common/basewidget/network_avatar.dart';
+import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
 
@@ -23,7 +24,10 @@ class AdminMemberRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: AppDimensions.spaceMd.w, vertical: AppDimensions.spaceSm.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppDimensions.spaceMd.w,
+        vertical: AppDimensions.spaceSm.h,
+      ),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
@@ -31,7 +35,12 @@ class AdminMemberRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          NetworkAvatar(radius: 20, seed: entry.name.hashCode.abs() % 70 + 1, fallbackIcon: null, fallbackBg: AppColors.neutralGrayLight),
+          NetworkAvatar(
+            radius: 20,
+            seed: entry.name.hashCode.abs() % 70 + 1,
+            fallbackIcon: null,
+            fallbackBg: AppColors.neutralGrayLight,
+          ),
           SizedBox(width: AppDimensions.spaceSm.w),
           Expanded(
             child: Column(
@@ -43,14 +52,22 @@ class AdminMemberRow extends StatelessWidget {
                       child: Text(
                         entry.name,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                     ),
                     if (entry.role != null) ...[
                       const SizedBox(width: 6),
                       Text(
-                        entry.role!,
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.roleText),
+                        _localizedRole(entry.role!),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.roleText,
+                        ),
                       ),
                     ],
                     if (entry.isHighlighted) ...[
@@ -68,7 +85,11 @@ class AdminMemberRow extends StatelessWidget {
                       child: Text(
                         entry.statusLine,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 11, color: entry.statusColor, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: entry.statusColor,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ],
@@ -86,7 +107,11 @@ class AdminMemberRow extends StatelessWidget {
                   color: AppColors.tagRedBg,
                   borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
                 ),
-                child: const Icon(Icons.mail_outline, size: 16, color: AppColors.alertRed),
+                child: const Icon(
+                  Icons.mail_outline,
+                  size: 16,
+                  color: AppColors.alertRed,
+                ),
               ),
             )
           else
@@ -95,7 +120,11 @@ class AdminMemberRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               child: const Padding(
                 padding: EdgeInsets.all(4),
-                child: Icon(Icons.more_vert, size: 18, color: AppColors.textSecondary),
+                child: Icon(
+                  Icons.more_vert,
+                  size: 18,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
         ],
@@ -103,3 +132,10 @@ class AdminMemberRow extends StatelessWidget {
     );
   }
 }
+
+String _localizedRole(String role) => switch (role.toUpperCase()) {
+  'ADMIN' => AppLocalizations.t('role_admin'),
+  'CO_ADMIN' => AppLocalizations.t('role_co_admin'),
+  'MEMBRE' => AppLocalizations.t('role_member'),
+  _ => role,
+};

@@ -18,7 +18,6 @@ class CreateCommunityStep5Page extends StatefulWidget {
     required this.draft,
     required this.onBack,
     required this.onCreate,
-    required this.onEditGeneral,
     required this.onEditFinancial,
     required this.onEditRules,
     required this.onEditMembers,
@@ -26,26 +25,47 @@ class CreateCommunityStep5Page extends StatefulWidget {
 
   final CommunityDraft draft;
   final VoidCallback onBack;
-  final VoidCallback onCreate;
-  final VoidCallback onEditGeneral;
+  final Future<String?> Function() onCreate;
   final VoidCallback onEditFinancial;
   final VoidCallback onEditRules;
   final VoidCallback onEditMembers;
 
   @override
-  State<CreateCommunityStep5Page> createState() => _CreateCommunityStep5PageState();
+  State<CreateCommunityStep5Page> createState() =>
+      _CreateCommunityStep5PageState();
 }
 
 class _CreateCommunityStep5PageState extends State<CreateCommunityStep5Page> {
   bool _confirmed = false;
+  bool _isCreating = false;
 
   static const _monthsFr = [
-    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
+    'Janvier',
+    'Février',
+    'Mars',
+    'Avril',
+    'Mai',
+    'Juin',
+    'Juillet',
+    'Août',
+    'Septembre',
+    'Octobre',
+    'Novembre',
+    'Décembre',
   ];
   static const _monthsEn = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   String _formatDate(DateTime d) {
@@ -54,14 +74,24 @@ class _CreateCommunityStep5PageState extends State<CreateCommunityStep5Page> {
     return isFr ? '${d.day} $month ${d.year}' : '$month ${d.day}, ${d.year}';
   }
 
-  void _handleCreate() {
+  Future<void> _handleCreate() async {
+    if (_isCreating) return;
     if (!_confirmed) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.t('confirm_required_message'))),
       );
       return;
     }
-    widget.onCreate();
+
+    setState(() => _isCreating = true);
+    final errorMessage = await widget.onCreate();
+    if (!mounted) return;
+    setState(() => _isCreating = false);
+    if (errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+      );
+    }
   }
 
   @override
@@ -76,24 +106,35 @@ class _CreateCommunityStep5PageState extends State<CreateCommunityStep5Page> {
         child: Column(
           children: [
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppDimensions.screenPaddingH.w),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppDimensions.screenPaddingH.w,
+              ),
               child: StepHeader(step: 5, totalSteps: 5, onBack: widget.onBack),
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: AppDimensions.screenPaddingH.w),
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppDimensions.screenPaddingH.w,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(height: AppDimensions.spaceSm.h),
                     Text(
                       AppLocalizations.t('almost_done_title'),
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.primaryDark),
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryDark,
+                      ),
                     ),
                     SizedBox(height: AppDimensions.spaceXs.h),
                     Text(
                       AppLocalizations.t('review_subtitle'),
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     SizedBox(height: AppDimensions.spaceLg.h),
 
@@ -101,7 +142,6 @@ class _CreateCommunityStep5PageState extends State<CreateCommunityStep5Page> {
                     ReviewSectionCard(
                       icon: Icons.info_outline,
                       title: AppLocalizations.t('general_info_title'),
-                      onEdit: widget.onEditGeneral,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -113,9 +153,15 @@ class _CreateCommunityStep5PageState extends State<CreateCommunityStep5Page> {
                                 height: 44,
                                 decoration: BoxDecoration(
                                   color: AppColors.surface,
-                                  borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+                                  borderRadius: BorderRadius.circular(
+                                    AppDimensions.radiusSm,
+                                  ),
                                 ),
-                                child: const Icon(Icons.groups_outlined, size: 20, color: AppColors.textSecondary),
+                                child: const Icon(
+                                  Icons.groups_outlined,
+                                  size: 20,
+                                  color: AppColors.textSecondary,
+                                ),
                               ),
                               SizedBox(width: AppDimensions.spaceSm.w),
                               Column(
@@ -123,11 +169,18 @@ class _CreateCommunityStep5PageState extends State<CreateCommunityStep5Page> {
                                 children: [
                                   Text(
                                     draft.name.isEmpty ? '—' : draft.name,
-                                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                      color: AppColors.textPrimary,
+                                    ),
                                   ),
                                   Text(
                                     '${AppLocalizations.t('type_label_prefix')} ${draft.type != null ? AppLocalizations.t(draft.type!.labelKey) : '—'}',
-                                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.textSecondary,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -135,13 +188,22 @@ class _CreateCommunityStep5PageState extends State<CreateCommunityStep5Page> {
                           ),
                           SizedBox(height: AppDimensions.spaceSm.h),
                           Text(
-                            AppLocalizations.t('description_label').toUpperCase(),
-                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+                            AppLocalizations.t(
+                              'description_label',
+                            ).toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             draft.description.isEmpty ? '—' : draft.description,
-                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ],
                       ),
@@ -160,15 +222,29 @@ class _CreateCommunityStep5PageState extends State<CreateCommunityStep5Page> {
                             children: [
                               Expanded(
                                 child: _ReviewField(
-                                  label: AppLocalizations.t('cotisation_label').toUpperCase(),
-                                  value: draft.contributionAmount.isEmpty ? '—' : '${draft.contributionAmount} FCFA',
+                                  label:
+                                      AppLocalizations.t(
+                                        'cotisation_label',
+                                      ).toUpperCase(),
+                                  value:
+                                      draft.contributionAmount.isEmpty
+                                          ? '—'
+                                          : '${draft.contributionAmount} FCFA',
                                   emphasized: true,
                                 ),
                               ),
                               Expanded(
                                 child: _ReviewField(
-                                  label: AppLocalizations.t('frequency_label').toUpperCase(),
-                                  value: draft.frequency != null ? AppLocalizations.t(draft.frequency!.titleKey) : '—',
+                                  label:
+                                      AppLocalizations.t(
+                                        'frequency_label',
+                                      ).toUpperCase(),
+                                  value:
+                                      draft.frequency != null
+                                          ? AppLocalizations.t(
+                                            draft.frequency!.titleKey,
+                                          )
+                                          : '—',
                                 ),
                               ),
                             ],
@@ -178,13 +254,22 @@ class _CreateCommunityStep5PageState extends State<CreateCommunityStep5Page> {
                             children: [
                               Expanded(
                                 child: _ReviewField(
-                                  label: AppLocalizations.t('start_date_label').toUpperCase(),
-                                  value: draft.startDate != null ? _formatDate(draft.startDate!) : '—',
+                                  label:
+                                      AppLocalizations.t(
+                                        'start_date_label',
+                                      ).toUpperCase(),
+                                  value:
+                                      draft.startDate != null
+                                          ? _formatDate(draft.startDate!)
+                                          : '—',
                                 ),
                               ),
                               Expanded(
                                 child: _ReviewField(
-                                  label: AppLocalizations.t('due_day_label').toUpperCase(),
+                                  label:
+                                      AppLocalizations.t(
+                                        'due_day_label',
+                                      ).toUpperCase(),
                                   value: draft.dueDayLabel ?? '—',
                                 ),
                               ),
@@ -205,16 +290,26 @@ class _CreateCommunityStep5PageState extends State<CreateCommunityStep5Page> {
                         children: [
                           RulesChecklistItem(
                             enabled: draft.allowLoans,
-                            label: AppLocalizations.t(draft.allowLoans ? 'rules_loans_enabled' : 'rules_loans_disabled'),
+                            label: AppLocalizations.t(
+                              draft.allowLoans
+                                  ? 'rules_loans_enabled'
+                                  : 'rules_loans_disabled',
+                            ),
                           ),
                           RulesChecklistItem(
                             enabled: draft.penaltiesEnabled,
-                            label: AppLocalizations.t(draft.penaltiesEnabled ? 'rules_penalties_enabled' : 'rules_penalties_disabled'),
+                            label: AppLocalizations.t(
+                              draft.penaltiesEnabled
+                                  ? 'rules_penalties_enabled'
+                                  : 'rules_penalties_disabled',
+                            ),
                           ),
                           RulesChecklistItem(
                             enabled: draft.adminValidationRequired,
                             label: AppLocalizations.t(
-                              draft.adminValidationRequired ? 'rules_admin_validation_enabled' : 'rules_admin_validation_disabled',
+                              draft.adminValidationRequired
+                                  ? 'rules_admin_validation_enabled'
+                                  : 'rules_admin_validation_disabled',
                             ),
                           ),
                         ],
@@ -235,15 +330,27 @@ class _CreateCommunityStep5PageState extends State<CreateCommunityStep5Page> {
                               height: 28,
                               child: Stack(
                                 children: [
-                                  for (var i = 0; i < draft.invitedMembers.length && i < 2; i++)
+                                  for (
+                                    var i = 0;
+                                    i < draft.invitedMembers.length && i < 2;
+                                    i++
+                                  )
                                     Positioned(
                                       left: i * 20.0,
                                       child: CircleAvatar(
                                         radius: 14,
-                                        backgroundColor: draft.invitedMembers[i].avatarBg,
+                                        backgroundColor:
+                                            draft.invitedMembers[i].avatarBg,
                                         child: Text(
                                           draft.invitedMembers[i].initials,
-                                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: draft.invitedMembers[i].avatarColor),
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w700,
+                                            color:
+                                                draft
+                                                    .invitedMembers[i]
+                                                    .avatarColor,
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -253,7 +360,10 @@ class _CreateCommunityStep5PageState extends State<CreateCommunityStep5Page> {
                             SizedBox(width: AppDimensions.spaceSm.w),
                             Text(
                               '${draft.invitedMembers.length} ${AppLocalizations.t('invitations_sent_label')}',
-                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -268,7 +378,8 @@ class _CreateCommunityStep5PageState extends State<CreateCommunityStep5Page> {
                         children: [
                           Checkbox(
                             value: _confirmed,
-                            onChanged: (v) => setState(() => _confirmed = v ?? false),
+                            onChanged:
+                                (v) => setState(() => _confirmed = v ?? false),
                             activeColor: AppColors.primaryDark,
                           ),
                           Expanded(
@@ -276,7 +387,10 @@ class _CreateCommunityStep5PageState extends State<CreateCommunityStep5Page> {
                               padding: const EdgeInsets.only(top: 12),
                               child: Text(
                                 AppLocalizations.t('confirm_checkbox_label'),
-                                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textSecondary,
+                                ),
                               ),
                             ),
                           ),
@@ -300,7 +414,8 @@ class _CreateCommunityStep5PageState extends State<CreateCommunityStep5Page> {
                   AppButton(
                     label: AppLocalizations.t('create_community_button'),
                     icon: Icons.arrow_forward,
-                    onPressed: _handleCreate,
+                    isLoading: _isCreating,
+                    onPressed: _isCreating ? null : _handleCreate,
                   ),
                   SizedBox(height: AppDimensions.spaceSm.h),
                   AppButton(
@@ -319,7 +434,11 @@ class _CreateCommunityStep5PageState extends State<CreateCommunityStep5Page> {
 }
 
 class _ReviewField extends StatelessWidget {
-  const _ReviewField({required this.label, required this.value, this.emphasized = false});
+  const _ReviewField({
+    required this.label,
+    required this.value,
+    this.emphasized = false,
+  });
 
   final String label;
   final String value;
@@ -330,7 +449,14 @@ class _ReviewField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textSecondary,
+          ),
+        ),
         const SizedBox(height: 2),
         Text(
           value,

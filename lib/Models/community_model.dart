@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'MembreGroupe.dart';
 
 /// Statut visuel d'un badge de communauté.
 enum CommunityBadgeType { info, warning, none }
@@ -20,6 +21,15 @@ class CommunityModel {
     required this.contributionFrequency,
     required this.progressPercent,
     required this.lastUpdateLabel,
+    this.description = '',
+    this.type = '',
+    this.groupCode,
+    this.members = const [],
+    this.membersLoaded = false,
+    this.cyclesLoaded = false,
+    this.hasCycle = true,
+    this.meetingDay,
+    this.logoUrl,
     this.role,
     this.badgeLabel,
     this.badgeType = CommunityBadgeType.none,
@@ -29,17 +39,80 @@ class CommunityModel {
 
   final String id;
   final String name;
+  final String description;
+  final String type;
+  final String? groupCode;
   final IconData icon;
   final String? role;
   final int cycleCurrent;
   final int cycleTotal;
   final int memberCount;
+  final List<MembreGroupe> members;
+  final bool membersLoaded;
+  final bool cyclesLoaded;
+  final bool hasCycle;
   final String contributionAmount;
   final String contributionFrequency;
+  final String? meetingDay;
+  final String? logoUrl;
   final double progressPercent; // 0.0 à 1.0
   final String lastUpdateLabel;
   final String? badgeLabel;
   final CommunityBadgeType badgeType;
   final String? statusLabel;
   final String? actionLabel;
+
+  CommunityModel copyWith({
+    String? name,
+    String? description,
+    String? type,
+    String? groupCode,
+    IconData? icon,
+    String? role,
+    int? cycleCurrent,
+    int? cycleTotal,
+    int? memberCount,
+    List<MembreGroupe>? members,
+    bool? membersLoaded,
+    bool? cyclesLoaded,
+    bool? hasCycle,
+    String? contributionAmount,
+    String? contributionFrequency,
+    String? meetingDay,
+    String? logoUrl,
+    double? progressPercent,
+    String? lastUpdateLabel,
+    String? badgeLabel,
+    CommunityBadgeType? badgeType,
+    String? statusLabel,
+    String? actionLabel,
+  }) {
+    return CommunityModel(
+      id: id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      type: type ?? this.type,
+      groupCode: groupCode ?? this.groupCode,
+      icon: icon ?? this.icon,
+      role: role ?? this.role,
+      cycleCurrent: cycleCurrent ?? this.cycleCurrent,
+      cycleTotal: cycleTotal ?? this.cycleTotal,
+      memberCount: memberCount ?? this.memberCount,
+      members: members ?? this.members,
+      membersLoaded: membersLoaded ?? this.membersLoaded,
+      cyclesLoaded: cyclesLoaded ?? this.cyclesLoaded,
+      hasCycle: hasCycle ?? this.hasCycle,
+      contributionAmount: contributionAmount ?? this.contributionAmount,
+      contributionFrequency:
+          contributionFrequency ?? this.contributionFrequency,
+      meetingDay: meetingDay ?? this.meetingDay,
+      logoUrl: logoUrl ?? this.logoUrl,
+      progressPercent: progressPercent ?? this.progressPercent,
+      lastUpdateLabel: lastUpdateLabel ?? this.lastUpdateLabel,
+      badgeLabel: badgeLabel ?? this.badgeLabel,
+      badgeType: badgeType ?? this.badgeType,
+      statusLabel: statusLabel ?? this.statusLabel,
+      actionLabel: actionLabel ?? this.actionLabel,
+    );
+  }
 }

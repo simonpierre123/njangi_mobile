@@ -75,10 +75,14 @@ class _VerifyOtpPageState extends State<VerifyOtpPage> {
 
       // Transmet le code OTP saisi au callback parent pour gérer la suite du flux
       await widget.onVerified(_code);
-    } catch (e) {
+    } catch (error, stackTrace) {
+      debugPrint('[OTP] Verification flow failed: $error\n$stackTrace');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
       );
     } finally {
       if (mounted) {

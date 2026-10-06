@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import '../../Models/user_model.dart';
 import '../../Models/profile_model.dart';
 import '../../common/basewidget/app_button.dart';
+import '../../common/basewidget/shimmer_loading.dart';
 import '../../common/basewidget/simple_app_bar.dart';
 import '../../localization/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_dimensions.dart';
+import '../../utils/app_constants.dart';
 import '../../utils/management/storage_manager.dart';
 import 'widgets/avatar_with_badge.dart';
 import 'widgets/profile_info_field.dart';
+import 'widgets/profile_skeleton.dart';
 import 'widgets/verified_badge.dart';
 
 /// Écran "Mon Profil" — détail en lecture seule des informations
@@ -50,12 +53,22 @@ class _MyProfilePageState extends State<MyProfilePage> {
     });
   }
 
+  String? _documentUrl(String? path) {
+    final storedPath = path?.trim();
+    if (storedPath == null || storedPath.isEmpty) return null;
+    if (storedPath.startsWith('http')) return storedPath;
+    return '${AppConstants.imageBaseUrl}${storedPath.replaceFirst(RegExp(r'^/+'), '')}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final user =
         _storedUser == null
             ? widget.user
             : UserProfile.fromUserModel(_storedUser!);
+    final passportUrl = _documentUrl(user.passport);
+    final frontUrl = _documentUrl(user.cniRecto);
+    final backUrl = _documentUrl(user.cniVerso);
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -67,7 +80,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
         top: false,
         child:
             _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const ProfileSkeleton()
                 : SingleChildScrollView(
                   padding: EdgeInsets.symmetric(
                     horizontal: AppDimensions.screenPaddingH.w,
@@ -79,7 +92,7 @@ class _MyProfilePageState extends State<MyProfilePage> {
                       Center(
                         child: Column(
                           children: [
-                            const AvatarWithBadge(size: 90),
+                            AvatarWithBadge(size: 90, imageUrl: user.photoUrl),
                             SizedBox(height: AppDimensions.spaceSm.h),
                             Text(
                               user.name,
@@ -128,6 +141,57 @@ class _MyProfilePageState extends State<MyProfilePage> {
                         label: AppLocalizations.t('gender_label'),
                         value: user.gender,
                       ),
+                      if (passportUrl != null ||
+                          frontUrl != null ||
+                          backUrl != null) ...[
+                        SizedBox(height: AppDimensions.spaceLg.h),
+                        Text(
+                          AppLocalizations.t('kyc_saved_documents_title'),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        SizedBox(height: AppDimensions.spaceSm.h),
+                        if (passportUrl != null)
+                          _KycDocumentPreview(
+                            label: AppLocalizations.t('kyc_doc_passport'),
+                            imageUrl: passportUrl,
+                          )
+                        else if (frontUrl != null && backUrl != null)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: _KycDocumentPreview(
+                                  label: AppLocalizations.t(
+                                    'kyc_front_side_label',
+                                  ),
+                                  imageUrl: frontUrl,
+                                ),
+                              ),
+                              SizedBox(width: AppDimensions.spaceSm.w),
+                              Expanded(
+                                child: _KycDocumentPreview(
+                                  label: AppLocalizations.t(
+                                    'kyc_back_side_label',
+                                  ),
+                                  imageUrl: backUrl,
+                                ),
+                              ),
+                            ],
+                          )
+                        else if (frontUrl != null || backUrl != null)
+                          _KycDocumentPreview(
+                            label: AppLocalizations.t(
+                              frontUrl != null
+                                  ? 'kyc_front_side_label'
+                                  : 'kyc_back_side_label',
+                            ),
+                            imageUrl: frontUrl ?? backUrl!,
+                          ),
+                      ],
                       SizedBox(height: AppDimensions.spaceSm.h),
                       ProfileInfoField(
                         label: AppLocalizations.t('member_since_label'),
@@ -146,6 +210,63 @@ class _MyProfilePageState extends State<MyProfilePage> {
                     ],
                   ),
                 ),
+      ),
+    );
+  }
+}
+
+class _KycDocumentPreview extends StatelessWidget {
+  const _KycDocumentPreview({required this.label, required this.imageUrl});
+
+  final String label;
+  final String imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(AppDimensions.spaceSm.w),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+        border: Border.all(color: AppColors.inputBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          SizedBox(height: AppDimensions.spaceXs.h),
+          AspectRatio(
+            aspectRatio: 1.55,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppDimensions.radiusSm),
+              child: ShimmerNetworkImage(
+                url: imageUrl,
+                fit: BoxFit.contain,
+                errorBuilder:
+                    (context, error, stackTrace) => ColoredBox(
+                      color: AppColors.tagMintBg,
+                      child: Center(
+                        child: Text(
+                          AppLocalizations.t('kyc_document_image_error'),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

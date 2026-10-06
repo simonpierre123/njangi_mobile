@@ -1,9 +1,15 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import '../Controllers_distant/AuthController.dart';
+import '../Controllers_distant/CycleController.dart';
+import '../Controllers_distant/UserController.dart';
+import '../Models/MembreGroupe.dart';
 import '../Models/community_model.dart';
+import '../Models/community_members_model.dart';
 import '../Models/create_community_model.dart';
+import '../Models/kyc_model.dart';
 import '../common/basewidget/coming_soon_page.dart';
 import '../datasource/community_admin_mock_datasource.dart';
 import '../datasource/community_beneficiary_mock_datasource.dart';
@@ -92,8 +98,9 @@ class AppRouter {
     _replaceAll(AppRoutes.home);
   }
 
-  static void _logout() {
+  static Future<void> _logout() async {
     sessionActive.value = false;
+    await StorageManager.logout();
     _replaceAll(AppRoutes.authLanding);
   }
 
@@ -118,6 +125,33 @@ class AppRouter {
 
   static void _popUntil(String route) =>
       navigatorKey.currentState!.popUntil(ModalRoute.withName(route));
+
+  static void openCommunity(CommunityModel community) {
+    if (community.cyclesLoaded && !community.hasCycle) {
+      final type = switch (community.type.toUpperCase()) {
+        'FAMILLE' => CommunityType.famille,
+        'AMIS' => CommunityType.amis,
+        'ENTREPRISE' => CommunityType.entreprise,
+        'ASSOCIATION' => CommunityType.association,
+        'AUTRE' => CommunityType.autre,
+        _ => null,
+      };
+      _push(
+        AppRoutes.createCommunityStep2,
+        arguments: CommunityDraft(
+          groupId: community.id,
+          groupCode: community.groupCode,
+          existingCommunity: community,
+          name: community.name,
+          description: community.description,
+          type: type,
+          expectedMemberCount: community.memberCount.toString(),
+        ),
+      );
+      return;
+    }
+    _push(AppRoutes.communityShell, arguments: community);
+  }
 
   static void _showRecordContributionSheet() {
     showModalBottomSheet(
@@ -206,6 +240,79 @@ class AppRouter {
     AppLocalizations.setLocale(next);
   }
 
+  static CommunitySummary _communityMemberSummary(
+    CommunityModel community, {
+    required bool admin,
+  }) {
+    if (!community.membersLoaded) {
+      return admin
+          ? CommunityMembersMockDatasource.summaryAdmin
+          : CommunityMembersMockDatasource.summaryMember;
+    }
+
+    final activeMembers =
+        community.members
+            .where((member) => member.active != '0' && member.statut == 'ACTIF')
+            .length;
+    final adminCount =
+        community.members
+            .where(
+              (member) => member.role == 'ADMIN' || member.role == 'CO_ADMIN',
+            )
+            .length;
+
+    return CommunitySummary(
+      totalMembers: community.memberCount,
+      adminCount: adminCount,
+      activeCount: activeMembers,
+      cycleLabel: '${community.cycleCurrent}/${community.cycleTotal}',
+      lateCount:
+          admin ? CommunityMembersMockDatasource.summaryAdmin.lateCount : null,
+    );
+  }
+
+  static List<AdminMemberEntry> _adminMemberDirectory(
+    CommunityModel community,
+  ) {
+    if (!community.membersLoaded) {
+      return CommunityMembersMockDatasource.adminDirectory;
+    }
+    return List.generate(community.members.length, (index) {
+      final member = community.members[index];
+      final fallback =
+          CommunityMembersMockDatasource.adminDirectory[index %
+              CommunityMembersMockDatasource.adminDirectory.length];
+      return AdminMemberEntry(
+        name: member.displayName,
+        role: member.role == 'MEMBRE' ? null : member.role,
+        statusLine: fallback.statusLine,
+        statusIcon: fallback.statusIcon,
+        statusColor: fallback.statusColor,
+        isHighlighted: fallback.isHighlighted,
+        hasUrgentAction: fallback.hasUrgentAction,
+      );
+    });
+  }
+
+  static List<MemberDirectoryEntry> _memberDirectory(CommunityModel community) {
+    if (!community.membersLoaded)
+      return CommunityMembersMockDatasource.directory;
+    return List.generate(community.members.length, (index) {
+      final member = community.members[index];
+      final fallback =
+          CommunityMembersMockDatasource.directory[index %
+              CommunityMembersMockDatasource.directory.length];
+      return MemberDirectoryEntry(
+        name: member.displayName,
+        role: member.role == 'MEMBRE' ? null : member.role,
+        memberSinceLabel:
+            member.dateAdhesion?.split('T').first ?? fallback.memberSinceLabel,
+        status: fallback.status,
+        isHighlighted: fallback.isHighlighted,
+      );
+    });
+  }
+
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     // Fonction locale qui masque volontairement l'ancienne méthode
     // statique du même nom : chaque route créée porte désormais son
@@ -218,11 +325,8 @@ class AppRouter {
           (context) => ValueListenableBuilder<String>(
             valueListenable: AppLocalizations.locale,
             builder: (context, languageCode, _) {
-              final isCurrent = ModalRoute.of(context)?.isCurrent ?? true;
-              return KeyedSubtree(
-                key: ValueKey(isCurrent ? languageCode : 'inactive-route'),
-                child: child,
-              );
+              // Une clé liée à isCurrent détruit l'état de la page à chaque dialogue ouvert par-dessus.
+              return KeyedSubtree(key: ValueKey(languageCode), child: child);
             },
           ),
     );
@@ -297,16 +401,30 @@ class AppRouter {
         );
 
       case AppRoutes.createPin:
+        final createPinArgs =
+            settings.arguments is Map ? settings.arguments as Map : null;
         final phone =
-            settings.arguments is String ? settings.arguments as String : '';
+            createPinArgs?['telephone'] as String? ??
+            (settings.arguments is String ? settings.arguments as String : '');
+        final isPinChange = createPinArgs?['changePin'] == true;
+        final isPinReset = createPinArgs?['resetPin'] == true;
+        final resetToken = createPinArgs?['resetToken'] as String?;
         return page(
           CreatePinPage(
             phoneNumber: phone,
             onBack: _pop,
+            step: isPinChange ? 2 : 3,
+            totalSteps: isPinChange ? 3 : 4,
             onPinCreated: (pin) {
               _push(
                 AppRoutes.confirmPin,
-                arguments: {'pin': pin, 'telephone': phone},
+                arguments: {
+                  'pin': pin,
+                  'telephone': phone,
+                  'changePin': isPinChange,
+                  'resetPin': isPinReset,
+                  'resetToken': resetToken,
+                },
               );
             },
           ),
@@ -316,13 +434,27 @@ class AppRouter {
         final args = settings.arguments is Map ? settings.arguments as Map : {};
         final originalPin = (args['pin'] ?? '') as String;
         final telephone = (args['telephone'] ?? '') as String;
+        final isPinChange = args['changePin'] == true;
+        final isPinReset = args['resetPin'] == true;
+        final resetToken = args['resetToken'] as String?;
 
         return page(
           ConfirmPinPage(
             originalPin: originalPin,
             telephone: telephone,
             onBack: _pop,
-            onConfirmed: (_) => _openHome(),
+            resetToken: resetToken,
+            step: isPinChange ? 3 : 4,
+            totalSteps: isPinChange ? 3 : 4,
+            onConfirmed: (_) {
+              if (isPinChange) {
+                _popUntil(AppRoutes.security);
+              } else if (isPinReset) {
+                _replaceAll(AppRoutes.enterPin, arguments: telephone);
+              } else {
+                _openHome();
+              }
+            },
           ),
         );
 
@@ -353,16 +485,28 @@ class AppRouter {
       // ---------------- Connexion ----------------
 
       case AppRoutes.loginPhone:
+        final isForgotPin =
+            settings.arguments is Map &&
+            (settings.arguments as Map)['forgotPin'] == true;
         return page(
           LoginPhonePage(
             onBack: _pop,
             onRegister: () => _push(AppRoutes.registerPhone),
-            onContinue: (phone) => _push(AppRoutes.loginOtp, arguments: phone),
+            onContinue:
+                (phone) => _push(
+                  AppRoutes.loginOtp,
+                  arguments: {'telephone': phone, 'forgotPin': isForgotPin},
+                ),
           ),
         );
 
       case AppRoutes.loginOtp:
-        final phone = settings.arguments as String;
+        final otpArgs =
+            settings.arguments is Map ? settings.arguments as Map : null;
+        final phone =
+            otpArgs?['telephone'] as String? ??
+            (settings.arguments is String ? settings.arguments as String : '');
+        final isForgotPin = otpArgs?['forgotPin'] == true;
         return page(
           VerifyOtpPage(
             phoneNumber: phone,
@@ -371,8 +515,48 @@ class AppRouter {
             onBack: _pop,
             onEditNumber: _pop,
             onResend: () {},
-            onVerified:
-                (_) async => _push(AppRoutes.enterPin, arguments: phone),
+            onVerified: (code) async {
+              final authController = AuthController();
+              try {
+                final response =
+                    isForgotPin
+                        ? await authController.verifyResetOtp(
+                          telephone: phone,
+                          code: code,
+                        )
+                        : await authController.verifyLoginOtp(
+                          telephone: phone,
+                          code: code,
+                        );
+                if (response['success'] != true) {
+                  throw Exception(
+                    response['message'] ??
+                        AppLocalizations.t('pin_status_unavailable'),
+                  );
+                }
+
+                if (!isForgotPin && response['has_pin'] == true) {
+                  _push(AppRoutes.enterPin, arguments: phone);
+                  return;
+                }
+
+                final resetToken = response['reset_token'] as String?;
+                if (resetToken == null || resetToken.isEmpty) {
+                  throw Exception(AppLocalizations.t('pin_status_unavailable'));
+                }
+
+                _push(
+                  AppRoutes.createPin,
+                  arguments: {
+                    'telephone': phone,
+                    'resetPin': true,
+                    'resetToken': resetToken,
+                  },
+                );
+              } finally {
+                authController.dispose();
+              }
+            },
           ),
         );
 
@@ -380,6 +564,9 @@ class AppRouter {
         final isLocked =
             settings.arguments is Map &&
             (settings.arguments as Map)['locked'] == true;
+        final isPinChange =
+            settings.arguments is Map &&
+            (settings.arguments as Map)['changePin'] == true;
         final phone =
             settings.arguments is Map
                 ? (settings.arguments as Map)['telephone'] as String? ?? ''
@@ -390,7 +577,19 @@ class AppRouter {
             onBack: isLocked ? () {} : _pop,
             canGoBack: !isLocked,
             allowBiometricUnlock: isLocked,
-            onPinEntered: (_) => _openHome(),
+            onForgotPin:
+                () =>
+                    _push(AppRoutes.loginPhone, arguments: {'forgotPin': true}),
+            onPinEntered: (_) {
+              if (isPinChange) {
+                _push(
+                  AppRoutes.createPin,
+                  arguments: {'telephone': phone, 'changePin': true},
+                );
+              } else {
+                _openHome();
+              }
+            },
           ),
         );
 
@@ -399,20 +598,18 @@ class AppRouter {
       case AppRoutes.home:
         return page(
           HomeShell(
-            communities: CommunityMockDatasource.sample,
+            communities: CommunityMockDatasource.empty,
             isProfileComplete: false,
             onIdentify: () => _push(AppRoutes.kycIntro),
             // Une seule route pour toute communauté, quel que soit son
             // rôle — le shell décide lui-même de la variante à afficher.
-            onCommunityTap:
-                (c) => _push(AppRoutes.communityShell, arguments: c),
-            onAddCommunity: () => _push(AppRoutes.createCommunityStep1),
+            onCommunityTap: openCommunity,
+            onAddCommunity: () => _pushAndWait(AppRoutes.createCommunityStep1),
             notifications: NotificationFeedMockDatasource.items,
             user: ProfileMockDatasource.user,
             profileActivity: ProfileMockDatasource.activity,
-            profileCommunities: ProfileMockDatasource.communities,
-            onProfileCommunityTap:
-                (c) => _push(AppRoutes.communityShell, arguments: c.community),
+            profileCommunities: const [],
+            onProfileCommunityTap: (c) => openCommunity(c.community),
             onOpenMyProfile: () => _pushAndWait(AppRoutes.myProfile),
             onOpenSecurity: () => _push(AppRoutes.security),
             onOpenNotifications: () => _push(AppRoutes.notifications),
@@ -434,6 +631,10 @@ class AppRouter {
         final community = settings.arguments as CommunityModel?;
         if (community == null) return page(const _MissingCommunityRedirect());
         final isAdmin = community.role == 'ADMIN';
+        final adminSummary = _communityMemberSummary(community, admin: true);
+        final memberSummary = _communityMemberSummary(community, admin: false);
+        final adminDirectory = _adminMemberDirectory(community);
+        final memberDirectory = _memberDirectory(community);
         return page(
           CommunityShell(
             community: community,
@@ -515,10 +716,10 @@ class AppRouter {
                   arguments: 'Historique des versements',
                 ),
             // Membres
-            adminSummary: CommunityMembersMockDatasource.summaryAdmin,
-            memberSummary: CommunityMembersMockDatasource.summaryMember,
-            adminDirectory: CommunityMembersMockDatasource.adminDirectory,
-            memberDirectory: CommunityMembersMockDatasource.directory,
+            adminSummary: adminSummary,
+            memberSummary: memberSummary,
+            adminDirectory: adminDirectory,
+            memberDirectory: memberDirectory,
             growth: CommunityMembersMockDatasource.growth,
             trustScore: CommunityMembersMockDatasource.trustScore,
             onInviteMember:
@@ -578,11 +779,14 @@ class AppRouter {
           SecurityPage(
             status: ProfileMockDatasource.security,
             onBack: _pop,
-            onChangePin:
-                () => _push(
-                  AppRoutes.comingSoon,
-                  arguments: 'Modifier le code PIN',
-                ),
+            onChangePin: () async {
+              final user = await StorageManager.getUser();
+              if (user == null || user.telephone.isEmpty) return;
+              _push(
+                AppRoutes.enterPin,
+                arguments: {'telephone': user.telephone, 'changePin': true},
+              );
+            },
             onOpenConnectedDevices:
                 () => _push(
                   AppRoutes.comingSoon,
@@ -694,14 +898,24 @@ class AppRouter {
           CreateCommunityStep5Page(
             draft: draft,
             onBack: _pop,
-            // TODO (Njoya) : pas d'API branchée — pousse un placeholder au
-            // lieu de créer réellement la communauté et de revenir à l'accueil.
-            onCreate:
-                () => _push(
-                  AppRoutes.comingSoon,
-                  arguments: 'Communauté créée !',
-                ),
-            onEditGeneral: () => _popUntil(AppRoutes.createCommunityStep1),
+            onCreate: () async {
+              final groupId = draft.groupId;
+              if (groupId == null || groupId.isEmpty) {
+                return AppLocalizations.t('cycle_group_missing');
+              }
+
+              final result = await CycleController.createForGroup(
+                groupId: groupId,
+                draft: draft,
+              );
+              if (result['success'] != true) {
+                return result['message']?.toString() ??
+                    AppLocalizations.t('cycle_create_error');
+              }
+
+              _replaceAll(AppRoutes.home);
+              return null;
+            },
             onEditFinancial: () => _popUntil(AppRoutes.createCommunityStep2),
             onEditRules: () => _popUntil(AppRoutes.createCommunityStep3),
             onEditMembers: () => _popUntil(AppRoutes.createCommunityStep4),
@@ -825,19 +1039,67 @@ class AppRouter {
             options: KycMockDatasource.documentOptions,
             onBack: _pop,
             onContinue:
-                (docType) => _push(AppRoutes.kycCapture, arguments: docType),
+                (docType) => _push(
+                  AppRoutes.kycCapture,
+                  arguments: {'documentType': docType, 'isBackSide': false},
+                ),
           ),
         );
 
       case AppRoutes.kycCapture:
-        // TODO (Njoya) : Étape 4/4 (revue/soumission) pas encore construite.
+        final args = settings.arguments is Map ? settings.arguments as Map : {};
+        final documentType =
+            args['documentType'] as KycDocumentTypeId? ??
+            KycDocumentTypeId.nationalId;
+        final isBackSide = args['isBackSide'] == true;
+        final frontPath = args['frontPath'] as String?;
         return page(
           KycCapturePage(
+            documentType: documentType,
+            isBackSide: isBackSide,
             onBack: _pop,
-            // TODO (Njoya) : Étape 4/4 (revue/soumission) pas encore construite.
-            onPhotoReady:
-                (path) =>
-                    _push(AppRoutes.comingSoon, arguments: 'Étape 4 sur 4'),
+            onPhotoReady: (path) async {
+              if (!isBackSide && documentType != KycDocumentTypeId.passport) {
+                _push(
+                  AppRoutes.kycCapture,
+                  arguments: {
+                    'documentType': documentType,
+                    'isBackSide': true,
+                    'frontPath': path,
+                  },
+                );
+                return null;
+              }
+
+              final user = await StorageManager.getUser();
+              if (user == null) {
+                return AppLocalizations.t('profile_load_error');
+              }
+
+              final documents = <String, File>{};
+              if (documentType == KycDocumentTypeId.passport) {
+                documents['passport'] = File(path);
+              } else {
+                if (frontPath == null || frontPath.isEmpty) {
+                  return AppLocalizations.t('kyc_capture_error');
+                }
+                documents['cni_recto'] = File(frontPath);
+                documents['cni_verso'] = File(path);
+              }
+
+              final response = await UserController.updateProfile(
+                userId: user.id,
+                data: const {},
+                documents: documents,
+              );
+              if (response['success'] != true) {
+                return response['message']?.toString() ??
+                    AppLocalizations.t('kyc_save_error');
+              }
+
+              _replaceAll(AppRoutes.home);
+              return null;
+            },
           ),
         );
 

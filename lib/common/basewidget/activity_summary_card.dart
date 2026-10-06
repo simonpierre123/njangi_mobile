@@ -50,7 +50,7 @@ class ActivitySummaryCard extends StatelessWidget {
                 child: Image.asset(
                   'assets/images/subtle_pattern.png',
                   fit: BoxFit.cover,
-               
+
                   // Le pattern est décoratif : si l'asset n'est pas encore
                   // déposé, on ne casse pas l'écran.
                   errorBuilder: (_, __, ___) => const SizedBox.shrink(),
@@ -68,19 +68,26 @@ class ActivitySummaryCard extends StatelessWidget {
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.8,
-                    color: isFilled ? AppColors.white70 : AppColors.textSecondary,
+                    color:
+                        isFilled ? AppColors.white70 : AppColors.textSecondary,
                   ),
                 ),
                 SizedBox(height: AppDimensions.spaceXs.h),
                 Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: isFilled ? AppColors.white : AppColors.textPrimary,
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color:
+                              isFilled
+                                  ? AppColors.white
+                                  : AppColors.textPrimary,
+                        ),
                       ),
                     ),
                     if (hasAlert) ...[
@@ -101,27 +108,44 @@ class ActivitySummaryCard extends StatelessWidget {
                 SizedBox(height: AppDimensions.spaceLg.h),
                 Divider(
                   height: 1,
-                  color: isFilled ? AppColors.white.withValues(alpha: 0.2) : AppColors.divider,
+                  color:
+                      isFilled
+                          ? AppColors.white.withValues(alpha: 0.2)
+                          : AppColors.divider,
                 ),
                 SizedBox(height: AppDimensions.spaceMd.h),
-                
                 SizedBox(height: AppDimensions.spaceSm.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      pendingAmountLabel,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isFilled ? AppColors.white70 : AppColors.textSecondary,
+                    Expanded(
+                      child: Text(
+                        pendingAmountLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color:
+                              isFilled
+                                  ? AppColors.white70
+                                  : AppColors.textSecondary,
+                        ),
                       ),
                     ),
-                    Text(
-                      pendingAmount,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: isFilled ? AppColors.white : AppColors.textPrimary,
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        pendingAmount,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color:
+                              isFilled
+                                  ? AppColors.white
+                                  : AppColors.textPrimary,
+                        ),
                       ),
                     ),
                   ],

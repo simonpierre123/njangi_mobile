@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../../../common/basewidget/media_source_sheet.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
+import '../../../../utils/media_picker.dart';
 
 /// Sélecteur de photo de communauté (Étape 1/5) — fonctionnel : ouvre
-/// un choix caméra/galerie réel et affiche l'image choisie.
+/// la galerie et affiche l'image choisie.
 ///
 /// NB : bordure pointillée non disponible nativement dans Flutter sans
 /// CustomPainter dédié — approximée ici par une bordure fine pleine.
@@ -23,7 +23,7 @@ class _CommunityPhotoPickerState extends State<CommunityPhotoPicker> {
   File? _image;
 
   Future<void> _pick() async {
-    final file = await showMediaSourceSheet(context);
+    final file = await MediaPicker.pickFromGallery();
     if (file == null) return;
     setState(() => _image = File(file.path));
     widget.onImagePicked?.call(file.path);
@@ -49,19 +49,32 @@ class _CommunityPhotoPickerState extends State<CommunityPhotoPicker> {
                   borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
                   border: Border.all(color: AppColors.border, width: 1.5),
                 ),
-                child: _image != null
-                    ? Image.file(_image!, fit: BoxFit.cover, width: 96, height: 96)
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.photo_camera_outlined, color: AppColors.textSecondary, size: 22),
-                          const SizedBox(height: 4),
-                          Text(
-                            AppLocalizations.t('add_photo_label'),
-                            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                          ),
-                        ],
-                      ),
+                child:
+                    _image != null
+                        ? Image.file(
+                          _image!,
+                          fit: BoxFit.cover,
+                          width: 96,
+                          height: 96,
+                        )
+                        : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.photo_camera_outlined,
+                              color: AppColors.textSecondary,
+                              size: 22,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              AppLocalizations.t('add_photo_label'),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
               ),
               Positioned(
                 right: -4,
@@ -74,7 +87,11 @@ class _CommunityPhotoPickerState extends State<CommunityPhotoPicker> {
                     shape: BoxShape.circle,
                     border: Border.all(color: AppColors.white, width: 2),
                   ),
-                  child: const Icon(Icons.add, color: AppColors.white, size: 14),
+                  child: const Icon(
+                    Icons.add,
+                    color: AppColors.white,
+                    size: 14,
+                  ),
                 ),
               ),
             ],

@@ -8,9 +8,11 @@ class UserModel {
   final String? email;
   final String? cniRecto;
   final String? cniVerso;
+  final String? passport;
   final String? pays;
   final String? ville;
   final String? adresse;
+  final String? tokenfirebase;
   final int statut;
   final String active;
   final String delete;
@@ -27,9 +29,11 @@ class UserModel {
     this.email,
     this.cniRecto,
     this.cniVerso,
+    this.passport,
     this.pays,
     this.ville,
     this.adresse,
+    this.tokenfirebase,
     required this.statut,
     required this.active,
     required this.delete,
@@ -48,9 +52,11 @@ class UserModel {
       email: json['email'] as String?,
       cniRecto: json['cni_recto'] as String?,
       cniVerso: json['cni_verso'] as String?,
+      passport: json['passport'] as String?,
       pays: json['pays'] as String?,
       ville: json['ville'] as String?,
       adresse: json['adresse'] as String?,
+      tokenfirebase: json['tokenfirebase'] as String?,
       statut:
           json['statut'] is int
               ? json['statut']
@@ -73,9 +79,11 @@ class UserModel {
       'email': email,
       'cni_recto': cniRecto,
       'cni_verso': cniVerso,
+      'passport': passport,
       'pays': pays,
       'ville': ville,
       'adresse': adresse,
+      'tokenfirebase': tokenfirebase,
       'statut': statut,
       'active': active,
       'delete': delete,

@@ -53,16 +53,19 @@ class _AdminMembersPageState extends State<AdminMembersPage> {
       AppLocalizations.t('up_to_date'),
     ];
 
-    final filtered = widget.directory.where((m) {
-      final matchesFilter = switch (_filterIndex) {
-        1 => m.role == 'ADMIN',
-        2 => m.role == null,
-        3 => m.statusColor == AppColors.primary,
-        _ => true,
-      };
-      final matchesQuery = _query.isEmpty || m.name.toLowerCase().contains(_query.toLowerCase());
-      return matchesFilter && matchesQuery;
-    }).toList();
+    final filtered =
+        widget.directory.where((m) {
+          final matchesFilter = switch (_filterIndex) {
+            1 => m.role == 'ADMIN' || m.role == 'CO_ADMIN',
+            2 => m.role == null,
+            3 => m.statusColor == AppColors.primary,
+            _ => true,
+          };
+          final matchesQuery =
+              _query.isEmpty ||
+              m.name.toLowerCase().contains(_query.toLowerCase());
+          return matchesFilter && matchesQuery;
+        }).toList();
 
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(
@@ -95,7 +98,8 @@ class _AdminMembersPageState extends State<AdminMembersPage> {
               onMenuTap: () => widget.onMemberMenuTap(filtered[i]),
               onUrgentAction: () => widget.onMemberUrgentAction(filtered[i]),
             ),
-            if (i != filtered.length - 1) SizedBox(height: AppDimensions.spaceSm.h),
+            if (i != filtered.length - 1)
+              SizedBox(height: AppDimensions.spaceSm.h),
           ],
           SizedBox(height: AppDimensions.spaceXl.h),
         ],

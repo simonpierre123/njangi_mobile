@@ -15,14 +15,21 @@ class ProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const AvatarWithBadge(size: 80),
+        AvatarWithBadge(size: 80, imageUrl: user.photoUrl),
         SizedBox(height: AppDimensions.spaceSm.h),
         Text(
           user.name,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
         ),
         const SizedBox(height: 2),
-        Text(user.phone, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        Text(
+          user.phone,
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
         SizedBox(height: AppDimensions.spaceSm.h),
         VerifiedBadge(label: user.roleSummaryLabel),
       ],

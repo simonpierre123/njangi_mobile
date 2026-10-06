@@ -15,6 +15,7 @@ class EnterPinPage extends StatefulWidget {
     required this.phoneNumber,
     required this.onBack,
     required this.onPinEntered,
+    required this.onForgotPin,
     this.canGoBack = true,
     this.allowBiometricUnlock = false,
   });
@@ -22,6 +23,7 @@ class EnterPinPage extends StatefulWidget {
   final String phoneNumber;
   final VoidCallback onBack;
   final ValueChanged<String> onPinEntered;
+  final VoidCallback onForgotPin;
   final bool canGoBack;
   final bool allowBiometricUnlock;
 
@@ -384,9 +386,7 @@ class _EnterPinPageState extends State<EnterPinPage>
 
                           // Bouton PIN oublié
                           GestureDetector(
-                            onTap: () {
-                              // Action pour récupérer le PIN
-                            },
+                            onTap: widget.onForgotPin,
                             child: Text(
                               AppLocalizations.t('forgot_pin') ??
                                   'PIN oublié ?',

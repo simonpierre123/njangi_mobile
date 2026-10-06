@@ -16,12 +16,18 @@ class ConfirmPinPage extends StatefulWidget {
     required this.telephone,
     required this.onBack,
     required this.onConfirmed,
+    this.resetToken,
+    this.step = 4,
+    this.totalSteps = 4,
   });
 
   final String originalPin;
   final String telephone;
   final VoidCallback onBack;
   final ValueChanged<String> onConfirmed;
+  final String? resetToken;
+  final int step;
+  final int totalSteps;
 
   @override
   State<ConfirmPinPage> createState() => _ConfirmPinPageState();
@@ -69,11 +75,17 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
       return;
     }
 
-    // Appel au backend en passant le numéro de téléphone et le PIN
-    final response = await _authController.setPin(
-      telephone: widget.telephone,
-      pin: _pin,
-    );
+    final response =
+        widget.resetToken == null
+            ? await _authController.setPin(
+              telephone: widget.telephone,
+              pin: _pin,
+            )
+            : await _authController.resetPin(
+              telephone: widget.telephone,
+              resetToken: widget.resetToken!,
+              pin: _pin,
+            );
 
     if (!mounted) return;
 
@@ -118,7 +130,11 @@ class _ConfirmPinPageState extends State<ConfirmPinPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      StepHeader(step: 3, totalSteps: 4, onBack: widget.onBack),
+                      StepHeader(
+                        step: widget.step,
+                        totalSteps: widget.totalSteps,
+                        onBack: widget.onBack,
+                      ),
                       SizedBox(height: AppDimensions.spaceLg.h),
                       Text(
                         AppLocalizations.t('pin_create_title'),

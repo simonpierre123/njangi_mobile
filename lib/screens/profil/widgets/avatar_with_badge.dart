@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../utils/app_colors.dart';
 import '../../../common/basewidget/network_avatar.dart';
+import '../../../common/basewidget/shimmer_loading.dart';
 
 /// Avatar circulaire avec un badge en overlay (coche de vérification par
 /// défaut, ou icône appareil photo en mode édition).
@@ -19,13 +20,17 @@ class AvatarWithBadge extends StatelessWidget {
     this.size = 80,
     this.badgeIcon = Icons.check,
     this.onBadgeTap,
+    this.onImageTap,
     this.imageFile,
+    this.imageUrl,
   });
 
   final double size;
   final IconData badgeIcon;
   final VoidCallback? onBadgeTap;
+  final VoidCallback? onImageTap;
   final File? imageFile;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -35,14 +40,36 @@ class AvatarWithBadge extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          Container(
-            width: size,
-            height: size,
-            clipBehavior: Clip.antiAlias,
-            decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.neutralGrayLight),
-            child: imageFile != null
-                ? Image.file(imageFile!, fit: BoxFit.cover, width: size, height: size)
-                : NetworkAvatar(radius: size / 2, seed: 68),
+          GestureDetector(
+            onTap: onImageTap,
+            child: Container(
+              width: size,
+              height: size,
+              clipBehavior: Clip.antiAlias,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.neutralGrayLight,
+              ),
+              child:
+                  imageFile != null
+                      ? Image.file(
+                        imageFile!,
+                        fit: BoxFit.cover,
+                        width: size,
+                        height: size,
+                      )
+                      : imageUrl != null
+                      ? ShimmerNetworkImage(
+                        url: imageUrl!,
+                        fit: BoxFit.cover,
+                        width: size,
+                        height: size,
+                        errorBuilder:
+                            (context, error, stackTrace) =>
+                                NetworkAvatar(radius: size / 2, seed: 68),
+                      )
+                      : NetworkAvatar(radius: size / 2, seed: 68),
+            ),
           ),
           Positioned(
             right: -2,
@@ -57,7 +84,11 @@ class AvatarWithBadge extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.white, width: 2),
                 ),
-                child: Icon(badgeIcon, color: AppColors.white, size: size * 0.16),
+                child: Icon(
+                  badgeIcon,
+                  color: AppColors.white,
+                  size: size * 0.16,
+                ),
               ),
             ),
           ),

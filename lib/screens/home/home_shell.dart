@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../Controllers_distant/GroupeNjangiController.dart';
 import '../../Models/community_model.dart';
 import '../../Models/notification_feed_model.dart';
 import '../../Models/profile_model.dart';
@@ -41,7 +42,7 @@ class HomeShell extends StatefulWidget {
   final bool isProfileComplete;
   final VoidCallback onIdentify;
   final ValueChanged<CommunityModel> onCommunityTap;
-  final VoidCallback onAddCommunity;
+  final Future<void> Function() onAddCommunity;
   final List<NotificationItem> notifications;
 
   final UserProfile user;
@@ -65,13 +66,63 @@ class _HomeShellState extends State<HomeShell> {
   String _userName = '';
   String? _greetingSubtitleKey;
   late UserProfile _profileUser;
+  late List<CommunityModel> _communities = widget.communities;
+  late List<ProfileCommunityEntry> _profileCommunities =
+      widget.profileCommunities;
+  late ProfileActivity _profileActivity = widget.profileActivity;
+  bool _isLoadingCommunities = true;
 
   @override
   void initState() {
     super.initState();
     _profileUser = widget.user;
     _loadGreeting();
+    _loadCommunities();
   }
+
+  Future<void> _loadCommunities() async {
+    final communities =
+        await GroupeNjangiController.getCurrentUserCommunities();
+    if (!mounted) return;
+
+    final profileCommunities = communities
+        .map(
+          (community) => ProfileCommunityEntry(
+            community: community,
+            roleLabel: _localizedRole(community.role),
+            icon: community.icon,
+            iconBg: AppColors.tagMintBg,
+            iconColor: AppColors.primaryDark,
+          ),
+        )
+        .toList(growable: false);
+    setState(() {
+      _communities = communities;
+      _profileCommunities = profileCommunities;
+      _profileActivity = ProfileActivity(
+        communitiesCount: communities.length,
+        adminCount:
+            communities.where((community) => community.role == 'ADMIN').length,
+        totalContributions: widget.profileActivity.totalContributions,
+        activeLoans: widget.profileActivity.activeLoans,
+      );
+      _isLoadingCommunities = false;
+    });
+  }
+
+  Future<void> _handleAddCommunity() async {
+    await widget.onAddCommunity();
+    if (!mounted) return;
+    setState(() => _isLoadingCommunities = true);
+    await _loadCommunities();
+  }
+
+  String _localizedRole(String? role) => switch (role?.toUpperCase()) {
+    'ADMIN' => AppLocalizations.t('role_admin'),
+    'CO_ADMIN' => AppLocalizations.t('role_co_admin'),
+    'MEMBRE' => AppLocalizations.t('role_member'),
+    _ => role ?? AppLocalizations.t('role_member'),
+  };
 
   Future<void> _loadGreeting() async {
     final user = await StorageManager.getUser();
@@ -104,7 +155,7 @@ class _HomeShellState extends State<HomeShell> {
     return Scaffold(
       backgroundColor: AppColors.surface,
       floatingActionButton:
-          _tabIndex == 0 ? AppFab(onPressed: widget.onAddCommunity) : null,
+          _tabIndex == 0 ? AppFab(onPressed: _handleAddCommunity) : null,
       bottomNavigationBar: AppBottomNavBar(
         currentIndex: _tabIndex,
         onTap: (i) => setState(() => _tabIndex = i),
@@ -131,9 +182,12 @@ class _HomeShellState extends State<HomeShell> {
           children: [
             HomePage(
               userName: _userName,
+              userPhotoUrl: _profileUser.photoUrl,
               greetingSubtitleKey: _greetingSubtitleKey,
-              communities: widget.communities,
-              isProfileComplete: widget.isProfileComplete,
+              communities: _communities,
+              isLoadingCommunities: _isLoadingCommunities,
+              isProfileComplete:
+                  widget.isProfileComplete || _profileUser.isKycComplete,
               onIdentify: widget.onIdentify,
               onCommunityTap: widget.onCommunityTap,
             ),
@@ -145,8 +199,8 @@ class _HomeShellState extends State<HomeShell> {
             ),
             ProfilePage(
               user: _profileUser,
-              activity: widget.profileActivity,
-              communities: widget.profileCommunities,
+              activity: _profileActivity,
+              communities: _profileCommunities,
               onCommunityTap: widget.onProfileCommunityTap,
               onOpenMyProfile: _openMyProfile,
               onOpenSecurity: widget.onOpenSecurity,

@@ -17,11 +17,15 @@ class CreatePinPage extends StatefulWidget {
     required this.phoneNumber,
     required this.onBack,
     required this.onPinCreated,
+    this.step = 3,
+    this.totalSteps = 4,
   });
 
   final String phoneNumber;
   final VoidCallback onBack;
   final ValueChanged<String> onPinCreated;
+  final int step;
+  final int totalSteps;
 
   @override
   State<CreatePinPage> createState() => _CreatePinPageState();
@@ -60,7 +64,11 @@ class _CreatePinPageState extends State<CreatePinPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      StepHeader(step: 3, totalSteps: 4, onBack: widget.onBack),
+                      StepHeader(
+                        step: widget.step,
+                        totalSteps: widget.totalSteps,
+                        onBack: widget.onBack,
+                      ),
                       SizedBox(height: AppDimensions.spaceLg.h),
                       Text(
                         AppLocalizations.t('pin_create_title'),

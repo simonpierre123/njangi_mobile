@@ -29,18 +29,33 @@ class MemberDueCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(member.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary)),
+                Text(
+                  member.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Row(
+                Wrap(
+                  spacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
                       AppLocalizations.t('contribution_expected_label'),
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
-                    const SizedBox(width: 4),
                     Text(
                       member.expectedAmount,
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.contributionAmountEmphasis),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.contributionAmountEmphasis,
+                      ),
                     ),
                   ],
                 ),
@@ -49,10 +64,17 @@ class MemberDueCard extends StatelessWidget {
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(color: AppColors.warningBg, borderRadius: BorderRadius.circular(AppDimensions.radiusXl)),
+            decoration: BoxDecoration(
+              color: AppColors.warningBg,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+            ),
             child: Text(
               member.statusLabel,
-              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.warningText),
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: AppColors.warningText,
+              ),
             ),
           ),
         ],

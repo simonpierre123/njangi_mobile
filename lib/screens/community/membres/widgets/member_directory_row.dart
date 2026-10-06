@@ -17,10 +17,16 @@ class MemberDirectoryRow extends StatelessWidget {
     final isLate = entry.status == MemberRowStatus.late;
     final badgeBg = isLate ? AppColors.tagRedBg : AppColors.tagMintBg;
     final badgeText = isLate ? AppColors.alertRed : AppColors.primaryDark;
-    final badgeLabel = isLate ? AppLocalizations.t('overdue_label') : AppLocalizations.t('up_to_date');
+    final badgeLabel =
+        isLate
+            ? AppLocalizations.t('overdue_label')
+            : AppLocalizations.t('up_to_date');
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: AppDimensions.spaceMd.w, vertical: AppDimensions.spaceSm.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppDimensions.spaceMd.w,
+        vertical: AppDimensions.spaceSm.h,
+      ),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
@@ -28,7 +34,12 @@ class MemberDirectoryRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          NetworkAvatar(radius: 20, seed: entry.name.hashCode.abs() % 70 + 1, fallbackIcon: null, fallbackBg: AppColors.neutralGrayLight),
+          NetworkAvatar(
+            radius: 20,
+            seed: entry.name.hashCode.abs() % 70 + 1,
+            fallbackIcon: null,
+            fallbackBg: AppColors.neutralGrayLight,
+          ),
           SizedBox(width: AppDimensions.spaceSm.w),
           Expanded(
             child: Column(
@@ -40,14 +51,22 @@ class MemberDirectoryRow extends StatelessWidget {
                       child: Text(
                         entry.name,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                     ),
                     if (entry.role != null) ...[
                       const SizedBox(width: 6),
                       Text(
-                        entry.role!,
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.roleText),
+                        _localizedRole(entry.role!),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.roleText,
+                        ),
                       ),
                     ],
                     if (entry.isHighlighted) ...[
@@ -57,18 +76,41 @@ class MemberDirectoryRow extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 2),
-                Text(entry.memberSinceLabel, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                Text(
+                  entry.memberSinceLabel,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               ],
             ),
           ),
           SizedBox(width: AppDimensions.spaceSm.w),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(color: badgeBg, borderRadius: BorderRadius.circular(AppDimensions.radiusXl)),
-            child: Text(badgeLabel, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: badgeText)),
+            decoration: BoxDecoration(
+              color: badgeBg,
+              borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+            ),
+            child: Text(
+              badgeLabel,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: badgeText,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 }
+
+String _localizedRole(String role) => switch (role.toUpperCase()) {
+  'ADMIN' => AppLocalizations.t('role_admin'),
+  'CO_ADMIN' => AppLocalizations.t('role_co_admin'),
+  'MEMBRE' => AppLocalizations.t('role_member'),
+  _ => role,
+};

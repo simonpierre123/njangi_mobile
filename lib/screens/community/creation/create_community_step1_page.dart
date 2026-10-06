@@ -1,4 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import '../../../Controllers_distant/GroupeNjangiController.dart';
+import '../../../Controllers_distant/MembreGroupeController.dart';
+import '../../../Models/GroupeNjangi.dart';
 import '../../../Models/create_community_model.dart';
 import '../../../common/basewidget/app_button.dart';
 import '../../../common/basewidget/app_text_field.dart';
@@ -24,14 +29,22 @@ class CreateCommunityStep1Page extends StatefulWidget {
   final ValueChanged<CommunityDraft> onContinue;
 
   @override
-  State<CreateCommunityStep1Page> createState() => _CreateCommunityStep1PageState();
+  State<CreateCommunityStep1Page> createState() =>
+      _CreateCommunityStep1PageState();
 }
 
 class _CreateCommunityStep1PageState extends State<CreateCommunityStep1Page> {
-  late final TextEditingController _nameController = TextEditingController(text: widget.draft.name);
-  late final TextEditingController _descController = TextEditingController(text: widget.draft.description);
+  late final TextEditingController _nameController = TextEditingController(
+    text: widget.draft.name,
+  );
+  late final TextEditingController _descController = TextEditingController(
+    text: widget.draft.description,
+  );
   late CommunityType? _type = widget.draft.type;
   late String? _photoPath = widget.draft.photoPath;
+  GroupeNjangi? _createdGroup;
+  bool _creatorAdded = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -40,13 +53,80 @@ class _CreateCommunityStep1PageState extends State<CreateCommunityStep1Page> {
     super.dispose();
   }
 
-  void _continue() {
-    widget.onContinue(widget.draft.copyWith(
+  Future<void> _continue() async {
+    if (_isLoading) return;
+
+    final updatedDraft = widget.draft.copyWith(
       name: _nameController.text,
       description: _descController.text,
       type: _type,
       photoPath: _photoPath,
-    ));
+    );
+
+    if (updatedDraft.name.trim().isEmpty) {
+      _showError(AppLocalizations.t('community_name_required'));
+      return;
+    }
+    if (updatedDraft.type == null) {
+      _showError(AppLocalizations.t('community_type_required'));
+      return;
+    }
+
+    if (_createdGroup == null) {
+      setState(() => _isLoading = true);
+      final result = await GroupeNjangiController.create(
+        nom: updatedDraft.name.trim(),
+        description: updatedDraft.description.trim(),
+        type: updatedDraft.type!.apiValue,
+        logo: _photoPath == null ? null : File(_photoPath!),
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (result['success'] != true) {
+        _showError(
+          result['message']?.toString() ??
+              AppLocalizations.t('community_create_error'),
+        );
+        return;
+      }
+
+      _createdGroup = result['groupe'] as GroupeNjangi;
+    }
+
+    if (!_creatorAdded) {
+      setState(() => _isLoading = true);
+      final membership = await MembreGroupeController.addCurrentUser(
+        groupeId: _createdGroup!.id,
+      );
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (membership['success'] != true) {
+        _showError(
+          membership['message']?.toString() ??
+              AppLocalizations.t('community_member_add_error'),
+        );
+        return;
+      }
+
+      _creatorAdded = true;
+    }
+
+    widget.onContinue(
+      updatedDraft.copyWith(
+        groupId: _createdGroup!.id,
+        groupCode: _createdGroup!.codeGroupe,
+      ),
+    );
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
+    );
   }
 
   @override
@@ -59,12 +139,16 @@ class _CreateCommunityStep1PageState extends State<CreateCommunityStep1Page> {
         child: Column(
           children: [
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppDimensions.screenPaddingH.w),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppDimensions.screenPaddingH.w,
+              ),
               child: StepHeader(step: 1, totalSteps: 5, onBack: widget.onBack),
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: AppDimensions.screenPaddingH.w),
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppDimensions.screenPaddingH.w,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -76,27 +160,38 @@ class _CreateCommunityStep1PageState extends State<CreateCommunityStep1Page> {
                     SizedBox(height: AppDimensions.spaceLg.h),
                     Text(
                       AppLocalizations.t('general_info_title'),
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     SizedBox(height: AppDimensions.spaceXs.h),
                     Text(
                       AppLocalizations.t('general_info_subtitle'),
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     SizedBox(height: AppDimensions.spaceLg.h),
-                    // TODO (Njoya) : brancher un vrai sélecteur d'image ici.
                     CommunityPhotoPicker(
-                      onImagePicked: (path) => setState(() => _photoPath = path),
+                      onImagePicked:
+                          (path) => setState(() => _photoPath = path),
                     ),
                     SizedBox(height: AppDimensions.spaceLg.h),
                     AppTextField(
-                      label: AppLocalizations.t('community_name_label').toUpperCase(),
+                      label:
+                          AppLocalizations.t(
+                            'community_name_label',
+                          ).toUpperCase(),
                       hint: AppLocalizations.t('community_name_hint'),
                       controller: _nameController,
                     ),
                     SizedBox(height: AppDimensions.spaceMd.h),
                     AppTextField(
-                      label: AppLocalizations.t('description_label').toUpperCase(),
+                      label:
+                          AppLocalizations.t('description_label').toUpperCase(),
                       hint: AppLocalizations.t('description_hint'),
                       controller: _descController,
                       maxLines: 3,
@@ -104,10 +199,17 @@ class _CreateCommunityStep1PageState extends State<CreateCommunityStep1Page> {
                     SizedBox(height: AppDimensions.spaceMd.h),
                     Text(
                       AppLocalizations.t('community_type_label').toUpperCase(),
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     SizedBox(height: AppDimensions.spaceSm.h),
-                    CommunityTypeGrid(selected: _type, onSelect: (t) => setState(() => _type = t)),
+                    CommunityTypeGrid(
+                      selected: _type,
+                      onSelect: (t) => setState(() => _type = t),
+                    ),
                     SizedBox(height: AppDimensions.spaceLg.h),
                   ],
                 ),
@@ -123,7 +225,8 @@ class _CreateCommunityStep1PageState extends State<CreateCommunityStep1Page> {
               child: AppButton(
                 label: AppLocalizations.t('continue_button'),
                 icon: Icons.arrow_forward,
-                onPressed: _continue,
+                isLoading: _isLoading,
+                onPressed: _isLoading ? null : _continue,
               ),
             ),
           ],

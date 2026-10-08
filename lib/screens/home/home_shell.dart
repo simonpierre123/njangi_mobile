@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import '../../api/firebase_api.dart';
 import '../../Controllers_distant/GroupeNjangiController.dart';
 import '../../Models/community_model.dart';
 import '../../Models/notification_feed_model.dart';
@@ -75,6 +78,7 @@ class _HomeShellState extends State<HomeShell> {
   @override
   void initState() {
     super.initState();
+    unawaited(FirebaseApi.syncTokenOnHomeEntry());
     _profileUser = widget.user;
     _loadGreeting();
     _loadCommunities();
@@ -158,7 +162,10 @@ class _HomeShellState extends State<HomeShell> {
           _tabIndex == 0 ? AppFab(onPressed: _handleAddCommunity) : null,
       bottomNavigationBar: AppBottomNavBar(
         currentIndex: _tabIndex,
-        onTap: (i) => setState(() => _tabIndex = i),
+        onTap: (i) {
+          setState(() => _tabIndex = i);
+          if (i == 0) unawaited(FirebaseApi.syncTokenOnHomeEntry());
+        },
         items: [
           AppNavItem(
             icon: Icons.home_outlined,

@@ -2,74 +2,104 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:njangi/Models/Invitation.dart';
 import 'package:njangi/Models/user_model.dart';
 import 'package:njangi/datasource/api_service.dart';
 import 'package:njangi/localization/app_localizations.dart';
 import 'package:njangi/utils/management/storage_manager.dart';
 
-// class UserController {
-//   static Future<Map<String, dynamic>> updateProfile({
-//     required String userId,
-//     required Map<String, dynamic> data,
-//     File? photo,
-//   }) async {
-//     try {
-//       Object requestData = data;
-//       Options? options;
-//       if (photo != null) {
-//         requestData = FormData.fromMap({
-//           ...data,
-//           'photo': await MultipartFile.fromFile(photo.path),
-//         });
-//         options = Options(contentType: Headers.multipartFormDataContentType);
-//       }
-
-//       final response = await ApiService.dio.put(
-//         'utilisateurs/$userId',
-//         data: requestData,
-//         options: options,
-//       );
-//       final body = Map<String, dynamic>.from(response.data as Map);
-//       final userData = body['data'];
-//       print(body['message']);
-//       print(body['message']);
-//       print(body['message']);
-//       if (body['success'] != true || userData is! Map) {
-//         return {
-//           'success': false,
-//           'message':
-//               body['message'] ?? AppLocalizations.t('profile_update_error'),
-//         };
-//       }
-
-//       final user = UserModel.fromJson(Map<String, dynamic>.from(userData));
-//       await StorageManager.saveUser(user);
-
-//       return {
-//         'success': true,
-//         'message':
-//             body['message'] ?? AppLocalizations.t('profile_update_success'),
-//         'user': user,
-//       };
-//     } on DioException catch (error) {
-//       final responseData = error.response?.data;
-//       return {
-//         'success': false,
-//         'message':
-//             responseData is Map
-//                 ? responseData['message'] ??
-//                     AppLocalizations.t('profile_update_error')
-//                 : AppLocalizations.t('profile_update_error'),
-//       };
-//     } catch (error) {
-//       return {
-//         'success': false,
-//         'message': AppLocalizations.t('profile_update_error'),
-//       };
-//     }
-//   }
-// }
 class UserController {
+  static Future<List<RegisteredUser>> searchUsersByPhone(String query) async {
+    final phoneDigits = query.replaceAll(RegExp(r'\D'), '');
+    if (phoneDigits.isEmpty) return const [];
+
+    try {
+      final response = await ApiService.dio.get(
+        'utilisateurs',
+        queryParameters: {'search': phoneDigits},
+      );
+      final body = response.data;
+      if (body is! Map || body['success'] != true) {
+        debugPrint('[API] User search returned an invalid response: $body');
+        throw const FormatException('Invalid users search response');
+      }
+
+      final page = body['data'];
+      final rows = page is Map ? page['data'] : page;
+      if (rows is! List) {
+        debugPrint('[API] User search response has no user list: $body');
+        throw const FormatException('User list missing from search response');
+      }
+
+      return rows
+          .whereType<Map>()
+          .map((row) {
+            final user = Map<String, dynamic>.from(row);
+            final firstName = user['prenom']?.toString().trim() ?? '';
+            final lastName = user['nom']?.toString().trim() ?? '';
+            final name = [
+              firstName,
+              lastName,
+            ].where((part) => part.isNotEmpty).join(' ');
+            return RegisteredUser(
+              id: user['id']?.toString() ?? '',
+              name: name.isEmpty ? user['telephone']?.toString() ?? '' : name,
+              phone: user['telephone']?.toString() ?? '',
+            );
+          })
+          .where((user) => user.id.isNotEmpty && user.phone.isNotEmpty)
+          .toList();
+    } on DioException catch (error) {
+      ApiService.logServerError(error);
+      rethrow;
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateFirebaseToken({
+    required String userId,
+    required String firebaseToken,
+  }) async {
+    try {
+      final response = await ApiService.dio.patch(
+        'auth/firebase-token/$userId',
+        data: {'token_firebase': firebaseToken},
+      );
+      final body = response.data;
+
+      if (body is! Map || body['success'] != true) {
+        debugPrint(
+          '[API] Firebase token update returned failure: '
+          '${body is Map ? body : response.data}',
+        );
+        return {
+          'success': false,
+          'message': AppLocalizations.t('firebase_token_update_error'),
+        };
+      }
+
+      return {
+        'success': true,
+        'message': AppLocalizations.t('firebase_token_update_success'),
+        'data': body['data'],
+      };
+    } on DioException catch (error) {
+      ApiService.logServerError(error);
+      return {
+        'success': false,
+        'message': ApiService.localizedErrorMessage(
+          error,
+          fallbackKey: 'firebase_token_update_error',
+        ),
+      };
+    } catch (error) {
+      debugPrint('[API] Firebase token update failed unexpectedly: $error');
+      return {
+        'success': false,
+        'message': AppLocalizations.t('firebase_token_update_error'),
+      };
+    }
+  }
+
   static Future<Map<String, dynamic>> updateProfile({
     required String userId,
     required Map<String, dynamic> data,
@@ -129,8 +159,7 @@ class UserController {
 
       return {
         'success': true,
-        'message':
-            body['message'] ?? AppLocalizations.t('profile_update_success'),
+        'message': AppLocalizations.t('profile_update_success'),
         'user': user,
       };
     } on DioException catch (error) {

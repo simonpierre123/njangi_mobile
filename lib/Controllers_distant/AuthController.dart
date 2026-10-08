@@ -64,6 +64,25 @@ class AuthController extends ChangeNotifier {
         data: {'telephone': telephone, 'code': code},
       );
 
+      if (response['success'] == true) {
+        final responseBody = response['data'];
+        final registrationData =
+            responseBody is Map ? responseBody['data'] : null;
+        final token =
+            registrationData is Map ? registrationData['token'] : null;
+
+        if (token is! String || token.isEmpty) {
+          _isLoading = false;
+          notifyListeners();
+          return {
+            'success': false,
+            'message': AppLocalizations.t('register_error'),
+          };
+        }
+
+        await StorageManager.saveToken(token);
+      }
+
       _isLoading = false;
       notifyListeners();
 
@@ -228,6 +247,10 @@ class AuthController extends ChangeNotifier {
       notifyListeners();
 
       if (loginResponse['success'] != true) {
+        ApiService.logUnexpectedError(
+          'AuthController.setPin: PIN saved but automatic login failed',
+          loginResponse['message'] ?? 'Unknown login error',
+        );
         return {
           'success': false,
           'code': 'LOGIN_AFTER_PIN_ERROR',

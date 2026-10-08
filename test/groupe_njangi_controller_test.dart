@@ -72,12 +72,30 @@ void main() {
       expect(groups.single.hasCycle, isFalse);
     },
   );
+
+  test('hides a group while the user is only invited', () async {
+    SharedPreferences.setMockInitialValues({
+      'user_data': jsonEncode({
+        'id': 'user-uuid',
+        'telephone': '+237600000000',
+        'statut': 1,
+        'active': '1',
+        'delete': '0',
+      }),
+    });
+    ApiService.dio.httpClientAdapter = _GroupsApiAdapter(role: 'INVITE');
+
+    final groups = await GroupeNjangiController.getCurrentUserCommunities();
+
+    expect(groups, isEmpty);
+  });
 }
 
 class _GroupsApiAdapter implements HttpClientAdapter {
-  _GroupsApiAdapter({this.emptyCycles = false});
+  _GroupsApiAdapter({this.emptyCycles = false, this.role = 'ADMIN'});
 
   final bool emptyCycles;
+  final String role;
   final List<String> paths = [];
 
   @override
@@ -93,7 +111,7 @@ class _GroupsApiAdapter implements HttpClientAdapter {
         'success': true,
         'data': [
           {
-            'role': 'ADMIN',
+            'role': role,
             'groupe_id': 'group-uuid',
             'groupe_nom': 'BND Teams',
             'groupe': {

@@ -72,7 +72,6 @@ class StorageManager {
     final prefs = await SharedPreferences.getInstance();
     // 2. Sauvegarde le jeton en utilisant la clé définie
     await prefs.setString(_TokenFireBase, tokenFireBase);
-    print('Jeton Firebase sauvegardé: $tokenFireBase');
   }
 
   static Future<String?> getTokenFireBase() async {

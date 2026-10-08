@@ -50,6 +50,12 @@ class AppRoutes {
   static const createCommunityStep3 = '/community/create/3';
   static const createCommunityStep4 = '/community/create/4';
   static const createCommunityStep5 = '/community/create/5';
+  static const inviteMembers = '/community/invite';
+
+  static const inviteLink = '/community/create/invite/link';
+  static const inviteQr = '/community/create/invite/qr';
+  static const invitePhone = '/community/create/invite/phone';
+  static const inviteContacts = '/community/create/invite/contacts';
 
   static const contributionDetail = '/community/contribution/detail';
 

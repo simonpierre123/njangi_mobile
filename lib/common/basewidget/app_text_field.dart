@@ -13,6 +13,7 @@ class AppTextField extends StatelessWidget {
     this.keyboardType,
     this.maxLines = 1,
     this.suffixText,
+    this.onChanged,
   });
 
   final String label;
@@ -21,26 +22,45 @@ class AppTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final int maxLines;
   final String? suffixText;
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
         SizedBox(height: AppDimensions.spaceXs.h),
         TextField(
           controller: controller,
+          onChanged: onChanged,
           keyboardType: keyboardType,
           maxLines: maxLines,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            hintStyle: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
             suffixText: suffixText,
-            suffixStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w600),
+            suffixStyle: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
             filled: true,
             fillColor: AppColors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
               borderSide: BorderSide(color: AppColors.inputBorder),
@@ -51,7 +71,10 @@ class AppTextField extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-              borderSide: const BorderSide(color: AppColors.primaryDark, width: 1.5),
+              borderSide: const BorderSide(
+                color: AppColors.primaryDark,
+                width: 1.5,
+              ),
             ),
           ),
         ),

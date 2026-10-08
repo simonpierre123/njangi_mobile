@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../utils/app_colors.dart';
+import 'Invitation.dart';
 import 'community_model.dart';
 
 /// Type de communauté (Étape 1/5).
@@ -62,13 +64,33 @@ class InvitedMember {
     required this.initials,
     required this.avatarBg,
     required this.avatarColor,
+    this.invitationId,
+    this.status = InvitationStatus.pending,
   });
+
+  factory InvitedMember.fromInvitation(Invitation invitation) {
+    final name = invitation.displayName ?? invitation.phone ?? '';
+    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty);
+    final initials = parts.take(2).map((p) => p[0].toUpperCase()).join();
+    final joined = invitation.status == InvitationStatus.joined;
+    return InvitedMember(
+      name: name,
+      phone: invitation.phone ?? '',
+      initials: initials.isEmpty ? '?' : initials,
+      avatarBg: joined ? AppColors.mintPale : AppColors.warningBg,
+      avatarColor: joined ? AppColors.primaryDark : AppColors.warningText,
+      invitationId: invitation.id,
+      status: invitation.status,
+    );
+  }
 
   final String name;
   final String phone;
   final String initials;
   final Color avatarBg;
   final Color avatarColor;
+  final String? invitationId;
+  final InvitationStatus status;
 }
 
 /// Brouillon de communauté porté d'étape en étape via les arguments de route.
@@ -77,6 +99,7 @@ class CommunityDraft {
     this.photoPath,
     this.groupId,
     this.groupCode,
+    this.cycleId,
     this.existingCommunity,
     this.name = '',
     this.description = '',
@@ -102,6 +125,7 @@ class CommunityDraft {
   final String? photoPath;
   final String? groupId;
   final String? groupCode;
+  final String? cycleId;
   final CommunityModel? existingCommunity;
   final String name;
   final String description;
@@ -127,6 +151,7 @@ class CommunityDraft {
     String? photoPath,
     String? groupId,
     String? groupCode,
+    String? cycleId,
     CommunityModel? existingCommunity,
     String? name,
     String? description,
@@ -150,6 +175,7 @@ class CommunityDraft {
       photoPath: photoPath ?? this.photoPath,
       groupId: groupId ?? this.groupId,
       groupCode: groupCode ?? this.groupCode,
+      cycleId: cycleId ?? this.cycleId,
       existingCommunity: existingCommunity ?? this.existingCommunity,
       name: name ?? this.name,
       description: description ?? this.description,

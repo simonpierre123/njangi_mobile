@@ -25,7 +25,9 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>Autorisez l'accès biométrique pour vous connecter rapidement et en toute sécurité.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Autorisez l'accès à l'appareil photo pour ajouter une photo de profil.</string>
+	<string>Autorisez l'accès à l'appareil photo pour scanner un QR code et rejoindre un groupe.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Autorisez l'accès à vos contacts pour inviter vos amis à rejoindre votre groupe.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Autorisez l'accès à vos photos pour choisir une photo de profil.</string>
 	<key>LSRequiresIPhoneOS</key>

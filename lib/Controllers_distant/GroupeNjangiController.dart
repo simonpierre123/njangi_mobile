@@ -46,6 +46,10 @@ class GroupeNjangiController {
       return await Future.wait(
         memberships.asMap().entries.map((entry) async {
           final membership = Map<String, dynamic>.from(entry.value);
+          // Tant que l'invitation n'est pas acceptée, le groupe reste masqué.
+          if (membership['role']?.toString().toUpperCase() == 'INVITE') {
+            return null;
+          }
           final groupValue = membership['groupe'];
           if (groupValue is! Map) return null;
 
@@ -96,7 +100,12 @@ class GroupeNjangiController {
             memberCount:
                 memberRows == null
                     ? staticCommunity?.memberCount ?? 0
-                    : members.where((member) => member.active != '0').length,
+                    : members
+                        .where(
+                          (member) =>
+                              member.active != '0' && member.role != 'INVITE',
+                        )
+                        .length,
             members: members,
             membersLoaded: memberRows != null,
             cyclesLoaded: cycles != null,

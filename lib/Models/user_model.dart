@@ -12,7 +12,7 @@ class UserModel {
   final String? pays;
   final String? ville;
   final String? adresse;
-  final String? tokenfirebase;
+  final String? tokenFirebase;
   final int statut;
   final String active;
   final String delete;
@@ -33,7 +33,7 @@ class UserModel {
     this.pays,
     this.ville,
     this.adresse,
-    this.tokenfirebase,
+    this.tokenFirebase,
     required this.statut,
     required this.active,
     required this.delete,
@@ -56,7 +56,8 @@ class UserModel {
       pays: json['pays'] as String?,
       ville: json['ville'] as String?,
       adresse: json['adresse'] as String?,
-      tokenfirebase: json['tokenfirebase'] as String?,
+      tokenFirebase:
+          (json['token_firebase'] ?? json['tokenfirebase']) as String?,
       statut:
           json['statut'] is int
               ? json['statut']
@@ -83,7 +84,7 @@ class UserModel {
       'pays': pays,
       'ville': ville,
       'adresse': adresse,
-      'tokenfirebase': tokenfirebase,
+      'token_firebase': tokenFirebase,
       'statut': statut,
       'active': active,
       'delete': delete,

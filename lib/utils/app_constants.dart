@@ -20,7 +20,13 @@ class AppConstants {
 
   // Groupes
   static const String groupes = 'groupes';
+  static const String cycles = 'cycles';
   static const String utilisateurs = 'utilisateurs';
+
+  // Invitations (domaine à confirmer avec le backend)
+  static const String inviteBaseUrl = 'https://njangi.app/join/';
+  static const String playStoreUrl =
+      'https://play.google.com/store/apps/details?id=com.example.njangi';
 
   // Storage Keys
   static const String userToken = 'user_token';

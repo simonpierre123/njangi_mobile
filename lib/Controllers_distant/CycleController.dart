@@ -33,55 +33,12 @@ class CycleController {
     required String groupId,
     required CommunityDraft draft,
   }) async {
-    final contributionAmount = _parseAmount(draft.contributionAmount);
-    if (contributionAmount == null || contributionAmount <= 0) {
-      return {
-        'success': false,
-        'message': AppLocalizations.t('cycle_amount_required'),
-      };
-    }
-    if (draft.frequency == null) {
-      return {
-        'success': false,
-        'message': AppLocalizations.t('cycle_frequency_required'),
-      };
-    }
-    if (draft.startDate == null) {
-      return {
-        'success': false,
-        'message': AppLocalizations.t('cycle_start_date_required'),
-      };
+    final validationError = _validateDraft(draft);
+    if (validationError != null) {
+      return {'success': false, 'message': validationError};
     }
 
-    final startDate = draft.startDate!;
-    final cycle = Cycle(
-      memberCount: int.tryParse(draft.expectedMemberCount.trim()),
-      adminCount: draft.maxAdminCount,
-      contributionAmount: contributionAmount,
-      currency: 'XAF',
-      maxLoanAmount:
-          draft.allowLoans ? _parseAmount(draft.maxLoanAmount) : null,
-      maxLoanDuration:
-          draft.allowLoans
-              ? int.tryParse(draft.maxLoanDurationMonths.trim())
-              : null,
-      maxSimultaneousLoans:
-          draft.allowLoans
-              ? int.tryParse(draft.maxSimultaneousLoans.trim())
-              : null,
-      frequency: _apiFrequency(draft.frequency!),
-      dueDay: draft.dueDayLabel,
-      startDate: startDate,
-      endDate: DateTime(
-        startDate.year + 1,
-        startDate.month,
-        startDate.day,
-      ).subtract(const Duration(days: 1)),
-      status: 'EN_ATTENTE',
-      loanModuleActive: draft.allowLoans ? '1' : '0',
-      collectiveLoanValidation: draft.collectiveValidation ? '1' : '0',
-      penaltiesEnabled: draft.penaltiesEnabled ? '1' : '0',
-    );
+    final cycle = _cycleFromDraft(draft);
 
     try {
       final response = await ApiService.dio.post(
@@ -90,6 +47,7 @@ class CycleController {
       );
       final body = response.data;
       if (body is! Map || body['success'] != true || body['data'] is! Map) {
+        debugPrint('[API] Cycle creation returned an invalid response: $body');
         return {
           'success': false,
           'message': AppLocalizations.t('cycle_create_error'),
@@ -116,6 +74,97 @@ class CycleController {
         'message': AppLocalizations.t('cycle_create_error'),
       };
     }
+  }
+
+  static Future<Map<String, dynamic>> updateForCycle({
+    required String cycleId,
+    required CommunityDraft draft,
+  }) async {
+    final validationError = _validateDraft(draft);
+    if (validationError != null) {
+      return {'success': false, 'message': validationError};
+    }
+
+    try {
+      final response = await ApiService.dio.put(
+        '${AppConstants.cycles}/$cycleId',
+        data: _cycleFromDraft(draft).toCreateJson(),
+      );
+      final body = response.data;
+      if (body is! Map || body['success'] != true || body['data'] is! Map) {
+        debugPrint('[API] Cycle update returned an invalid response: $body');
+        return {
+          'success': false,
+          'message': AppLocalizations.t('cycle_update_error'),
+        };
+      }
+
+      return {
+        'success': true,
+        'cycle': Cycle.fromJson(Map<String, dynamic>.from(body['data'] as Map)),
+      };
+    } on DioException catch (error) {
+      ApiService.logServerError(error);
+      return {
+        'success': false,
+        'message': ApiService.localizedErrorMessage(
+          error,
+          fallbackKey: 'cycle_update_error',
+        ),
+      };
+    } catch (error) {
+      debugPrint('[API] Cycle update failed unexpectedly: $error');
+      return {
+        'success': false,
+        'message': AppLocalizations.t('cycle_update_error'),
+      };
+    }
+  }
+
+  static String? _validateDraft(CommunityDraft draft) {
+    final contributionAmount = _parseAmount(draft.contributionAmount);
+    if (contributionAmount == null || contributionAmount <= 0) {
+      return AppLocalizations.t('cycle_amount_required');
+    }
+    if (draft.frequency == null) {
+      return AppLocalizations.t('cycle_frequency_required');
+    }
+    if (draft.startDate == null) {
+      return AppLocalizations.t('cycle_start_date_required');
+    }
+    return null;
+  }
+
+  static Cycle _cycleFromDraft(CommunityDraft draft) {
+    final startDate = draft.startDate!;
+    return Cycle(
+      memberCount: int.tryParse(draft.expectedMemberCount.trim()),
+      adminCount: draft.maxAdminCount,
+      contributionAmount: _parseAmount(draft.contributionAmount),
+      currency: 'XAF',
+      maxLoanAmount:
+          draft.allowLoans ? _parseAmount(draft.maxLoanAmount) : null,
+      maxLoanDuration:
+          draft.allowLoans
+              ? int.tryParse(draft.maxLoanDurationMonths.trim())
+              : null,
+      maxSimultaneousLoans:
+          draft.allowLoans
+              ? int.tryParse(draft.maxSimultaneousLoans.trim())
+              : null,
+      frequency: _apiFrequency(draft.frequency!),
+      dueDay: draft.dueDayLabel,
+      startDate: startDate,
+      endDate: DateTime(
+        startDate.year + 1,
+        startDate.month,
+        startDate.day,
+      ).subtract(const Duration(days: 1)),
+      status: 'EN_ATTENTE',
+      loanModuleActive: draft.allowLoans ? '1' : '0',
+      collectiveLoanValidation: draft.collectiveValidation ? '1' : '0',
+      penaltiesEnabled: draft.penaltiesEnabled ? '1' : '0',
+    );
   }
 
   static int? _parseAmount(String value) =>

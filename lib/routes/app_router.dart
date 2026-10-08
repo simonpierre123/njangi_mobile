@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import '../Controllers_distant/AuthController.dart';
 import '../Controllers_distant/CycleController.dart';
 import '../Controllers_distant/UserController.dart';
+import '../Models/Cycle.dart';
 import '../Models/MembreGroupe.dart';
+import '../Models/Invitation.dart';
 import '../Models/community_model.dart';
 import '../Models/community_members_model.dart';
 import '../Models/create_community_model.dart';
@@ -18,7 +20,6 @@ import '../datasource/community_members_mock_datasource.dart';
 import '../datasource/community_mock_datasource.dart';
 import '../datasource/community_treasury_mock_datasource.dart';
 import '../datasource/contribution_mock_datasource.dart';
-import '../datasource/create_community_mock_datasource.dart';
 import '../datasource/cycle_completion_mock_datasource.dart';
 import '../datasource/kyc_mock_datasource.dart';
 import '../datasource/notification_feed_mock_datasource.dart';
@@ -42,6 +43,9 @@ import '../screens/community/creation/create_community_step2_page.dart';
 import '../screens/community/creation/create_community_step3_page.dart';
 import '../screens/community/creation/create_community_step4_page.dart';
 import '../screens/community/creation/create_community_step5_page.dart';
+import '../screens/community/creation/invite/invite_contacts_page.dart';
+import '../screens/community/creation/invite/invite_join_page.dart';
+import '../screens/community/creation/invite/invite_phone_page.dart';
 import '../screens/community/rapport/detailed_report_page.dart';
 import '../screens/community/rapport/financial_summary_page.dart';
 import '../screens/community/tresorerie/contribution_detail_page.dart';
@@ -122,6 +126,21 @@ class AppRouter {
   }
 
   static void _pop() => navigatorKey.currentState!.pop();
+
+  static void _popWithResult(Object? result) =>
+      navigatorKey.currentState!.pop(result);
+
+  // Object? évite l'échec du cast générique des routes créées en Route<dynamic>.
+  static Future<List<InvitedMember>?> _pushForMembers(
+    String route, {
+    Object? arguments,
+  }) async {
+    final result = await navigatorKey.currentState!.pushNamed<Object?>(
+      route,
+      arguments: arguments,
+    );
+    return result is List ? result.whereType<InvitedMember>().toList() : null;
+  }
 
   static void _popUntil(String route) =>
       navigatorKey.currentState!.popUntil(ModalRoute.withName(route));
@@ -252,7 +271,12 @@ class AppRouter {
 
     final activeMembers =
         community.members
-            .where((member) => member.active != '0' && member.statut == 'ACTIF')
+            .where(
+              (member) =>
+                  member.active != '0' &&
+                  member.statut == 'ACTIF' &&
+                  member.role != 'INVITE',
+            )
             .length;
     final adminCount =
         community.members
@@ -723,8 +747,7 @@ class AppRouter {
             growth: CommunityMembersMockDatasource.growth,
             trustScore: CommunityMembersMockDatasource.trustScore,
             onInviteMember:
-                () =>
-                    _push(AppRoutes.comingSoon, arguments: 'Inviter un membre'),
+                () => _push(AppRoutes.inviteMembers, arguments: community),
             onMemberMenuTap:
                 (m) => _push(AppRoutes.comingSoon, arguments: m.name),
             onMemberUrgentAction:
@@ -853,17 +876,54 @@ class AppRouter {
           CreateCommunityStep3Page(
             draft: draft,
             onBack: _pop,
-            onContinue:
-                (updated) => _push(
-                  AppRoutes.createCommunityStep4,
-                  arguments:
-                      updated.invitedMembers.isEmpty
-                          ? updated.copyWith(
-                            invitedMembers:
-                                CreateCommunityMockDatasource.initialInvites,
-                          )
-                          : updated,
-                ),
+            onContinue: (updated) async {
+              final groupId = updated.groupId;
+              if (groupId == null || groupId.isEmpty) {
+                return {
+                  'success': false,
+                  'message': AppLocalizations.t('cycle_group_missing'),
+                };
+              }
+
+              var cycleId = updated.cycleId;
+              if (cycleId == null || cycleId.isEmpty) {
+                final existingCycles = await CycleController.getForGroup(
+                  groupId,
+                );
+                if (existingCycles == null) {
+                  return {
+                    'success': false,
+                    'message': AppLocalizations.t('cycle_create_error'),
+                  };
+                }
+
+                if (existingCycles.isNotEmpty) {
+                  cycleId = existingCycles.first.id;
+                } else {
+                  final result = await CycleController.createForGroup(
+                    groupId: groupId,
+                    draft: updated,
+                  );
+                  if (result['success'] != true) {
+                    return {'success': false, 'message': result['message']};
+                  }
+                  cycleId = (result['cycle'] as Cycle).id;
+                }
+              }
+
+              if (cycleId == null || cycleId.isEmpty) {
+                return {
+                  'success': false,
+                  'message': AppLocalizations.t('cycle_create_error'),
+                };
+              }
+
+              _push(
+                AppRoutes.createCommunityStep4,
+                arguments: updated.copyWith(cycleId: cycleId),
+              );
+              return {'success': true, 'cycleId': cycleId};
+            },
           ),
         );
 
@@ -877,18 +937,86 @@ class AppRouter {
                 (updated) =>
                     _push(AppRoutes.createCommunityStep5, arguments: updated),
             onGenerateLink:
-                () =>
-                    _push(AppRoutes.comingSoon, arguments: "Lien d'invitation"),
+                () => _pushForMembers(AppRoutes.inviteLink, arguments: draft),
             onShowQrCode:
-                () => _push(AppRoutes.comingSoon, arguments: 'QR Code'),
+                () => _pushForMembers(AppRoutes.inviteQr, arguments: draft),
             onInviteByNumber:
-                () => _push(
-                  AppRoutes.comingSoon,
-                  arguments: 'Inviter par numéro',
-                ),
+                () => _pushForMembers(AppRoutes.invitePhone, arguments: draft),
             onChooseContacts:
                 () =>
-                    _push(AppRoutes.comingSoon, arguments: 'Choisir contacts'),
+                    _pushForMembers(AppRoutes.inviteContacts, arguments: draft),
+          ),
+        );
+
+      case AppRoutes.inviteMembers:
+        final community = settings.arguments as CommunityModel?;
+        if (community == null) return page(const _MissingCommunityRedirect());
+        final inviteDraft = CommunityDraft(
+          groupId: community.id,
+          groupCode: community.groupCode,
+          name: community.name,
+          description: community.description,
+        );
+        return page(
+          CreateCommunityStep4Page(
+            standalone: true,
+            draft: inviteDraft,
+            onBack: _pop,
+            onContinue: (_) => _pop(),
+            onGenerateLink:
+                () => _pushForMembers(
+                  AppRoutes.inviteLink,
+                  arguments: inviteDraft,
+                ),
+            onShowQrCode:
+                () =>
+                    _pushForMembers(AppRoutes.inviteQr, arguments: inviteDraft),
+            onInviteByNumber:
+                () => _pushForMembers(
+                  AppRoutes.invitePhone,
+                  arguments: inviteDraft,
+                ),
+            onChooseContacts:
+                () => _pushForMembers(
+                  AppRoutes.inviteContacts,
+                  arguments: inviteDraft,
+                ),
+          ),
+        );
+
+      case AppRoutes.inviteLink:
+      case AppRoutes.inviteQr:
+        final draft = settings.arguments as CommunityDraft;
+        return page(
+          InviteJoinPage(
+            groupId: draft.groupId ?? '',
+            method:
+                settings.name == AppRoutes.inviteQr
+                    ? InvitationMethod.qr
+                    : InvitationMethod.link,
+            onBack: _pop,
+            onDone: _popWithResult,
+          ),
+        );
+
+      case AppRoutes.invitePhone:
+        final draft = settings.arguments as CommunityDraft;
+        return page(
+          InvitePhonePage(
+            groupId: draft.groupId ?? '',
+            onBack: _pop,
+            onDone: _popWithResult,
+          ),
+        );
+
+      case AppRoutes.inviteContacts:
+        final draft = settings.arguments as CommunityDraft;
+        return page(
+          InviteContactsPage(
+            groupId: draft.groupId ?? '',
+            groupName: draft.name,
+            onBack: _pop,
+            onDone: _popWithResult,
           ),
         );
 
@@ -899,18 +1027,18 @@ class AppRouter {
             draft: draft,
             onBack: _pop,
             onCreate: () async {
-              final groupId = draft.groupId;
-              if (groupId == null || groupId.isEmpty) {
-                return AppLocalizations.t('cycle_group_missing');
+              final cycleId = draft.cycleId;
+              if (cycleId == null || cycleId.isEmpty) {
+                return AppLocalizations.t('cycle_missing');
               }
 
-              final result = await CycleController.createForGroup(
-                groupId: groupId,
+              final result = await CycleController.updateForCycle(
+                cycleId: cycleId,
                 draft: draft,
               );
               if (result['success'] != true) {
                 return result['message']?.toString() ??
-                    AppLocalizations.t('cycle_create_error');
+                    AppLocalizations.t('cycle_update_error');
               }
 
               _replaceAll(AppRoutes.home);

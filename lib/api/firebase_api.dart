@@ -5,10 +5,10 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/services.dart';
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:http/http.dart' as http;
-import 'package:googleapis_auth/auth_io.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:njangi/Controllers_distant/UserController.dart';
 import 'package:njangi/utils/management/storage_manager.dart';
 
 class FirebaseApi {
@@ -65,9 +65,11 @@ class FirebaseApi {
     const settings = InitializationSettings(android: android);
     await _localNotificationsPlugin.initialize(settings);
     final token = await _firebaseMessaging.getToken();
-    print('🔥 FCM Token: $token');
-    // Token et listeners...
-    await StorageManager.saveTokenFireBase('$token');
+    if (token != null && token.isNotEmpty) {
+      await StorageManager.saveTokenFireBase(token);
+    }
+
+    _firebaseMessaging.onTokenRefresh.listen(_saveAndSyncToken);
     // final userData = await StorageManager.loadUserData();
     // final user = userData?['user'] as User?;
 
@@ -96,6 +98,50 @@ class FirebaseApi {
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       print('🟢 [Opened App] Message: ${message.notification?.title}');
     });
+  }
+
+  static Future<void> syncTokenOnHomeEntry() async {
+    try {
+      final token = await _firebaseMessaging.getToken();
+      if (token == null || token.isEmpty) {
+        log('Aucun token FCM disponible à l’ouverture de l’accueil.');
+        return;
+      }
+      await _saveAndSyncToken(token);
+    } catch (error) {
+      log(
+        'Impossible de récupérer le token FCM à l’ouverture de l’accueil: $error',
+      );
+    }
+  }
+
+  static Future<void> _saveAndSyncToken(String token) async {
+    if (token.isEmpty) return;
+    await StorageManager.saveTokenFireBase(token);
+    await _syncTokenWithUser(token);
+  }
+
+  static Future<void> _syncTokenWithUser(String token) async {
+    try {
+      final user = await StorageManager.getUser();
+      if (user == null) {
+        log('Utilisateur non connecté; synchronisation FCM reportée.');
+        return;
+      }
+
+      final result = await UserController.updateFirebaseToken(
+        userId: user.id,
+        firebaseToken: token,
+      );
+      if (result['success'] != true) {
+        log(
+          'Échec de la synchronisation du token FCM: '
+          '${result['message'] ?? 'réponse serveur en échec'}',
+        );
+      }
+    } catch (error) {
+      log('Échec de la synchronisation du token FCM: $error');
+    }
   }
 
   // Application tuée => isolé

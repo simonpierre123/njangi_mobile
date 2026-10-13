@@ -1,12 +1,32 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:njangi/Models/Cycle.dart';
-import 'package:njangi/Models/create_community_model.dart';
+import 'package:njangi/ModeView/create_community_model.dart';
 import 'package:njangi/datasource/api_service.dart';
 import 'package:njangi/localization/app_localizations.dart';
 import 'package:njangi/utils/app_constants.dart';
 
 class CycleController {
+  static Future<Cycle?> getById(String cycleId) async {
+    try {
+      final response = await ApiService.dio.get(
+        '${AppConstants.cycles}/$cycleId',
+      );
+      final body = response.data;
+      if (body is! Map || body['success'] != true || body['data'] is! Map) {
+        debugPrint('[API] Cycle details returned an invalid response: $body');
+        return null;
+      }
+      return Cycle.fromJson(Map<String, dynamic>.from(body['data'] as Map));
+    } on DioException catch (error) {
+      ApiService.logServerError(error);
+      return null;
+    } catch (error) {
+      ApiService.logUnexpectedError('CycleController.getById', error);
+      return null;
+    }
+  }
+
   static Future<List<Cycle>?> getForGroup(String groupId) async {
     try {
       final response = await ApiService.dio.get(

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/beneficiary_model.dart';
+import '../../../../ModeView/beneficiary_model.dart';
 import '../../../../common/basewidget/network_avatar.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
@@ -30,9 +30,22 @@ class BeneficiaryDueCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(beneficiary.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary)),
+                Text(
+                  beneficiary.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(beneficiary.subtitle, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                Text(
+                  beneficiary.subtitle,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               ],
             ),
           ),
@@ -41,12 +54,19 @@ class BeneficiaryDueCard extends StatelessWidget {
             children: [
               Text(
                 AppLocalizations.t('amount_due_label'),
-                style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textSecondary,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
                 beneficiary.amount,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.contributionAmountEmphasis),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.contributionAmountEmphasis,
+                ),
               ),
             ],
           ),

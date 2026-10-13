@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/beneficiary_model.dart';
+import '../../../../ModeView/beneficiary_model.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
@@ -21,28 +21,59 @@ class PayoutHistoryRow extends StatelessWidget {
         Container(
           width: 32,
           height: 32,
-          decoration: const BoxDecoration(color: AppColors.tagMintBg, shape: BoxShape.circle),
-          child: const Icon(Icons.check, size: 16, color: AppColors.primaryDark),
+          decoration: const BoxDecoration(
+            color: AppColors.tagMintBg,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.check,
+            size: 16,
+            color: AppColors.primaryDark,
+          ),
         ),
         SizedBox(width: AppDimensions.spaceSm.w),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(entry.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary)),
+              Text(
+                entry.name,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  color: AppColors.textPrimary,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text(entry.cycleLabel, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+              Text(
+                entry.cycleLabel,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textSecondary,
+                ),
+              ),
             ],
           ),
         ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(entry.amount, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary)),
+            Text(
+              entry.amount,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                color: AppColors.textPrimary,
+              ),
+            ),
             const SizedBox(height: 2),
             Text(
               AppLocalizations.t('completed_status'),
-              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.secondaryGreen),
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: AppColors.secondaryGreen,
+              ),
             ),
           ],
         ),

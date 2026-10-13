@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../Models/beneficiary_model.dart';
-import '../../../Models/treasury_model.dart';
+import '../../../ModeView/beneficiary_model.dart';
+import '../../../ModeView/treasury_model.dart';
 import '../../../common/basewidget/app_segmented_control.dart';
 import '../../../common/basewidget/member_filter_chips.dart';
 import '../../../localization/app_localizations.dart';
@@ -197,7 +197,11 @@ class _MyTreasuryTab extends StatelessWidget {
             children: [
               Text(
                 AppLocalizations.t('contribution_history'),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
               GestureDetector(
                 onTap: onSeeAllHistory,
@@ -249,8 +253,10 @@ class _ContributionsTab extends StatelessWidget {
     ];
 
     final filtered = switch (filterIndex) {
-      1 => members.where((m) => m.status == ContributionStatus.upToDate).toList(),
-      2 => members.where((m) => m.status == ContributionStatus.pending).toList(),
+      1 =>
+        members.where((m) => m.status == ContributionStatus.upToDate).toList(),
+      2 =>
+        members.where((m) => m.status == ContributionStatus.pending).toList(),
       3 => members.where((m) => m.status == ContributionStatus.late).toList(),
       _ => members,
     };
@@ -265,7 +271,11 @@ class _ContributionsTab extends StatelessWidget {
             onTap: onOpenDetailedReport,
             child: Row(
               children: [
-                const Icon(Icons.insert_chart_outlined, size: 14, color: AppColors.secondaryGreen),
+                const Icon(
+                  Icons.insert_chart_outlined,
+                  size: 14,
+                  color: AppColors.secondaryGreen,
+                ),
                 const SizedBox(width: 4),
                 Text(
                   AppLocalizations.t('see_detailed_report_link'),
@@ -280,14 +290,22 @@ class _ContributionsTab extends StatelessWidget {
             ),
           ),
           SizedBox(height: AppDimensions.spaceLg.h),
-          MemberFilterChips(labels: filterLabels, currentIndex: filterIndex, onChanged: onFilterChanged),
+          MemberFilterChips(
+            labels: filterLabels,
+            currentIndex: filterIndex,
+            onChanged: onFilterChanged,
+          ),
           SizedBox(height: AppDimensions.spaceLg.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 AppLocalizations.t('members_activity'),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
               GestureDetector(
                 onTap: onSeeAllMembers,
@@ -366,7 +384,11 @@ class _LoansTab extends StatelessWidget {
             children: [
               Text(
                 AppLocalizations.t('repayment_history'),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
               Text(
                 AppLocalizations.t('see_all_link'),
@@ -382,7 +404,8 @@ class _LoansTab extends StatelessWidget {
           SizedBox(height: AppDimensions.spaceSm.h),
           for (var i = 0; i < history.length; i++) ...[
             MemberContributionRow(contribution: history[i]),
-            if (i != history.length - 1) SizedBox(height: AppDimensions.spaceSm.h),
+            if (i != history.length - 1)
+              SizedBox(height: AppDimensions.spaceSm.h),
           ],
           SizedBox(height: AppDimensions.spaceXl.h),
         ],
@@ -445,17 +468,31 @@ class _BeneficiairesTabState extends State<_BeneficiairesTab> {
             children: [
               Text(
                 AppLocalizations.t('passage_order_section'),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.adminHintBg,
                   borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
                 ),
                 child: Text(
-                  AppLocalizations.t(widget.isAdmin ? 'admin_view_reorder_hint' : 'member_view_hint'),
-                  style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                  AppLocalizations.t(
+                    widget.isAdmin
+                        ? 'admin_view_reorder_hint'
+                        : 'member_view_hint',
+                  ),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
             ],
@@ -490,7 +527,11 @@ class _BeneficiairesTabState extends State<_BeneficiairesTab> {
           SizedBox(height: AppDimensions.spaceLg.h),
           Text(
             AppLocalizations.t('payout_history_section'),
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
           ),
           SizedBox(height: AppDimensions.spaceSm.h),
           Container(
@@ -514,16 +555,26 @@ class _BeneficiairesTabState extends State<_BeneficiairesTab> {
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: AppColors.mintPale34,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusXl,
+                      ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           AppLocalizations.t('see_full_history'),
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primaryContainer),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryContainer,
+                          ),
                         ),
-                        const Icon(Icons.chevron_right, size: 16, color: AppColors.primaryContainer),
+                        const Icon(
+                          Icons.chevron_right,
+                          size: 16,
+                          color: AppColors.primaryContainer,
+                        ),
                       ],
                     ),
                   ),
@@ -544,7 +595,12 @@ class _BeneficiairesTabState extends State<_BeneficiairesTab> {
 /// à droite. Le marqueur et la ligne sont hors de la carte, à
 /// l'extérieur — fidèle à la maquette.
 class _TimelineStep extends StatelessWidget {
-  const _TimelineStep({super.key, required this.entry, required this.isLast, required this.child});
+  const _TimelineStep({
+    super.key,
+    required this.entry,
+    required this.isLast,
+    required this.child,
+  });
 
   final PassageOrderEntry entry;
   final bool isLast;
@@ -564,18 +620,26 @@ class _TimelineStep extends StatelessWidget {
                 children: [
                   entry.isCurrent
                       ? const CircleAvatar(
-                          radius: 16,
-                          backgroundColor: AppColors.primaryDark,
-                          child: Icon(Icons.play_arrow, size: 18, color: AppColors.white),
-                        )
+                        radius: 16,
+                        backgroundColor: AppColors.primaryDark,
+                        child: Icon(
+                          Icons.play_arrow,
+                          size: 18,
+                          color: AppColors.white,
+                        ),
+                      )
                       : CircleAvatar(
-                          radius: 14,
-                          backgroundColor: AppColors.surface,
-                          child: Text(
-                            '${entry.order}',
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+                        radius: 14,
+                        backgroundColor: AppColors.surface,
+                        child: Text(
+                          '${entry.order}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textSecondary,
                           ),
                         ),
+                      ),
                   if (!isLast)
                     Expanded(
                       child: Container(

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../Models/create_community_model.dart';
+import '../../../ModeView/create_community_model.dart';
 import '../../../common/basewidget/app_button.dart';
 import '../../../common/basewidget/app_text_field.dart';
 import '../../../common/basewidget/step_header.dart';
@@ -93,11 +93,12 @@ class _CreateCommunityStep3PageState extends State<CreateCommunityStep3Page> {
     if (!mounted) return;
     setState(() => _isSaving = false);
 
+    final cycleId = result['cycleId']?.toString();
+    if (cycleId != null && cycleId.isNotEmpty) {
+      setState(() => _cycleId = cycleId);
+    }
+
     if (result['success'] == true) {
-      final cycleId = result['cycleId']?.toString();
-      if (cycleId != null && cycleId.isNotEmpty) {
-        setState(() => _cycleId = cycleId);
-      }
       return;
     }
 

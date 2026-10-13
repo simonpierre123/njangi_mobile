@@ -1,4 +1,4 @@
-import '../Models/contribution_model.dart';
+import '../ModeView/contribution_model.dart';
 
 /// Données mock pour "Enregistrer une cotisation" / "Contribution",
 /// en attendant l'API.

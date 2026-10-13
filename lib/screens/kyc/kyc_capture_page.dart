@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../Models/kyc_model.dart';
+import '../../ModeView/kyc_model.dart';
 import '../../common/basewidget/app_button.dart';
 import '../../common/basewidget/simple_app_bar.dart';
 import '../../localization/app_localizations.dart';

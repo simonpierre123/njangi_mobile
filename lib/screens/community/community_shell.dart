@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../Models/beneficiary_model.dart';
-import '../../Models/community_admin_dashboard_model.dart';
-import '../../Models/community_member_dashboard_model.dart';
-import '../../Models/community_members_model.dart';
-import '../../Models/community_model.dart';
-import '../../Models/profile_model.dart';
-import '../../Models/treasury_model.dart';
+import '../../ModeView/beneficiary_model.dart';
+import '../../ModeView/community_admin_dashboard_model.dart';
+import '../../ModeView/community_member_dashboard_model.dart';
+import '../../ModeView/community_members_model.dart';
+import '../../ModeView/community_model.dart';
+import '../../ModeView/profile_model.dart';
+import '../../ModeView/treasury_model.dart';
 import '../../common/basewidget/app_bottom_nav_bar.dart';
 import '../../localization/app_localizations.dart';
 import '../../utils/app_colors.dart';
@@ -83,6 +83,7 @@ class CommunityShell extends StatefulWidget {
     required this.onInviteMember,
     required this.onMemberMenuTap,
     required this.onMemberUrgentAction,
+    required this.onAdminMemberTap,
     required this.onMemberTap,
     // Profil
     required this.user,
@@ -146,6 +147,7 @@ class CommunityShell extends StatefulWidget {
   final VoidCallback onInviteMember;
   final ValueChanged<AdminMemberEntry> onMemberMenuTap;
   final ValueChanged<AdminMemberEntry> onMemberUrgentAction;
+  final ValueChanged<AdminMemberEntry> onAdminMemberTap;
   final ValueChanged<MemberDirectoryEntry> onMemberTap;
 
   final UserProfile user;
@@ -188,6 +190,53 @@ class _CommunityShellState extends State<CommunityShell> {
 
   bool get _isAdmin => widget.community.role == 'ADMIN';
 
+  GroupHealthStats get _healthWithCommunityCount {
+    final total = widget.community.memberCount;
+    return GroupHealthStats(
+      healthPercent: widget.health.healthPercent,
+      healthLabel: widget.health.healthLabel,
+      cashBalance: widget.health.cashBalance,
+      membersUpToDate: widget.health.membersUpToDate.clamp(0, total),
+      membersTotal: total,
+      pendingCount: widget.health.pendingCount,
+      activeLoans: widget.health.activeLoans,
+      lastUpdateLabel: widget.health.lastUpdateLabel,
+    );
+  }
+
+  MemberStatusStats _memberStatusWithCommunityCount(MemberStatusStats stats) {
+    final total = widget.community.memberCount;
+    return MemberStatusStats(
+      total: total,
+      upToDate: stats.upToDate.clamp(0, total),
+      pending: stats.pending.clamp(0, total),
+      lateCount: stats.lateCount.clamp(0, total),
+    );
+  }
+
+  CycleInfo get _adminCycleForCommunity {
+    final total = widget.community.cycleTotal;
+    final current = widget.community.cycleCurrent;
+    return CycleInfo(
+      currentCycle: current,
+      totalCycle: total,
+      progressPercent: total > 0 ? (current / total).clamp(0.0, 1.0) : 0,
+      nextBeneficiary: widget.adminCycle.nextBeneficiary,
+      remainingCycles: (total - current).clamp(0, total),
+    );
+  }
+
+  MemberCycleInfo get _memberCycleForCommunity => MemberCycleInfo(
+    progressPercent: widget.memberCycle.progressPercent,
+    progressLabel: widget.memberCycle.progressLabel,
+    nextBeneficiary: widget.memberCycle.nextBeneficiary,
+    remainingCycles: (widget.community.cycleTotal -
+            widget.community.cycleCurrent)
+        .clamp(0, widget.community.cycleTotal),
+    currentCycle: widget.community.cycleCurrent,
+    totalCycle: widget.community.cycleTotal,
+  );
+
   void _goToTab(int index) => setState(() => _tabIndex = index);
 
   @override
@@ -204,7 +253,11 @@ class _CommunityShellState extends State<CommunityShell> {
               : CommunityAppBar(
                 name: widget.community.name,
                 cycleLabel:
-                    'Cycle ${widget.community.cycleCurrent}/${widget.community.cycleTotal}',
+                    widget.community.hasCycle
+                        ? 'Cycle ${widget.community.cycleCurrent}/${widget.community.cycleTotal}'
+                        : '—',
+                logoUrl: widget.community.logoUrl,
+                memberCount: widget.community.memberCount,
                 role: widget.community.role,
                 onBack: widget.onBack,
               ),
@@ -237,10 +290,12 @@ class _CommunityShellState extends State<CommunityShell> {
           children: [
             _isAdmin
                 ? AdminDashboardPage(
-                  health: widget.health,
+                  health: _healthWithCommunityCount,
                   priorities: widget.adminPriorities,
-                  cycle: widget.adminCycle,
-                  memberStatus: widget.adminMemberStatus,
+                  cycle: _adminCycleForCommunity,
+                  memberStatus: _memberStatusWithCommunityCount(
+                    widget.adminMemberStatus,
+                  ),
                   loans: widget.loans,
                   activity: widget.dashboardActivity,
                   onQuickAction: widget.onQuickAction,
@@ -252,10 +307,12 @@ class _CommunityShellState extends State<CommunityShell> {
                   onSeeAllActivity: widget.onSeeAllActivity,
                 )
                 : MemberDashboardPage(
-                  health: widget.health,
+                  health: _healthWithCommunityCount,
                   requiredActions: widget.memberRequiredActions,
-                  cycle: widget.memberCycle,
-                  memberStatus: widget.memberMemberStatus,
+                  cycle: _memberCycleForCommunity,
+                  memberStatus: _memberStatusWithCommunityCount(
+                    widget.memberMemberStatus,
+                  ),
                   activity: widget.dashboardActivity,
                   onQuickAction: widget.onQuickAction,
                   onActionPay: widget.onActionPay,
@@ -295,6 +352,7 @@ class _CommunityShellState extends State<CommunityShell> {
                   onInviteMember: widget.onInviteMember,
                   onMemberMenuTap: widget.onMemberMenuTap,
                   onMemberUrgentAction: widget.onMemberUrgentAction,
+                  onMemberTap: widget.onAdminMemberTap,
                 )
                 : MembersPage(
                   summary: widget.memberSummary,

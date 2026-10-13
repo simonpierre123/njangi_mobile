@@ -20,6 +20,9 @@ subprojects {
                 else -> "com.example.${project.name}"
             }
         }
+        if (androidLibrary != null) {
+            androidLibrary.compileSdk = 36
+        }
     }
 }
 subprojects {

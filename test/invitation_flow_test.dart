@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:njangi/Models/Invitation.dart';
-import 'package:njangi/Models/create_community_model.dart';
+import 'package:njangi/ModeView/create_community_model.dart';
 import 'package:njangi/datasource/invitation_repository.dart';
 import 'package:njangi/localization/app_localizations.dart';
 import 'package:njangi/screens/community/creation/invite/invite_join_page.dart';
@@ -22,7 +22,11 @@ void main() {
 
     test('invites a registered user as pending', () async {
       final user = SimulatedInvitationRepository.registry.first;
-      final invitation = await repository.inviteUser(groupId: 'g1', user: user);
+      final invitation = await repository.inviteUser(
+        groupId: 'g1',
+        groupName: 'Groupe test',
+        user: user,
+      );
 
       expect(invitation.status, InvitationStatus.pending);
       expect(invitation.method, InvitationMethod.phone);
@@ -68,7 +72,8 @@ void main() {
           home: page,
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
     }
 
     testWidgets('phone page filters while typing and invites on tap', (
@@ -77,7 +82,12 @@ void main() {
       List<InvitedMember>? done;
       await pumpPage(
         tester,
-        InvitePhonePage(groupId: 'g1', onBack: () {}, onDone: (m) => done = m),
+        InvitePhonePage(
+          groupId: 'g1',
+          groupName: 'Groupe test',
+          onBack: () {},
+          onDone: (m) => done = m,
+        ),
       );
 
       await tester.enterText(find.byType(TextField), '69');
@@ -90,7 +100,12 @@ void main() {
 
       await tester.tap(find.text('Marie Ndzié'));
       await tester.pumpAndSettle();
-      expect(find.text('Invitation envoyée'), findsOneWidget);
+      expect(
+        find.text('Invitation enregistrée et notification envoyée.'),
+        findsOneWidget,
+      );
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
 
       await tester.tap(find.text('Terminer'));
       expect(done, hasLength(1));
@@ -119,7 +134,8 @@ void main() {
       expect(find.textContaining('https://njangi.app/join/'), findsWidgets);
 
       await tester.tap(find.text("Simuler l'ouverture du lien"));
-      await tester.pumpAndSettle();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1));
       expect(find.text('A rejoint'), findsOneWidget);
 
       await tester.tap(find.text('Terminer'));

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../Models/cycle_completion_model.dart';
+import '../../../ModeView/cycle_completion_model.dart';
 import '../../../localization/app_localizations.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/app_dimensions.dart';
@@ -69,19 +69,30 @@ class CycleCompletedPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
                   border: Border.all(color: AppColors.inputBorder),
                 ),
-                child: CycleCompletionHeader(communityName: communityName, closedDateLabel: closedDateLabel),
+                child: CycleCompletionHeader(
+                  communityName: communityName,
+                  closedDateLabel: closedDateLabel,
+                ),
               ),
               SizedBox(height: AppDimensions.spaceLg.h),
               Text(
                 AppLocalizations.t('cycle_summary_section'),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
               SizedBox(height: AppDimensions.spaceSm.h),
               CycleSummaryStatsGrid(stats: stats),
               SizedBox(height: AppDimensions.spaceLg.h),
               Text(
                 AppLocalizations.t('beneficiary_history_section'),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
               SizedBox(height: AppDimensions.spaceSm.h),
               Container(
@@ -105,9 +116,17 @@ class CycleCompletedPage extends StatelessWidget {
                         children: [
                           Text(
                             AppLocalizations.t('see_full_list_link'),
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.secondaryGreen),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.secondaryGreen,
+                            ),
                           ),
-                          const Icon(Icons.keyboard_arrow_down, size: 16, color: AppColors.secondaryGreen),
+                          const Icon(
+                            Icons.keyboard_arrow_down,
+                            size: 16,
+                            color: AppColors.secondaryGreen,
+                          ),
                         ],
                       ),
                     ),
@@ -117,7 +136,10 @@ class CycleCompletedPage extends StatelessWidget {
               SizedBox(height: AppDimensions.spaceLg.h),
               ClosureReportCard(onExport: onExportReport),
               SizedBox(height: AppDimensions.spaceLg.h),
-              NewCycleCard(onStartNewCycle: onStartNewCycle, onSeeCyclesHistory: onSeeCyclesHistory),
+              NewCycleCard(
+                onStartNewCycle: onStartNewCycle,
+                onSeeCyclesHistory: onSeeCyclesHistory,
+              ),
               SizedBox(height: AppDimensions.spaceXl.h),
             ],
           ),

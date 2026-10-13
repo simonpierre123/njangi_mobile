@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/treasury_model.dart';
+import '../../../../ModeView/treasury_model.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
 
 /// Carte "Cotisation du mois" avec accès au reçu.
 class ContributionReceiptCard extends StatelessWidget {
-  const ContributionReceiptCard({super.key, required this.receipt, required this.onSeeReceipt});
+  const ContributionReceiptCard({
+    super.key,
+    required this.receipt,
+    required this.onSeeReceipt,
+  });
 
   final ContributionReceipt receipt;
   final VoidCallback onSeeReceipt;
@@ -25,7 +29,10 @@ class ContributionReceiptCard extends StatelessWidget {
           Container(
             width: 36,
             height: 36,
-            decoration: const BoxDecoration(color: AppColors.primaryDark, shape: BoxShape.circle),
+            decoration: const BoxDecoration(
+              color: AppColors.primaryDark,
+              shape: BoxShape.circle,
+            ),
             child: const Icon(Icons.check, color: AppColors.white, size: 18),
           ),
           SizedBox(width: AppDimensions.spaceSm.w),
@@ -33,23 +40,47 @@ class ContributionReceiptCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(receipt.title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary)),
+                Text(
+                  receipt.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(receipt.dueLabel, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Text(
+                  receipt.dueLabel,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               ],
             ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(receipt.amount, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary)),
+              Text(
+                receipt.amount,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: AppColors.textPrimary,
+                ),
+              ),
               const SizedBox(height: 4),
               GestureDetector(
                 onTap: onSeeReceipt,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.receipt_long_outlined, size: 12, color: AppColors.secondaryGreen),
+                    const Icon(
+                      Icons.receipt_long_outlined,
+                      size: 12,
+                      color: AppColors.secondaryGreen,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       AppLocalizations.t('see_receipt'),

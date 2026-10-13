@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../Models/user_model.dart';
-import '../../Models/profile_model.dart';
+import '../../ModeView/profile_model.dart';
 import '../../common/basewidget/app_button.dart';
 import '../../common/basewidget/shimmer_loading.dart';
 import '../../common/basewidget/simple_app_bar.dart';

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../Models/profile_model.dart';
+import '../../../ModeView/profile_model.dart';
 import '../../../localization/app_localizations.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/app_dimensions.dart';
@@ -23,15 +23,32 @@ class ProfileActivityCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: _Stat(label: AppLocalizations.t('stat_communities'), value: '${activity.communitiesCount}')),
-              Expanded(child: _Stat(label: 'Admin', value: '${activity.adminCount}')),
+              Expanded(
+                child: _Stat(
+                  label: AppLocalizations.t('stat_communities'),
+                  value: '${activity.communitiesCount}',
+                ),
+              ),
+              Expanded(
+                child: _Stat(label: 'Admin', value: '${activity.adminCount}'),
+              ),
             ],
           ),
           SizedBox(height: AppDimensions.spaceMd.h),
           Row(
             children: [
-              Expanded(child: _Stat(label: AppLocalizations.t('contributions_label'), value: activity.totalContributions)),
-              Expanded(child: _Stat(label: AppLocalizations.t('active_loans'), value: '${activity.activeLoans}')),
+              Expanded(
+                child: _Stat(
+                  label: AppLocalizations.t('contributions_label'),
+                  value: activity.totalContributions,
+                ),
+              ),
+              Expanded(
+                child: _Stat(
+                  label: AppLocalizations.t('active_loans'),
+                  value: '${activity.activeLoans}',
+                ),
+              ),
             ],
           ),
         ],
@@ -53,10 +70,22 @@ class _Stat extends StatelessWidget {
       children: [
         Text(
           label.toUpperCase(),
-          style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.white70, letterSpacing: 0.5),
+          style: TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+            color: AppColors.white70,
+            letterSpacing: 0.5,
+          ),
         ),
         const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.white)),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.white,
+          ),
+        ),
       ],
     );
   }

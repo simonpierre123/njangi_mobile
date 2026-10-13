@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/contribution_model.dart';
+import '../../../../ModeView/contribution_model.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
 
 /// Grille 3 colonnes de sélection du mode de paiement.
 class PaymentMethodGrid extends StatelessWidget {
-  const PaymentMethodGrid({super.key, required this.selected, required this.onSelect});
+  const PaymentMethodGrid({
+    super.key,
+    required this.selected,
+    required this.onSelect,
+  });
 
   final PaymentMethod selected;
   final ValueChanged<PaymentMethod> onSelect;
@@ -36,7 +40,8 @@ class PaymentMethodGrid extends StatelessWidget {
               onTap: () => onSelect(method),
             ),
           ),
-          if (method != PaymentMethod.values.last) SizedBox(width: AppDimensions.spaceSm.w),
+          if (method != PaymentMethod.values.last)
+            SizedBox(width: AppDimensions.spaceSm.w),
         ],
       ],
     );
@@ -44,7 +49,12 @@ class PaymentMethodGrid extends StatelessWidget {
 }
 
 class _MethodTile extends StatelessWidget {
-  const _MethodTile({required this.icon, required this.label, required this.isSelected, required this.onTap});
+  const _MethodTile({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String label;
@@ -54,7 +64,10 @@ class _MethodTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: isSelected ? AppColors.tagMintBg : AppColors.paymentMethodUnselectedBg,
+      color:
+          isSelected
+              ? AppColors.tagMintBg
+              : AppColors.paymentMethodUnselectedBg,
       borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
       child: InkWell(
         onTap: onTap,
@@ -63,12 +76,22 @@ class _MethodTile extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: AppDimensions.spaceMd.h),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-            border: Border.all(color: isSelected ? AppColors.primaryDark : AppColors.inputBorder, width: isSelected ? 1.5 : 1),
+            border: Border.all(
+              color: isSelected ? AppColors.primaryDark : AppColors.inputBorder,
+              width: isSelected ? 1.5 : 1,
+            ),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 20, color: isSelected ? AppColors.primaryDark : AppColors.textSecondary),
+              Icon(
+                icon,
+                size: 20,
+                color:
+                    isSelected
+                        ? AppColors.primaryDark
+                        : AppColors.textSecondary,
+              ),
               const SizedBox(height: 6),
               Text(
                 label,
@@ -76,7 +99,10 @@ class _MethodTile extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: isSelected ? AppColors.primaryDark : AppColors.textPrimary,
+                  color:
+                      isSelected
+                          ? AppColors.primaryDark
+                          : AppColors.textPrimary,
                 ),
               ),
             ],

@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../api/firebase_api.dart';
 import '../../Controllers_distant/GroupeNjangiController.dart';
-import '../../Models/community_model.dart';
-import '../../Models/notification_feed_model.dart';
-import '../../Models/profile_model.dart';
+import '../../Controllers_distant/NotificationController.dart';
+import '../../Models/Notification.dart' as app_notification;
+import '../../ModeView/community_model.dart';
+import '../../ModeView/profile_model.dart';
 import '../../common/basewidget/app_bottom_nav_bar.dart';
 import '../../common/basewidget/app_fab.dart';
 import '../../localization/app_localizations.dart';
+import '../../routes/app_route_observer.dart';
 import '../../utils/management/storage_manager.dart';
 import '../../utils/app_colors.dart';
 import '../profil/profile_page.dart';
@@ -27,7 +29,8 @@ class HomeShell extends StatefulWidget {
     required this.onIdentify,
     required this.onCommunityTap,
     required this.onAddCommunity,
-    required this.notifications,
+    required this.onOpenInvitation,
+    required this.onLock,
     required this.user,
     required this.profileActivity,
     required this.profileCommunities,
@@ -46,7 +49,8 @@ class HomeShell extends StatefulWidget {
   final VoidCallback onIdentify;
   final ValueChanged<CommunityModel> onCommunityTap;
   final Future<void> Function() onAddCommunity;
-  final List<NotificationItem> notifications;
+  final Future<void> Function(app_notification.Notification) onOpenInvitation;
+  final Future<void> Function() onLock;
 
   final UserProfile user;
   final ProfileActivity profileActivity;
@@ -64,7 +68,7 @@ class HomeShell extends StatefulWidget {
   State<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
+class _HomeShellState extends State<HomeShell> with RouteAware {
   int _tabIndex = 0;
   String _userName = '';
   String? _greetingSubtitleKey;
@@ -74,6 +78,13 @@ class _HomeShellState extends State<HomeShell> {
       widget.profileCommunities;
   late ProfileActivity _profileActivity = widget.profileActivity;
   bool _isLoadingCommunities = true;
+  List<app_notification.Notification> _notifications = const [];
+  bool _isLoadingNotifications = false;
+  String? _notificationError;
+  PageRoute<dynamic>? _homeRoute;
+
+  int get _unreadNotificationCount =>
+      _notifications.where((notification) => !notification.isRead).length;
 
   @override
   void initState() {
@@ -82,6 +93,96 @@ class _HomeShellState extends State<HomeShell> {
     _profileUser = widget.user;
     _loadGreeting();
     _loadCommunities();
+    unawaited(_loadNotifications());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute<dynamic> && route != _homeRoute) {
+      if (_homeRoute != null) appRouteObserver.unsubscribe(this);
+      _homeRoute = route;
+      appRouteObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void didPopNext() {
+    unawaited(_refreshHome());
+  }
+
+  @override
+  void dispose() {
+    appRouteObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  Future<void> _loadNotifications() async {
+    if (mounted) {
+      setState(() {
+        _isLoadingNotifications = true;
+        _notificationError = null;
+      });
+    }
+
+    final user = await StorageManager.getUser();
+    if (user == null || user.id.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        _notifications = const [];
+        _isLoadingNotifications = false;
+        _notificationError = AppLocalizations.t('notification_load_error');
+      });
+      return;
+    }
+
+    final result = await NotificationController.getForUser(user.id);
+    if (!mounted) return;
+    setState(() {
+      _notifications =
+          result['success'] == true
+              ? result['notifications'] as List<app_notification.Notification>
+              : const [];
+      _isLoadingNotifications = false;
+      _notificationError =
+          result['success'] == true
+              ? null
+              : result['message']?.toString() ??
+                  AppLocalizations.t('notification_load_error');
+    });
+  }
+
+  Future<void> _markNotificationAsRead(
+    app_notification.Notification notification,
+  ) async {
+    final id = notification.id;
+    if (id == null || notification.isRead) return;
+    final result = await NotificationController.markAsRead(id);
+    if (!mounted) return;
+    if (result['success'] == true) {
+      setState(() {
+        _notifications = _notifications
+            .map((item) => item.id == id ? item.copyWith(isRead: true) : item)
+            .toList(growable: false);
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result['message']?.toString() ??
+                AppLocalizations.t('notification_mark_read_error'),
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _openInvitation(
+    app_notification.Notification notification,
+  ) async {
+    await widget.onOpenInvitation(notification);
+    await _loadNotifications();
   }
 
   Future<void> _loadCommunities() async {
@@ -119,6 +220,10 @@ class _HomeShellState extends State<HomeShell> {
     if (!mounted) return;
     setState(() => _isLoadingCommunities = true);
     await _loadCommunities();
+  }
+
+  Future<void> _refreshHome() async {
+    await Future.wait([_loadCommunities(), _loadNotifications()]);
   }
 
   String _localizedRole(String? role) => switch (role?.toUpperCase()) {
@@ -164,7 +269,11 @@ class _HomeShellState extends State<HomeShell> {
         currentIndex: _tabIndex,
         onTap: (i) {
           setState(() => _tabIndex = i);
-          if (i == 0) unawaited(FirebaseApi.syncTokenOnHomeEntry());
+          if (i == 0) {
+            unawaited(FirebaseApi.syncTokenOnHomeEntry());
+            unawaited(_refreshHome());
+          }
+          if (i == 1) unawaited(_loadNotifications());
         },
         items: [
           AppNavItem(
@@ -175,7 +284,7 @@ class _HomeShellState extends State<HomeShell> {
           AppNavItem(
             icon: Icons.notifications_none_outlined,
             label: AppLocalizations.t('nav_notifications'),
-            showDot: true,
+            badgeCount: _unreadNotificationCount,
           ),
           AppNavItem(
             icon: Icons.person_outline,
@@ -197,12 +306,19 @@ class _HomeShellState extends State<HomeShell> {
                   widget.isProfileComplete || _profileUser.isKycComplete,
               onIdentify: widget.onIdentify,
               onCommunityTap: widget.onCommunityTap,
+              onRefresh: _refreshHome,
+              onLock: widget.onLock,
             ),
-            // TODO (Njoya) : brancher un vrai badge "non lues" sur
-            // l'onglet lui-même une fois l'API disponible.
             NotificationFeedPage(
-              notifications: widget.notifications,
+              notifications: _notifications,
               onBackToHome: () => setState(() => _tabIndex = 0),
+              isLoading: _isLoadingNotifications,
+              errorMessage: _notificationError,
+              onRetry: () => unawaited(_loadNotifications()),
+              onOpenInvitation: _openInvitation,
+              onMarkAsRead:
+                  (notification) =>
+                      unawaited(_markNotificationAsRead(notification)),
             ),
             ProfilePage(
               user: _profileUser,

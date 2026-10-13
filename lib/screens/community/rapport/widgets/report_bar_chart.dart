@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/report_model.dart';
+import '../../../../ModeView/report_model.dart';
 import '../../../../utils/app_colors.dart';
 
 /// Graphique en barres — "Évolution des versements". La barre la plus
@@ -30,8 +30,13 @@ class ReportBarChart extends StatelessWidget {
                     alignment: Alignment.bottomCenter,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: p.value == maxValue ? AppColors.primaryDark : AppColors.primaryDark10,
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                        color:
+                            p.value == maxValue
+                                ? AppColors.primaryDark
+                                : AppColors.primaryDark10,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(8),
+                        ),
                       ),
                     ),
                   ),
@@ -46,7 +51,13 @@ class ReportBarChart extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             for (final p in points)
-              Text(p.label, style: const TextStyle(fontSize: 9, color: AppColors.textSecondary)),
+              Text(
+                p.label,
+                style: const TextStyle(
+                  fontSize: 9,
+                  color: AppColors.textSecondary,
+                ),
+              ),
           ],
         ),
       ],

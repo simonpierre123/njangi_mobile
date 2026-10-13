@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/beneficiary_model.dart';
+import '../../../../ModeView/beneficiary_model.dart';
 import '../../../../common/basewidget/network_avatar.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
@@ -54,7 +54,11 @@ class CurrentBeneficiaryCard extends StatelessWidget {
                         color: AppColors.secondaryGreen,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.star, size: 12, color: Colors.amber),
+                      child: const Icon(
+                        Icons.star,
+                        size: 12,
+                        color: Colors.amber,
+                      ),
                     ),
                   ),
                 ],
@@ -66,26 +70,43 @@ class CurrentBeneficiaryCard extends StatelessWidget {
                   children: [
                     Text(
                       beneficiary.name,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.white),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.white,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusXl,
+                        ),
                       ),
                       child: Text(
                         '${beneficiary.subtitle} · ${beneficiary.statusLabel}',
                         // Réutilise la même valeur que cycleBadgeBg
                         // (#B1F0D4), ici comme couleur de TEXTE, pas de fond.
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.cycleBadgeBg),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.cycleBadgeBg,
+                        ),
                       ),
                     ),
                     SizedBox(height: AppDimensions.spaceXs.h),
                     Text(
                       beneficiary.amount,
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.white),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.white,
+                      ),
                     ),
                   ],
                 ),
@@ -102,15 +123,26 @@ class CurrentBeneficiaryCard extends StatelessWidget {
                   onTap: onDisburse,
                   borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.payments_outlined, size: 16, color: AppColors.primaryDark),
+                        const Icon(
+                          Icons.payments_outlined,
+                          size: 16,
+                          color: AppColors.primaryDark,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           AppLocalizations.t('disburse_button'),
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.primaryDark),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryDark,
+                          ),
                         ),
                       ],
                     ),

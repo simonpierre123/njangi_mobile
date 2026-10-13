@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../Models/community_admin_dashboard_model.dart';
+import '../ModeView/community_admin_dashboard_model.dart';
 import '../utils/app_colors.dart';
 
 /// Données mock pour le tableau de bord admin, en attendant l'API.
@@ -22,7 +22,11 @@ class CommunityAdminMockDatasource {
   static const priorities = [
     PriorityItem(icon: Icons.payment, label: '3 cotisations à enregistrer'),
     PriorityItem(icon: Icons.description_outlined, label: '2 demandes de prêt'),
-    PriorityItem(icon: Icons.warning_amber_rounded, label: '1 membre en retard', isAlert: true),
+    PriorityItem(
+      icon: Icons.warning_amber_rounded,
+      label: '1 membre en retard',
+      isAlert: true,
+    ),
   ];
 
   static const cycle = CycleInfo(

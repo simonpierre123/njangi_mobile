@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/contribution_model.dart';
+import '../../../../ModeView/contribution_model.dart';
 import '../../../../common/basewidget/network_avatar.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';

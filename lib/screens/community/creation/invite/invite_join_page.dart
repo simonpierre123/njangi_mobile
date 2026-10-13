@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../Models/Invitation.dart';
-import '../../../../Models/create_community_model.dart';
+import '../../../../ModeView/create_community_model.dart';
 import '../../../../common/basewidget/app_button.dart';
 import '../../../../common/basewidget/shimmer_loading.dart';
 import '../../../../common/basewidget/simple_app_bar.dart';

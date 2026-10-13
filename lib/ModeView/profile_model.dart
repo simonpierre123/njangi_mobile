@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'community_model.dart';
-import 'user_model.dart';
+import '../Models/user_model.dart';
 import '../utils/app_constants.dart';
 
 /// Modèles pour la section "Profil" (compte utilisateur, sécurité).

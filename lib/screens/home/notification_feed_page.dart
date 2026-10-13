@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-import '../../Models/notification_feed_model.dart';
+import 'package:flutter/material.dart' hide Notification;
+import '../../Models/Notification.dart';
 import '../../common/basewidget/member_filter_chips.dart';
 import '../../localization/app_localizations.dart';
 import '../../utils/app_colors.dart';
@@ -18,10 +18,20 @@ class NotificationFeedPage extends StatefulWidget {
     super.key,
     required this.notifications,
     required this.onBackToHome,
+    required this.isLoading,
+    required this.errorMessage,
+    required this.onRetry,
+    required this.onOpenInvitation,
+    required this.onMarkAsRead,
   });
 
-  final List<NotificationItem> notifications;
+  final List<Notification> notifications;
   final VoidCallback onBackToHome;
+  final bool isLoading;
+  final String? errorMessage;
+  final VoidCallback onRetry;
+  final ValueChanged<Notification> onOpenInvitation;
+  final ValueChanged<Notification> onMarkAsRead;
 
   @override
   State<NotificationFeedPage> createState() => _NotificationFeedPageState();
@@ -37,16 +47,24 @@ class _NotificationFeedPageState extends State<NotificationFeedPage> {
       AppLocalizations.t('filter_unread'),
       AppLocalizations.t('contributions_label'),
       AppLocalizations.t('loans_label'),
+      AppLocalizations.t('invite_members_title'),
     ];
 
-    final filtered = widget.notifications.where((n) {
-      return switch (_filterIndex) {
-        1 => n.isUnread,
-        2 => n.type == NotificationType.contribution,
-        3 => n.type == NotificationType.loan,
-        _ => true,
-      };
-    }).toList();
+    final filtered =
+        widget.notifications.where((n) {
+            return switch (_filterIndex) {
+              1 => !n.isRead,
+              2 => n.eventType == 'COTISATION',
+              3 => n.eventType == 'PRET',
+              4 => n.isInvitation,
+              _ => true,
+            };
+          }).toList()
+          ..sort(
+            (a, b) => (b.createdAt ?? DateTime(0)).compareTo(
+              a.createdAt ?? DateTime(0),
+            ),
+          );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,19 +79,28 @@ class _NotificationFeedPageState extends State<NotificationFeedPage> {
               IconButton(
                 onPressed: widget.onBackToHome,
                 padding: EdgeInsets.zero,
-                icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: AppColors.textPrimary,
+                ),
               ),
               SizedBox(width: AppDimensions.spaceXs.w),
               Text(
                 AppLocalizations.t('nav_notifications'),
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ],
           ),
         ),
         Expanded(
           child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: AppDimensions.screenPaddingH.w),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppDimensions.screenPaddingH.w,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -83,7 +110,28 @@ class _NotificationFeedPageState extends State<NotificationFeedPage> {
                   onChanged: (i) => setState(() => _filterIndex = i),
                 ),
                 SizedBox(height: AppDimensions.spaceLg.h),
-                _buildGroupedList(filtered),
+                if (widget.isLoading)
+                  const Center(child: CircularProgressIndicator())
+                else if (widget.errorMessage != null)
+                  Center(
+                    child: Column(
+                      children: [
+                        Text(
+                          widget.errorMessage!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: widget.onRetry,
+                          child: Text(AppLocalizations.t('invite_retry')),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  _buildList(filtered),
                 SizedBox(height: AppDimensions.spaceXl.h),
               ],
             ),
@@ -93,7 +141,7 @@ class _NotificationFeedPageState extends State<NotificationFeedPage> {
     );
   }
 
-  Widget _buildGroupedList(List<NotificationItem> items) {
+  Widget _buildList(List<Notification> items) {
     if (items.isEmpty) {
       return Padding(
         padding: EdgeInsets.symmetric(vertical: AppDimensions.spaceXl.h),
@@ -106,22 +154,17 @@ class _NotificationFeedPageState extends State<NotificationFeedPage> {
       );
     }
 
-    final widgets = <Widget>[];
-    String? lastGroup;
-    for (final item in items) {
-      if (item.dayGroupKey != lastGroup) {
-        if (lastGroup != null) widgets.add(SizedBox(height: AppDimensions.spaceLg.h));
-        widgets.add(Text(
-          AppLocalizations.t(item.dayGroupKey).toUpperCase(),
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5),
-        ));
-        widgets.add(SizedBox(height: AppDimensions.spaceSm.h));
-        lastGroup = item.dayGroupKey;
-      } else {
-        widgets.add(SizedBox(height: AppDimensions.spaceSm.h));
-      }
-      widgets.add(NotificationFeedCard(item: item));
-    }
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: widgets);
+    return Column(
+      children: [
+        for (final notification in items) ...[
+          NotificationFeedCard(
+            item: notification,
+            onOpenInvitation: () => widget.onOpenInvitation(notification),
+            onMarkAsRead: () => widget.onMarkAsRead(notification),
+          ),
+          SizedBox(height: AppDimensions.spaceSm.h),
+        ],
+      ],
+    );
   }
 }

@@ -45,10 +45,59 @@ class UserController {
               id: user['id']?.toString() ?? '',
               name: name.isEmpty ? user['telephone']?.toString() ?? '' : name,
               phone: user['telephone']?.toString() ?? '',
+              tokenFirebase: user['token_firebase']?.toString(),
             );
           })
           .where((user) => user.id.isNotEmpty && user.phone.isNotEmpty)
           .toList();
+    } on DioException catch (error) {
+      ApiService.logServerError(error);
+      rethrow;
+    }
+  }
+
+  static Future<RegisteredUser?> getByPhone(String phone) async {
+    final normalizedPhone = phone.trim();
+    if (normalizedPhone.isEmpty) return null;
+
+    try {
+      final response = await ApiService.dio.get(
+        'utilisateurs',
+        queryParameters: {'telephone': normalizedPhone},
+      );
+      final body = response.data;
+      if (body is! Map || body['success'] != true) {
+        debugPrint(
+          '[API] Exact user lookup returned an invalid response: $body',
+        );
+        throw const FormatException('Invalid exact user lookup response');
+      }
+
+      final page = body['data'];
+      final rows = page is Map ? page['data'] : page;
+      if (rows is! List) {
+        debugPrint('[API] Exact user lookup has no user list: $body');
+        throw const FormatException('User list missing from exact lookup');
+      }
+
+      for (final row in rows.whereType<Map>()) {
+        final user = Map<String, dynamic>.from(row);
+        if (user['telephone']?.toString() != normalizedPhone) continue;
+
+        final firstName = user['prenom']?.toString().trim() ?? '';
+        final lastName = user['nom']?.toString().trim() ?? '';
+        final name = [
+          firstName,
+          lastName,
+        ].where((part) => part.isNotEmpty).join(' ');
+        return RegisteredUser(
+          id: user['id']?.toString() ?? '',
+          name: name.isEmpty ? normalizedPhone : name,
+          phone: normalizedPhone,
+          tokenFirebase: user['token_firebase']?.toString(),
+        );
+      }
+      return null;
     } on DioException catch (error) {
       ApiService.logServerError(error);
       rethrow;

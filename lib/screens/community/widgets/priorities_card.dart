@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/community_admin_dashboard_model.dart';
+import '../../../ModeView/community_admin_dashboard_model.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
 
@@ -24,8 +24,12 @@ class PrioritiesCard extends StatelessWidget {
       child: Column(
         children: [
           for (var i = 0; i < items.length; i++) ...[
-            _PriorityRow(item: items[i], onTap: () => onItemTap?.call(items[i])),
-            if (i != items.length - 1) SizedBox(height: AppDimensions.spaceSm.h),
+            _PriorityRow(
+              item: items[i],
+              onTap: () => onItemTap?.call(items[i]),
+            ),
+            if (i != items.length - 1)
+              SizedBox(height: AppDimensions.spaceSm.h),
           ],
         ],
       ),
@@ -44,7 +48,8 @@ class _PriorityRow extends StatelessWidget {
     final accent = item.isAlert ? AppColors.alertRed : AppColors.primaryDark;
 
     return Material(
-      color: item.isAlert ? AppColors.errorContainer20 : AppColors.mintSurfaceAlt,
+      color:
+          item.isAlert ? AppColors.errorContainer20 : AppColors.mintSurfaceAlt,
       borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppDimensions.radiusLg),

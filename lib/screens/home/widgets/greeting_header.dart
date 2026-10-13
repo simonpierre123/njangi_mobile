@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../common/basewidget/shimmer_loading.dart';
 import '../../../localization/app_localizations.dart';
@@ -10,11 +12,13 @@ class GreetingHeader extends StatelessWidget {
     required this.userName,
     required this.photoUrl,
     required this.subtitleKey,
+    required this.onLock,
   });
 
   final String userName;
   final String? photoUrl;
   final String? subtitleKey;
+  final Future<void> Function() onLock;
 
   @override
   Widget build(BuildContext context) {
@@ -50,22 +54,33 @@ class GreetingHeader extends StatelessWidget {
                   ),
         ),
         const SizedBox(width: 10),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${AppLocalizations.t('greeting_hello')}, $userName 👋',
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
-            ),
-            if (subtitleKey != null)
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Text(
-                AppLocalizations.t(subtitleKey!),
+                '${AppLocalizations.t('greeting_hello')}, $userName 👋',
                 style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-          ],
+              if (subtitleKey != null)
+                Text(
+                  AppLocalizations.t(subtitleKey!),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        IconButton(
+          tooltip: AppLocalizations.t('lock_app_tooltip'),
+          onPressed: () => unawaited(onLock()),
+          icon: const Icon(Icons.lock_outline_rounded),
+          color: AppColors.primaryDark,
         ),
       ],
     );

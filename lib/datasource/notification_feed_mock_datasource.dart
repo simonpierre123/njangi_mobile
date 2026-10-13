@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../Models/notification_feed_model.dart';
+import '../ModeView/notification_feed_model.dart';
 import '../utils/app_colors.dart';
 
 /// Données mock du fil de notifications, en attendant l'API.

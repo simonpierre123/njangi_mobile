@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../Models/report_model.dart';
+import '../../../ModeView/report_model.dart';
 import '../../../common/basewidget/member_avatars_stack.dart';
 import '../../../common/basewidget/member_filter_chips.dart';
 import '../../../common/basewidget/simple_app_bar.dart';
@@ -45,7 +45,10 @@ class _DetailedReportPageState extends State<DetailedReportPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
-      appBar: SimpleAppBar(title: AppLocalizations.t('detailed_report_title'), onBack: widget.onBack),
+      appBar: SimpleAppBar(
+        title: AppLocalizations.t('detailed_report_title'),
+        onBack: widget.onBack,
+      ),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -60,15 +63,40 @@ class _DetailedReportPageState extends State<DetailedReportPage> {
                 children: [
                   Text(
                     AppLocalizations.t('contributions_breadcrumb'),
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
-                  const Text(' · ', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                  Text(widget.communityName, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  const Text(
+                    ' · ',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  Text(
+                    widget.communityName,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                   if (widget.role != null) ...[
-                    const Text(' · ', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    const Text(
+                      ' · ',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                     Text(
                       widget.role!,
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.roleText),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.roleText,
+                      ),
                     ),
                   ],
                 ],
@@ -97,30 +125,52 @@ class _DetailedReportPageState extends State<DetailedReportPage> {
                   children: [
                     Text(
                       AppLocalizations.t('total_collected_label').toUpperCase(),
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.white.withValues(alpha: 0.75), letterSpacing: 0.5),
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.white.withValues(alpha: 0.75),
+                        letterSpacing: 0.5,
+                      ),
                     ),
                     SizedBox(height: AppDimensions.spaceXs.h),
                     Text(
                       widget.summary.totalCollected,
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.white),
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.white,
+                      ),
                     ),
                     SizedBox(height: AppDimensions.spaceSm.h),
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.radiusXl,
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.arrow_upward, size: 10, color: AppColors.white),
+                              const Icon(
+                                Icons.arrow_upward,
+                                size: 10,
+                                color: AppColors.white,
+                              ),
                               const SizedBox(width: 2),
                               Text(
                                 widget.summary.changeLabel,
-                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.white),
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.white,
+                                ),
                               ),
                             ],
                           ),
@@ -128,7 +178,10 @@ class _DetailedReportPageState extends State<DetailedReportPage> {
                         SizedBox(width: AppDimensions.spaceSm.w),
                         Text(
                           widget.summary.updatedAtLabel,
-                          style: TextStyle(fontSize: 10, color: AppColors.white.withValues(alpha: 0.75)),
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: AppColors.white.withValues(alpha: 0.75),
+                          ),
                         ),
                       ],
                     ),
@@ -149,17 +202,27 @@ class _DetailedReportPageState extends State<DetailedReportPage> {
                   children: [
                     Text(
                       AppLocalizations.t('transactions_word'),
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     SizedBox(height: AppDimensions.spaceXs.h),
                     Row(
                       children: [
                         Text(
                           '${widget.summary.transactionsCount}',
-                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                         const Spacer(),
-                        MemberAvatarsStack(count: widget.summary.transactionsCount),
+                        MemberAvatarsStack(
+                          count: widget.summary.transactionsCount,
+                        ),
                       ],
                     ),
                   ],
@@ -171,16 +234,30 @@ class _DetailedReportPageState extends State<DetailedReportPage> {
                 children: [
                   Text(
                     AppLocalizations.t('versements_evolution_title'),
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(width: 6, height: 6, decoration: const BoxDecoration(color: AppColors.primaryDark, shape: BoxShape.circle)),
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: AppColors.primaryDark,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         AppLocalizations.t('objective_reached_label'),
-                        style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -203,7 +280,11 @@ class _DetailedReportPageState extends State<DetailedReportPage> {
                 children: [
                   Text(
                     AppLocalizations.t('last_operations_section'),
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   GestureDetector(
                     onTap: widget.onSeeAllTransactions,
@@ -222,7 +303,8 @@ class _DetailedReportPageState extends State<DetailedReportPage> {
               SizedBox(height: AppDimensions.spaceSm.h),
               for (var i = 0; i < widget.transactions.length; i++) ...[
                 ReportTransactionRow(transaction: widget.transactions[i]),
-                if (i != widget.transactions.length - 1) SizedBox(height: AppDimensions.spaceSm.h),
+                if (i != widget.transactions.length - 1)
+                  SizedBox(height: AppDimensions.spaceSm.h),
               ],
               SizedBox(height: AppDimensions.spaceLg.h),
               Row(
@@ -236,8 +318,14 @@ class _DetailedReportPageState extends State<DetailedReportPage> {
                         backgroundColor: AppColors.primaryDark,
                         foregroundColor: AppColors.white,
                         elevation: 0,
-                        padding: EdgeInsets.symmetric(vertical: AppDimensions.spaceSm.h),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusMd)),
+                        padding: EdgeInsets.symmetric(
+                          vertical: AppDimensions.spaceSm.h,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radiusMd,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -245,12 +333,17 @@ class _DetailedReportPageState extends State<DetailedReportPage> {
                   Container(
                     decoration: BoxDecoration(
                       color: AppColors.white,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusMd,
+                      ),
                       border: Border.all(color: AppColors.inputBorder),
                     ),
                     child: IconButton(
                       onPressed: widget.onExport,
-                      icon: const Icon(Icons.ios_share, color: AppColors.primaryDark),
+                      icon: const Icon(
+                        Icons.ios_share,
+                        color: AppColors.primaryDark,
+                      ),
                     ),
                   ),
                 ],

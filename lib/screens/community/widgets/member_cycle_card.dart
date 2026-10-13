@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/community_member_dashboard_model.dart';
+import '../../../ModeView/community_member_dashboard_model.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
@@ -23,9 +23,27 @@ class MemberCycleCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            AppLocalizations.t('current_cycle'),
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                AppLocalizations.t('current_cycle'),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              if (info.totalCycle > 0)
+                Text(
+                  '${AppLocalizations.t('cycle_word')} ${info.currentCycle} ${AppLocalizations.t('of_word')} ${info.totalCycle}',
+                  style: const TextStyle(
+                    color: AppColors.primaryDark,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+            ],
           ),
           SizedBox(height: AppDimensions.spaceMd.h),
           Row(
@@ -34,11 +52,21 @@ class MemberCycleCard extends StatelessWidget {
             children: [
               Text(
                 '${(info.progressPercent * 100).round()}%',
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 36, color: AppColors.primaryDark),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 36,
+                  color: AppColors.primaryDark,
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: Text(info.progressLabel, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                child: Text(
+                  info.progressLabel,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               ),
             ],
           ),
@@ -55,22 +83,36 @@ class MemberCycleCard extends StatelessWidget {
           SizedBox(height: AppDimensions.spaceMd.h),
           Row(
             children: [
-              const Icon(Icons.person_outline, size: 14, color: AppColors.textSecondary),
+              const Icon(
+                Icons.person_outline,
+                size: 14,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(width: 6),
               Text(
                 '${AppLocalizations.t('next_beneficiary_colon')} ',
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
               ),
               Text(
                 info.nextBeneficiary,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
             '${info.remainingCycles} ${AppLocalizations.t('cycles_remaining_period')}',
-            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
           ),
         ],
       ),

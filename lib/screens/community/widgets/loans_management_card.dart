@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/community_admin_dashboard_model.dart';
+import '../../../ModeView/community_admin_dashboard_model.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
@@ -21,11 +21,20 @@ class LoansManagementCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _LoanRow(label: AppLocalizations.t('active_loans'), value: '${stats.activeLoans}'),
+          _LoanRow(
+            label: AppLocalizations.t('active_loans'),
+            value: '${stats.activeLoans}',
+          ),
           const Divider(height: 1, color: AppColors.divider),
-          _LoanRow(label: AppLocalizations.t('pending_requests'), value: '${stats.pendingRequests}'),
+          _LoanRow(
+            label: AppLocalizations.t('pending_requests'),
+            value: '${stats.pendingRequests}',
+          ),
           const Divider(height: 1, color: AppColors.divider),
-          _LoanRow(label: AppLocalizations.t('overdue_label'), value: '${stats.overdue}'),
+          _LoanRow(
+            label: AppLocalizations.t('overdue_label'),
+            value: '${stats.overdue}',
+          ),
           SizedBox(height: AppDimensions.spaceMd.h),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -39,11 +48,19 @@ class LoansManagementCard extends StatelessWidget {
               children: [
                 Text(
                   AppLocalizations.t('borrowing_capacity').toUpperCase(),
-                  style: const TextStyle(color: AppColors.primaryDark, fontSize: 10, fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    color: AppColors.primaryDark,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 Text(
                   stats.borrowingCapacity,
-                  style: const TextStyle(color: AppColors.primaryDark, fontSize: 14, fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    color: AppColors.primaryDark,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
@@ -67,8 +84,21 @@ class _LoanRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-          Text(value, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 13)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
         ],
       ),
     );

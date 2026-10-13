@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
-import 'Invitation.dart';
+import '../Models/Invitation.dart';
 import 'community_model.dart';
 
 /// Type de communauté (Étape 1/5).

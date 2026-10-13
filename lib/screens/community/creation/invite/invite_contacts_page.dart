@@ -2,7 +2,7 @@ import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../../Models/Invitation.dart';
-import '../../../../Models/create_community_model.dart';
+import '../../../../ModeView/create_community_model.dart';
 import '../../../../common/basewidget/app_button.dart';
 import '../../../../common/basewidget/app_text_field.dart';
 import '../../../../common/basewidget/shimmer_loading.dart';

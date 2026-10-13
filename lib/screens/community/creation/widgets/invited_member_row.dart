@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../Models/Invitation.dart';
-import '../../../../Models/create_community_model.dart';
+import '../../../../ModeView/create_community_model.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';

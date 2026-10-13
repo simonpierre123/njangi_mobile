@@ -37,6 +37,13 @@ void main() {
     expect(group.members, hasLength(2));
     expect(group.membersLoaded, isTrue);
     expect(group.members.first.displayName, 'Gaston Ndjanang');
+    expect(group.members.first.telephone, '+237690000001');
+    expect(group.members.first.email, 'gaston@example.com');
+    expect(group.members.first.photo, 'utilisateurs/gaston.jpg');
+    expect(group.members.first.cniRecto, 'documents/cni-recto.jpg');
+    expect(group.members.first.cniVerso, 'documents/cni-verso.jpg');
+    expect(group.members.first.passport, 'documents/passport.jpg');
+    expect(group.members.first.permis, 'documents/permis.jpg');
     expect(group.cycleCurrent, 1);
     expect(group.contributionAmount, '50000 XAF');
     expect(group.contributionFrequency, 'mois');
@@ -134,7 +141,22 @@ class _GroupsApiAdapter implements HttpClientAdapter {
             'role': 'ADMIN',
             'statut': 'ACTIF',
             'active': '1',
-            'utilisateur': {'prenom': 'Gaston', 'nom': 'Ndjanang'},
+            'utilisateur': {
+              'prenom': 'Gaston',
+              'nom': 'Ndjanang',
+              'telephone': '+237690000001',
+              'email': 'gaston@example.com',
+              'photo': 'utilisateurs/gaston.jpg',
+              'sexe': 'M',
+              'adresse': 'Rue du Centre',
+              'ville': 'Douala',
+              'pays': 'Cameroun',
+              'cni_recto': 'documents/cni-recto.jpg',
+              'cni_verso': 'documents/cni-verso.jpg',
+              'passport': 'documents/passport.jpg',
+              'permis_conduire': 'documents/permis.jpg',
+              'created_at': '2025-01-10T10:00:00.000000Z',
+            },
           },
           {
             'id': 'membership-2',

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/treasury_model.dart';
+import '../../../../ModeView/treasury_model.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
@@ -14,9 +14,18 @@ class CollectionStatusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final upToDateFraction = (status.upToDateCount / status.totalMembers).clamp(0.0, 1.0);
-    final pendingFraction = (status.pendingCount / status.totalMembers).clamp(0.0, 1.0 - upToDateFraction);
-    final restFraction = (1 - upToDateFraction - pendingFraction).clamp(0.0, 1.0);
+    final upToDateFraction = (status.upToDateCount / status.totalMembers).clamp(
+      0.0,
+      1.0,
+    );
+    final pendingFraction = (status.pendingCount / status.totalMembers).clamp(
+      0.0,
+      1.0 - upToDateFraction,
+    );
+    final restFraction = (1 - upToDateFraction - pendingFraction).clamp(
+      0.0,
+      1.0,
+    );
 
     return Container(
       width: double.infinity,
@@ -34,11 +43,20 @@ class CollectionStatusCard extends StatelessWidget {
             children: [
               Text(
                 AppLocalizations.t('collection_status').toUpperCase(),
-                style: TextStyle(color: AppColors.white70, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.5),
+                style: TextStyle(
+                  color: AppColors.white70,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                ),
               ),
               Text(
                 '${(status.percent * 100).round()}%',
-                style: const TextStyle(color: AppColors.white, fontSize: 30, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  color: AppColors.white,
+                  fontSize: 30,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -46,11 +64,21 @@ class CollectionStatusCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(status.collectedAmount, style: const TextStyle(color: AppColors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+              Text(
+                status.collectedAmount,
+                style: const TextStyle(
+                  color: AppColors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
               const SizedBox(width: 4),
               Padding(
                 padding: const EdgeInsets.only(bottom: 3),
-                child: Text('/ ${status.targetAmount}', style: TextStyle(color: AppColors.white70, fontSize: 13)),
+                child: Text(
+                  '/ ${status.targetAmount}',
+                  style: TextStyle(color: AppColors.white70, fontSize: 13),
+                ),
               ),
             ],
           ),
@@ -61,11 +89,19 @@ class CollectionStatusCard extends StatelessWidget {
               height: 8,
               child: Row(
                 children: [
-                  Expanded(flex: (upToDateFraction * 100).round().clamp(1, 100), child: Container(color: AppColors.primary)),
-                  Expanded(flex: (pendingFraction * 100).round().clamp(1, 100), child: Container(color: AppColors.amber)),
+                  Expanded(
+                    flex: (upToDateFraction * 100).round().clamp(1, 100),
+                    child: Container(color: AppColors.primary),
+                  ),
+                  Expanded(
+                    flex: (pendingFraction * 100).round().clamp(1, 100),
+                    child: Container(color: AppColors.amber),
+                  ),
                   Expanded(
                     flex: (restFraction * 100).round().clamp(1, 100),
-                    child: Container(color: AppColors.white.withValues(alpha: 0.15)),
+                    child: Container(
+                      color: AppColors.white.withValues(alpha: 0.15),
+                    ),
                   ),
                 ],
               ),
@@ -75,16 +111,32 @@ class CollectionStatusCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _Stat(label: AppLocalizations.t('members_up_to_date'), value: '${status.upToDateCount}/${status.totalMembers}'),
-              _Stat(label: AppLocalizations.t('pending_label'), value: '${status.pendingCount}'),
+              _Stat(
+                label: AppLocalizations.t('members_up_to_date'),
+                value: '${status.upToDateCount}/${status.totalMembers}',
+              ),
+              _Stat(
+                label: AppLocalizations.t('pending_label'),
+                value: '${status.pendingCount}',
+              ),
             ],
           ),
           SizedBox(height: AppDimensions.spaceMd.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(AppLocalizations.t('next_due_date'), style: TextStyle(color: AppColors.white70, fontSize: 12)),
-              Text(status.nextDueDate, style: const TextStyle(color: AppColors.white, fontSize: 13, fontWeight: FontWeight.w700)),
+              Text(
+                AppLocalizations.t('next_due_date'),
+                style: TextStyle(color: AppColors.white70, fontSize: 12),
+              ),
+              Text(
+                status.nextDueDate,
+                style: const TextStyle(
+                  color: AppColors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
             ],
           ),
         ],
@@ -106,7 +158,14 @@ class _Stat extends StatelessWidget {
       children: [
         Text(label, style: TextStyle(color: AppColors.white70, fontSize: 10)),
         const SizedBox(height: 4),
-        Text(value, style: const TextStyle(color: AppColors.white, fontSize: 14, fontWeight: FontWeight.w700)),
+        Text(
+          value,
+          style: const TextStyle(
+            color: AppColors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ],
     );
   }

@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:njangi/api/firebase_api.dart';
 import 'package:njangi/datasource/api_service.dart';
 import 'localization/app_localizations.dart';
 import 'routes/app_router.dart';
 import 'routes/app_routes.dart';
+import 'routes/app_route_observer.dart';
 import 'utils/app_theme.dart';
 import 'utils/management/locale_manager.dart';
 import 'utils/management/storage_manager.dart';
@@ -70,6 +72,7 @@ class _SessionTimeoutState extends State<_SessionTimeout>
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: '.env');
   ApiService.initializeInterceptors();
   await Firebase.initializeApp();
   await FirebaseApi.initializeFCM();
@@ -123,6 +126,7 @@ class NjangiApp extends StatelessWidget {
             localizationsDelegates: AppLocalizations.localizationsDelegates,
             supportedLocales: AppLocalizations.supportedLocales,
             navigatorKey: AppRouter.navigatorKey,
+            navigatorObservers: [appRouteObserver],
             initialRoute: initialRoute,
             onGenerateInitialRoutes:
                 (routeName) => [

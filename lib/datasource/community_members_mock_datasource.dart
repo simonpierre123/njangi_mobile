@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../Models/community_members_model.dart';
+import '../ModeView/community_members_model.dart';
 import '../utils/app_colors.dart';
 
 /// Données mock pour l'onglet Membres, en attendant l'API.
@@ -81,5 +81,8 @@ class CommunityMembersMockDatasource {
     summary: 'Excellent, 14 membres sur 15 sont à jour.',
   );
 
-  static const growth = GrowthStats(newMembersLabel: '+2 Nouveaux', percent: 0.94);
+  static const growth = GrowthStats(
+    newMembersLabel: '+2 Nouveaux',
+    percent: 0.94,
+  );
 }

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../Controllers_distant/GroupeNjangiController.dart';
 import '../../../Controllers_distant/MembreGroupeController.dart';
 import '../../../Models/GroupeNjangi.dart';
-import '../../../Models/create_community_model.dart';
+import '../../../ModeView/create_community_model.dart';
 import '../../../common/basewidget/app_button.dart';
 import '../../../common/basewidget/app_text_field.dart';
 import '../../../common/basewidget/step_header.dart';

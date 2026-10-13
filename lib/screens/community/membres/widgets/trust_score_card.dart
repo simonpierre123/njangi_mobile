@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/community_members_model.dart';
+import '../../../../ModeView/community_members_model.dart';
 import '../../../../common/basewidget/percent_ring.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
@@ -22,7 +22,12 @@ class TrustScoreCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          PercentRing(percent: score.percent, size: 48, strokeWidth: 5, color: AppColors.primaryDark),
+          PercentRing(
+            percent: score.percent,
+            size: 48,
+            strokeWidth: 5,
+            color: AppColors.primaryDark,
+          ),
           SizedBox(width: AppDimensions.spaceMd.w),
           Expanded(
             child: Column(
@@ -30,10 +35,20 @@ class TrustScoreCard extends StatelessWidget {
               children: [
                 Text(
                   AppLocalizations.t('trust_score_title'),
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
                 const SizedBox(height: 2),
-                Text(score.summary, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                Text(
+                  score.summary,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               ],
             ),
           ),

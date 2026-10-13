@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../Models/profile_model.dart';
+import '../../ModeView/profile_model.dart';
 import '../../common/basewidget/simple_app_bar.dart';
 import '../../localization/app_localizations.dart';
 import '../../utils/app_colors.dart';

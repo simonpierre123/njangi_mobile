@@ -13,12 +13,16 @@ class NetworkAvatar extends StatelessWidget {
     super.key,
     required this.radius,
     required this.seed,
+    this.imageUrl,
+    this.useGeneratedFallback = true,
     this.fallbackIcon = Icons.person,
     this.fallbackIconColor = AppColors.neutralGray,
     this.fallbackBg = AppColors.neutralGrayLighter,
   });
 
   final double radius;
+  final String? imageUrl;
+  final bool useGeneratedFallback;
   // Numéro pravatar.cc (1 à 70) — détermine quel visage est affiché,
   // pour varier les visages d'un avatar à l'autre.
   final int seed;
@@ -29,9 +33,27 @@ class NetworkAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = radius * 2;
+    final url =
+        imageUrl ??
+        (useGeneratedFallback ? 'https://i.pravatar.cc/150?img=$seed' : null);
+    if (url == null || url.isEmpty) {
+      return ClipOval(
+        child: Container(
+          width: size,
+          height: size,
+          color: fallbackBg,
+          alignment: Alignment.center,
+          child:
+              fallbackIcon == null
+                  ? null
+                  : Icon(fallbackIcon, size: radius, color: fallbackIconColor),
+        ),
+      );
+    }
+
     return ClipOval(
       child: ShimmerNetworkImage(
-        url: 'https://i.pravatar.cc/150?img=$seed',
+        url: url,
         width: size,
         height: size,
         fit: BoxFit.cover,

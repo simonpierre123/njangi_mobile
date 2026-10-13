@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../Models/community_members_model.dart';
+import '../../../ModeView/community_members_model.dart';
 import '../../../common/basewidget/app_search_field.dart';
 import '../../../common/basewidget/member_filter_chips.dart';
 import '../../../localization/app_localizations.dart';
@@ -27,6 +27,7 @@ class AdminMembersPage extends StatefulWidget {
     required this.onInviteMember,
     required this.onMemberMenuTap,
     required this.onMemberUrgentAction,
+    this.onMemberTap,
   });
 
   final CommunitySummary summary;
@@ -35,6 +36,7 @@ class AdminMembersPage extends StatefulWidget {
   final VoidCallback onInviteMember;
   final ValueChanged<AdminMemberEntry> onMemberMenuTap;
   final ValueChanged<AdminMemberEntry> onMemberUrgentAction;
+  final ValueChanged<AdminMemberEntry>? onMemberTap;
 
   @override
   State<AdminMembersPage> createState() => _AdminMembersPageState();
@@ -93,10 +95,13 @@ class _AdminMembersPageState extends State<AdminMembersPage> {
           ),
           SizedBox(height: AppDimensions.spaceLg.h),
           for (var i = 0; i < filtered.length; i++) ...[
-            AdminMemberRow(
-              entry: filtered[i],
-              onMenuTap: () => widget.onMemberMenuTap(filtered[i]),
-              onUrgentAction: () => widget.onMemberUrgentAction(filtered[i]),
+            GestureDetector(
+              onTap: () => widget.onMemberTap?.call(filtered[i]),
+              child: AdminMemberRow(
+                entry: filtered[i],
+                onMenuTap: () => widget.onMemberMenuTap(filtered[i]),
+                onUrgentAction: () => widget.onMemberUrgentAction(filtered[i]),
+              ),
             ),
             if (i != filtered.length - 1)
               SizedBox(height: AppDimensions.spaceSm.h),

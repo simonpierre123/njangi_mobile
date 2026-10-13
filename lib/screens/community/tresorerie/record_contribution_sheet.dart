@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../Models/contribution_model.dart';
+import '../../../ModeView/contribution_model.dart';
 import '../../../common/basewidget/app_button.dart';
 import '../../../common/basewidget/app_segmented_control.dart';
 import '../../../common/basewidget/app_text_field.dart';
@@ -34,11 +34,14 @@ class RecordContributionSheet extends StatefulWidget {
   final VoidCallback onCancel;
 
   @override
-  State<RecordContributionSheet> createState() => _RecordContributionSheetState();
+  State<RecordContributionSheet> createState() =>
+      _RecordContributionSheetState();
 }
 
 class _RecordContributionSheetState extends State<RecordContributionSheet> {
-  late final TextEditingController _amountController = TextEditingController(text: '50 000');
+  late final TextEditingController _amountController = TextEditingController(
+    text: '50 000',
+  );
   late final TextEditingController _notesController = TextEditingController();
 
   ContributionStatusInput _status = ContributionStatusInput.paid;
@@ -55,11 +58,15 @@ class _RecordContributionSheetState extends State<RecordContributionSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusCard)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppDimensions.radiusCard),
+          ),
         ),
         child: SafeArea(
           top: false,
@@ -78,25 +85,44 @@ class _RecordContributionSheetState extends State<RecordContributionSheet> {
                   children: [
                     Text(
                       AppLocalizations.t('record_contribution_title'),
-                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     InkWell(
                       onTap: widget.onCancel,
                       borderRadius: BorderRadius.circular(16),
                       child: const Padding(
                         padding: EdgeInsets.all(4),
-                        child: Icon(Icons.close, size: 20, color: AppColors.textSecondary),
+                        child: Icon(
+                          Icons.close,
+                          size: 20,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                Text(widget.communityName, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Text(
+                  widget.communityName,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
                 SizedBox(height: AppDimensions.spaceLg.h),
                 MemberDueCard(member: widget.member),
                 SizedBox(height: AppDimensions.spaceLg.h),
                 Text(
                   AppLocalizations.t('status_contribution_label').toUpperCase(),
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                    letterSpacing: 0.5,
+                  ),
                 ),
                 SizedBox(height: AppDimensions.spaceSm.h),
                 AppSegmentedControl(
@@ -106,11 +132,15 @@ class _RecordContributionSheetState extends State<RecordContributionSheet> {
                     AppLocalizations.t('status_unpaid'),
                   ],
                   currentIndex: _status.index,
-                  onChanged: (i) => setState(() => _status = ContributionStatusInput.values[i]),
+                  onChanged:
+                      (i) => setState(
+                        () => _status = ContributionStatusInput.values[i],
+                      ),
                 ),
                 SizedBox(height: AppDimensions.spaceMd.h),
                 AppTextField(
-                  label: AppLocalizations.t('amount_received_label').toUpperCase(),
+                  label:
+                      AppLocalizations.t('amount_received_label').toUpperCase(),
                   hint: '0',
                   controller: _amountController,
                   keyboardType: TextInputType.number,
@@ -119,10 +149,18 @@ class _RecordContributionSheetState extends State<RecordContributionSheet> {
                 SizedBox(height: AppDimensions.spaceMd.h),
                 Text(
                   AppLocalizations.t('payment_method_label').toUpperCase(),
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                    letterSpacing: 0.5,
+                  ),
                 ),
                 SizedBox(height: AppDimensions.spaceSm.h),
-                PaymentMethodGrid(selected: _method, onSelect: (m) => setState(() => _method = m)),
+                PaymentMethodGrid(
+                  selected: _method,
+                  onSelect: (m) => setState(() => _method = m),
+                ),
                 SizedBox(height: AppDimensions.spaceMd.h),
                 LabeledDateField(
                   label: AppLocalizations.t('payment_date_label').toUpperCase(),
@@ -132,7 +170,12 @@ class _RecordContributionSheetState extends State<RecordContributionSheet> {
                 SizedBox(height: AppDimensions.spaceMd.h),
                 Text(
                   AppLocalizations.t('receipt_optional_label').toUpperCase(),
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                    letterSpacing: 0.5,
+                  ),
                 ),
                 SizedBox(height: AppDimensions.spaceSm.h),
                 // TODO (Njoya) : aucun vrai sélecteur de fichier branché.
@@ -143,26 +186,41 @@ class _RecordContributionSheetState extends State<RecordContributionSheet> {
                   maxLines: 3,
                   decoration: InputDecoration(
                     hintText: AppLocalizations.t('notes_hint'),
-                    hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    hintStyle: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
                     filled: true,
                     fillColor: AppColors.white,
                     contentPadding: const EdgeInsets.all(14),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusMd,
+                      ),
                       borderSide: BorderSide(color: AppColors.inputBorder),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusMd,
+                      ),
                       borderSide: BorderSide(color: AppColors.inputBorder),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                      borderSide: const BorderSide(color: AppColors.primaryDark, width: 1.5),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusMd,
+                      ),
+                      borderSide: const BorderSide(
+                        color: AppColors.primaryDark,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
                 SizedBox(height: AppDimensions.spaceLg.h),
-                AppButton(label: AppLocalizations.t('save_button'), onPressed: widget.onSave),
+                AppButton(
+                  label: AppLocalizations.t('save_button'),
+                  onPressed: widget.onSave,
+                ),
                 SizedBox(height: AppDimensions.spaceSm.h),
                 AppButton(
                   label: AppLocalizations.t('cancel_button'),

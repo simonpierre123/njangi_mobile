@@ -1,4 +1,4 @@
-import '../Models/treasury_model.dart';
+import '../ModeView/treasury_model.dart';
 
 /// Données mock pour l'espace Trésorerie, en attendant l'API.
 class CommunityTreasuryMockDatasource {
@@ -19,9 +19,21 @@ class CommunityTreasuryMockDatasource {
   );
 
   static const history = [
-    ContributionHistoryItem(cycleLabel: 'Cycle 7/12', dateLabel: '12 Septembre 2023', amount: '50 000 FCFA'),
-    ContributionHistoryItem(cycleLabel: 'Cycle 6/12', dateLabel: '12 Août 2023', amount: '50 000 FCFA'),
-    ContributionHistoryItem(cycleLabel: 'Cycle 5/12', dateLabel: '12 Juillet 2023', amount: '50 000 FCFA'),
+    ContributionHistoryItem(
+      cycleLabel: 'Cycle 7/12',
+      dateLabel: '12 Septembre 2023',
+      amount: '50 000 FCFA',
+    ),
+    ContributionHistoryItem(
+      cycleLabel: 'Cycle 6/12',
+      dateLabel: '12 Août 2023',
+      amount: '50 000 FCFA',
+    ),
+    ContributionHistoryItem(
+      cycleLabel: 'Cycle 5/12',
+      dateLabel: '12 Juillet 2023',
+      amount: '50 000 FCFA',
+    ),
   ];
 
   static const collection = CollectionStatus(
@@ -69,7 +81,10 @@ class CommunityTreasuryMockDatasource {
     remainingBalance: '100 000 FCFA',
   );
 
-  static const loanDue = LoanDueInfo(dueDate: '12 Nov. 2023', amount: '50 000 FCFA');
+  static const loanDue = LoanDueInfo(
+    dueDate: '12 Nov. 2023',
+    amount: '50 000 FCFA',
+  );
 
   static const eligibility = LoanEligibility(
     availableLimit: '500 000 FCFA',
@@ -78,8 +93,23 @@ class CommunityTreasuryMockDatasource {
   );
 
   static const repaymentHistory = [
-    MemberContribution(name: 'Marie L.', amount: '50 000 FCFA', dateLabel: '12 Oct. 2023', status: ContributionStatus.upToDate),
-    MemberContribution(name: 'Marie L.', amount: '50 000 FCFA', dateLabel: '12 Oct. 2023', status: ContributionStatus.upToDate),
-    MemberContribution(name: 'Marie L.', amount: '50 000 FCFA', dateLabel: '12 Oct. 2023', status: ContributionStatus.upToDate),
+    MemberContribution(
+      name: 'Marie L.',
+      amount: '50 000 FCFA',
+      dateLabel: '12 Oct. 2023',
+      status: ContributionStatus.upToDate,
+    ),
+    MemberContribution(
+      name: 'Marie L.',
+      amount: '50 000 FCFA',
+      dateLabel: '12 Oct. 2023',
+      status: ContributionStatus.upToDate,
+    ),
+    MemberContribution(
+      name: 'Marie L.',
+      amount: '50 000 FCFA',
+      dateLabel: '12 Oct. 2023',
+      status: ContributionStatus.upToDate,
+    ),
   ];
 }

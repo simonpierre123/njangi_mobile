@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:njangi/Controllers_distant/CycleController.dart';
-import 'package:njangi/Models/create_community_model.dart';
+import 'package:njangi/ModeView/create_community_model.dart';
 import 'package:njangi/datasource/api_service.dart';
 
 void main() {

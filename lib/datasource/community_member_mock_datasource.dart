@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../Models/community_admin_dashboard_model.dart';
-import '../Models/community_member_dashboard_model.dart';
+import '../ModeView/community_admin_dashboard_model.dart';
+import '../ModeView/community_member_dashboard_model.dart';
 import '../utils/app_colors.dart';
 import 'community_admin_mock_datasource.dart';
 

@@ -10,6 +10,18 @@ class MembreGroupe {
     this.utilisateurPrenom,
     this.groupeNom,
     this.dateAdhesion,
+    this.telephone,
+    this.email,
+    this.sexe,
+    this.photo,
+    this.adresse,
+    this.ville,
+    this.pays,
+    this.cniRecto,
+    this.cniVerso,
+    this.passport,
+    this.permis,
+    this.utilisateurCreatedAt,
   });
 
   final String id;
@@ -22,6 +34,18 @@ class MembreGroupe {
   final String? utilisateurPrenom;
   final String? groupeNom;
   final String? dateAdhesion;
+  final String? telephone;
+  final String? email;
+  final String? sexe;
+  final String? photo;
+  final String? adresse;
+  final String? ville;
+  final String? pays;
+  final String? cniRecto;
+  final String? cniVerso;
+  final String? passport;
+  final String? permis;
+  final String? utilisateurCreatedAt;
 
   String get displayName {
     final parts =
@@ -37,6 +61,12 @@ class MembreGroupe {
     final utilisateur = json['utilisateur'];
     final utilisateurJson =
         utilisateur is Map ? Map<String, dynamic>.from(utilisateur) : null;
+    String? userField(String key, [String? alternate]) =>
+        utilisateurJson?[key]?.toString() ??
+        (alternate == null ? null : utilisateurJson?[alternate]?.toString()) ??
+        json['utilisateur_$key']?.toString() ??
+        json[key]?.toString();
+
     return MembreGroupe(
       id: json['id']?.toString() ?? '',
       utilisateurId: json['utilisateur_id']?.toString() ?? '',
@@ -50,6 +80,21 @@ class MembreGroupe {
       utilisateurPrenom: utilisateurJson?['prenom']?.toString(),
       groupeNom: json['groupe_nom']?.toString(),
       dateAdhesion: json['date_adhesion']?.toString(),
+      telephone: userField('telephone', 'phone'),
+      email: userField('email'),
+      sexe: userField('sexe', 'gender'),
+      photo: userField('photo', 'photo_url'),
+      adresse: userField('adresse', 'address'),
+      ville: userField('ville', 'city'),
+      pays: userField('pays', 'country'),
+      cniRecto: userField('cni_recto'),
+      cniVerso: userField('cni_verso'),
+      passport: userField('passport'),
+      permis:
+          userField('permis') ??
+          userField('permis_conduire') ??
+          userField('driving_license'),
+      utilisateurCreatedAt: userField('created_at'),
     );
   }
 }

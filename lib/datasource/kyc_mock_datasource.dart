@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../Models/kyc_model.dart';
+import '../ModeView/kyc_model.dart';
 
 /// Données mock du flux KYC, en attendant l'API.
 class KycMockDatasource {

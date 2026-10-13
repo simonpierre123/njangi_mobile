@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../Models/report_model.dart';
+import '../../../ModeView/report_model.dart';
 import '../../../common/basewidget/app_button.dart';
 import '../../../localization/app_localizations.dart';
 import '../../../utils/app_colors.dart';
@@ -74,7 +74,11 @@ class FinancialSummaryPage extends StatelessWidget {
             children: [
               Text(
                 AppLocalizations.t('financial_summary_title'),
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
               SizedBox(height: AppDimensions.spaceMd.h),
               FinancialStatCard(
@@ -108,11 +112,21 @@ class FinancialSummaryPage extends StatelessWidget {
                 children: [
                   Text(
                     AppLocalizations.t('contributions_evolution_title'),
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   // TODO (Njoya) : plage figée "Jan - Jul 2024" — à
                   // rendre dynamique une fois l'API branchée.
-                  const Text('Jan - Jul 2024', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                  const Text(
+                    'Jan - Jul 2024',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                 ],
               ),
               Container(
@@ -129,7 +143,11 @@ class FinancialSummaryPage extends StatelessWidget {
               SizedBox(height: AppDimensions.spaceLg.h),
               Text(
                 AppLocalizations.t('participation_section'),
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
               SizedBox(height: AppDimensions.spaceSm.h),
               ParticipationRingCard(data: participation),
@@ -138,7 +156,11 @@ class FinancialSummaryPage extends StatelessWidget {
               SizedBox(height: AppDimensions.spaceLg.h),
               Text(
                 AppLocalizations.t('recent_activity_report_section'),
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
               SizedBox(height: AppDimensions.spaceSm.h),
               Container(
@@ -158,10 +180,15 @@ class FinancialSummaryPage extends StatelessWidget {
                     GestureDetector(
                       onTap: onSeeFullHistory,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.mintPale34,
-                          borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radiusXl,
+                          ),
                         ),
                         child: Text(
                           AppLocalizations.t('see_full_history'),

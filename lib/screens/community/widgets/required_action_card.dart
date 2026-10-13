@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/community_member_dashboard_model.dart';
+import '../../../ModeView/community_member_dashboard_model.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
 
@@ -41,7 +41,10 @@ class RequiredActionCard extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(color: AppColors.iconBgMint, shape: BoxShape.circle),
+                decoration: const BoxDecoration(
+                  color: AppColors.iconBgMint,
+                  shape: BoxShape.circle,
+                ),
                 child: Icon(item.icon, color: AppColors.primaryDark, size: 18),
               ),
               SizedBox(width: AppDimensions.spaceSm.w),
@@ -51,10 +54,20 @@ class RequiredActionCard extends StatelessWidget {
                   children: [
                     Text(
                       item.title,
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     const SizedBox(height: 2),
-                    Text(item.subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    Text(
+                      item.subtitle,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -67,10 +80,23 @@ class RequiredActionCard extends StatelessWidget {
                     elevation: 0,
                     minimumSize: const Size(0, 36),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusXl)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusXl,
+                      ),
+                    ),
                   ),
-                  child: Text(item.actionLabel!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                  child: Text(
+                    item.actionLabel!,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 )
               else
                 const Icon(Icons.chevron_right, color: AppColors.textSecondary),

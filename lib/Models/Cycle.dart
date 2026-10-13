@@ -3,6 +3,9 @@ class Cycle {
     this.id,
     this.groupId,
     this.groupName,
+    this.groupDescription,
+    this.groupType,
+    this.groupCode,
     this.number,
     this.memberCount,
     this.adminCount,
@@ -25,6 +28,9 @@ class Cycle {
   final String? id;
   final String? groupId;
   final String? groupName;
+  final String? groupDescription;
+  final String? groupType;
+  final String? groupCode;
   final int? number;
   final int? memberCount;
   final int? adminCount;
@@ -44,10 +50,15 @@ class Cycle {
   final String deleted;
 
   factory Cycle.fromJson(Map<String, dynamic> json) {
+    final group = json['groupe'];
+    final groupData = group is Map ? Map<String, dynamic>.from(group) : null;
     return Cycle(
       id: json['id']?.toString(),
       groupId: json['groupe_id']?.toString(),
       groupName: json['groupe_nom']?.toString(),
+      groupDescription: groupData?['description']?.toString(),
+      groupType: groupData?['type']?.toString(),
+      groupCode: groupData?['code_groupe']?.toString(),
       number: _toInt(json['numero']),
       memberCount: _toInt(json['nombre_membres']),
       adminCount: _toInt(json['nombre_admin']),

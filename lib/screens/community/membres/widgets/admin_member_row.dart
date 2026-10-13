@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/community_members_model.dart';
+import '../../../../ModeView/community_members_model.dart';
 import '../../../../common/basewidget/network_avatar.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
@@ -38,6 +38,8 @@ class AdminMemberRow extends StatelessWidget {
           NetworkAvatar(
             radius: 20,
             seed: entry.name.hashCode.abs() % 70 + 1,
+            imageUrl: entry.details.photoUrl,
+            useGeneratedFallback: false,
             fallbackIcon: null,
             fallbackBg: AppColors.neutralGrayLight,
           ),

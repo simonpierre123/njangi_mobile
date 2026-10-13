@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../Models/community_model.dart';
+import '../../ModeView/community_model.dart';
 import '../../localization/app_localizations.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_dimensions.dart';

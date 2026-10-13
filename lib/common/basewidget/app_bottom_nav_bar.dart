@@ -10,13 +10,13 @@ class AppNavItem {
     required this.icon,
     required this.label,
     this.activeIcon,
-    this.showDot = false,
+    this.badgeCount,
   });
 
   final IconData icon;
   final IconData? activeIcon;
   final String label;
-  final bool showDot;
+  final int? badgeCount;
 }
 
 /// Barre de navigation basse réutilisable. Configurable via [items] pour
@@ -58,28 +58,56 @@ class AppBottomNavBar extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: isActive ? AppColors.mintSurfaceLighter : Colors.transparent,
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                      color:
+                          isActive
+                              ? AppColors.mintSurfaceLighter
+                              : Colors.transparent,
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusMd,
+                      ),
                     ),
                     child: Stack(
                       clipBehavior: Clip.none,
                       children: [
                         Icon(
                           icon,
-                          color: isActive ? AppColors.primaryDark : AppColors.textSecondary,
+                          color:
+                              isActive
+                                  ? AppColors.primaryDark
+                                  : AppColors.textSecondary,
                         ),
-                        if (item.showDot)
+                        if ((item.badgeCount ?? 0) > 0)
                           Positioned(
-                            right: -2,
-                            top: -2,
+                            right: -10,
+                            top: -8,
                             child: Container(
-                              width: 6,
-                              height: 6,
+                              constraints: const BoxConstraints(
+                                minWidth: 17,
+                                minHeight: 17,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
+                              alignment: Alignment.center,
                               decoration: const BoxDecoration(
                                 color: AppColors.badgeRed,
                                 shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                item.badgeCount! > 99
+                                    ? '99+'
+                                    : item.badgeCount.toString(),
+                                style: const TextStyle(
+                                  color: AppColors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  height: 1,
+                                ),
                               ),
                             ),
                           ),
@@ -92,7 +120,10 @@ class AppBottomNavBar extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                      color: isActive ? AppColors.primaryDark : AppColors.textSecondary,
+                      color:
+                          isActive
+                              ? AppColors.primaryDark
+                              : AppColors.textSecondary,
                     ),
                   ),
                 ],

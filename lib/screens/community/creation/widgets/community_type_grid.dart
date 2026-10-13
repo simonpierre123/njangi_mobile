@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/create_community_model.dart';
+import '../../../../ModeView/create_community_model.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
@@ -7,7 +7,11 @@ import '../../../../utils/app_dimensions.dart';
 /// Grille de sélection du type de communauté — 2x2 (Famille/Amis/
 /// Entreprise/Association) + "Autre" en pleine largeur en dessous.
 class CommunityTypeGrid extends StatelessWidget {
-  const CommunityTypeGrid({super.key, required this.selected, required this.onSelect});
+  const CommunityTypeGrid({
+    super.key,
+    required this.selected,
+    required this.onSelect,
+  });
 
   final CommunityType? selected;
   final ValueChanged<CommunityType> onSelect;
@@ -32,7 +36,11 @@ class CommunityTypeGrid extends StatelessWidget {
           childAspectRatio: 1.7,
           children: [
             for (final type in _gridTypes)
-              _TypeTile(type: type, isSelected: selected == type, onTap: () => onSelect(type)),
+              _TypeTile(
+                type: type,
+                isSelected: selected == type,
+                onTap: () => onSelect(type),
+              ),
           ],
         ),
         SizedBox(height: AppDimensions.spaceSm.h),
@@ -48,7 +56,12 @@ class CommunityTypeGrid extends StatelessWidget {
 }
 
 class _TypeTile extends StatelessWidget {
-  const _TypeTile({required this.type, required this.isSelected, required this.onTap, this.fullWidth = false});
+  const _TypeTile({
+    required this.type,
+    required this.isSelected,
+    required this.onTap,
+    this.fullWidth = false,
+  });
 
   final CommunityType type;
   final bool isSelected;
@@ -58,8 +71,15 @@ class _TypeTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = [
-      Icon(type.icon, size: 20, color: isSelected ? AppColors.primaryDark : AppColors.primaryContainer),
-      SizedBox(width: fullWidth ? AppDimensions.spaceSm.w : 0, height: fullWidth ? 0 : 6),
+      Icon(
+        type.icon,
+        size: 20,
+        color: isSelected ? AppColors.primaryDark : AppColors.primaryContainer,
+      ),
+      SizedBox(
+        width: fullWidth ? AppDimensions.spaceSm.w : 0,
+        height: fullWidth ? 0 : 6,
+      ),
       Text(
         AppLocalizations.t(type.labelKey),
         style: TextStyle(
@@ -80,11 +100,21 @@ class _TypeTile extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: AppDimensions.spaceMd.h),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-            border: Border.all(color: isSelected ? AppColors.primaryDark : AppColors.inputBorder, width: isSelected ? 1.5 : 1),
+            border: Border.all(
+              color: isSelected ? AppColors.primaryDark : AppColors.inputBorder,
+              width: isSelected ? 1.5 : 1,
+            ),
           ),
-          child: fullWidth
-              ? Row(mainAxisAlignment: MainAxisAlignment.center, children: content)
-              : Column(mainAxisAlignment: MainAxisAlignment.center, children: content),
+          child:
+              fullWidth
+                  ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: content,
+                  )
+                  : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: content,
+                  ),
         ),
       ),
     );

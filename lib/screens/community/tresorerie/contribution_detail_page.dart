@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../Models/contribution_model.dart';
+import '../../../ModeView/contribution_model.dart';
 import '../../../common/basewidget/app_button.dart';
 import '../../../common/basewidget/simple_app_bar.dart';
 import '../../../localization/app_localizations.dart';
@@ -33,7 +33,10 @@ class ContributionDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
-      appBar: SimpleAppBar(title: AppLocalizations.t('contribution_detail_title'), onBack: onBack),
+      appBar: SimpleAppBar(
+        title: AppLocalizations.t('contribution_detail_title'),
+        onBack: onBack,
+      ),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -52,11 +55,18 @@ class ContributionDetailPage extends StatelessWidget {
               SizedBox(height: AppDimensions.spaceLg.h),
               Text(
                 AppLocalizations.t('details_section').toUpperCase(),
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 0.5,
+                ),
               ),
               SizedBox(height: AppDimensions.spaceSm.h),
               Container(
-                padding: EdgeInsets.symmetric(horizontal: AppDimensions.spaceMd.w),
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppDimensions.spaceMd.w,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.white,
                   borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
@@ -64,49 +74,89 @@ class ContributionDetailPage extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    DetailRow(label: AppLocalizations.t('expected_amount_label'), value: detail.expectedAmount),
+                    DetailRow(
+                      label: AppLocalizations.t('expected_amount_label'),
+                      value: detail.expectedAmount,
+                    ),
                     Divider(height: 1, color: AppColors.inputBorder),
-                    DetailRow(label: AppLocalizations.t('paid_amount_label'), value: detail.paidAmount),
+                    DetailRow(
+                      label: AppLocalizations.t('paid_amount_label'),
+                      value: detail.paidAmount,
+                    ),
                     Divider(height: 1, color: AppColors.inputBorder),
                     DetailRow(
                       label: AppLocalizations.t('status_word'),
                       valueWidget: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                        decoration: BoxDecoration(color: AppColors.tagMintBg, borderRadius: BorderRadius.circular(AppDimensions.radiusXl)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.tagMintBg,
+                          borderRadius: BorderRadius.circular(
+                            AppDimensions.radiusXl,
+                          ),
+                        ),
                         child: Text(
                           detail.statusLabel,
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryDark),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryDark,
+                          ),
                         ),
                       ),
                     ),
                     Divider(height: 1, color: AppColors.inputBorder),
-                    DetailRow(label: AppLocalizations.t('date_word'), value: detail.dateLabel),
+                    DetailRow(
+                      label: AppLocalizations.t('date_word'),
+                      value: detail.dateLabel,
+                    ),
                     Divider(height: 1, color: AppColors.inputBorder),
-                    DetailRow(label: AppLocalizations.t('time_word'), value: detail.timeLabel),
+                    DetailRow(
+                      label: AppLocalizations.t('time_word'),
+                      value: detail.timeLabel,
+                    ),
                     Divider(height: 1, color: AppColors.inputBorder),
                     DetailRow(
                       label: AppLocalizations.t('payment_method_label'),
                       valueWidget: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.payments_outlined, size: 14, color: AppColors.textPrimary),
+                          const Icon(
+                            Icons.payments_outlined,
+                            size: 14,
+                            color: AppColors.textPrimary,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             detail.paymentMethodLabel,
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
                         ],
                       ),
                     ),
                     Divider(height: 1, color: AppColors.inputBorder),
-                    DetailRow(label: AppLocalizations.t('reference_label'), value: detail.reference),
+                    DetailRow(
+                      label: AppLocalizations.t('reference_label'),
+                      value: detail.reference,
+                    ),
                   ],
                 ),
               ),
               SizedBox(height: AppDimensions.spaceLg.h),
               Text(
                 AppLocalizations.t('history_section').toUpperCase(),
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 0.5,
+                ),
               ),
               SizedBox(height: AppDimensions.spaceSm.h),
               RecordedByCard(
@@ -117,7 +167,12 @@ class ContributionDetailPage extends StatelessWidget {
               SizedBox(height: AppDimensions.spaceLg.h),
               Text(
                 AppLocalizations.t('observation_section').toUpperCase(),
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                  letterSpacing: 0.5,
+                ),
               ),
               SizedBox(height: AppDimensions.spaceSm.h),
               ObservationBox(text: detail.observation),
@@ -143,11 +198,19 @@ class ContributionDetailPage extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.delete_outline, size: 14, color: AppColors.alertRed),
+                      const Icon(
+                        Icons.delete_outline,
+                        size: 14,
+                        color: AppColors.alertRed,
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         AppLocalizations.t('cancel_recording_button'),
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.alertRed),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.alertRed,
+                        ),
                       ),
                     ],
                   ),

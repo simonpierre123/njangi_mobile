@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../../../../Models/Invitation.dart';
-import '../../../../Models/create_community_model.dart';
+import '../../../../ModeView/create_community_model.dart';
 import '../../../../common/basewidget/app_button.dart';
 import '../../../../common/basewidget/app_text_field.dart';
 import '../../../../common/basewidget/shimmer_loading.dart';
@@ -20,11 +20,15 @@ class InvitePhonePage extends StatefulWidget {
   const InvitePhonePage({
     super.key,
     required this.groupId,
+    required this.groupName,
+    this.cycleId,
     required this.onBack,
     required this.onDone,
   });
 
   final String groupId;
+  final String groupName;
+  final String? cycleId;
   final VoidCallback onBack;
   final ValueChanged<List<InvitedMember>> onDone;
 
@@ -100,24 +104,44 @@ class _InvitePhonePageState extends State<InvitePhonePage> {
     try {
       final invitation = await _repository.inviteUser(
         groupId: widget.groupId,
+        groupName: widget.groupName,
+        cycleId: widget.cycleId,
         user: user,
       );
       if (!mounted) return;
       setState(
         () => _invited[user.phone] = InvitedMember.fromInvitation(invitation),
       );
-    } catch (_) {
-      if (mounted) _showError();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.t(
+              invitation.pushSent
+                  ? 'invite_sent_success'
+                  : 'invite_saved_no_push',
+            ),
+          ),
+          backgroundColor: invitation.pushSent ? Colors.green : Colors.orange,
+        ),
+      );
+    } catch (error) {
+      if (mounted) {
+        _showError(
+          error is InviteFlowException
+              ? error.message
+              : AppLocalizations.t('invite_persist_error'),
+        );
+      }
     } finally {
       _inviting.remove(user.phone);
       if (mounted) setState(() {});
     }
   }
 
-  void _showError() {
+  void _showError([String? message]) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(AppLocalizations.t('invite_error_generic')),
+        content: Text(message ?? AppLocalizations.t('invite_error_generic')),
         backgroundColor: Colors.red,
       ),
     );

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/community_members_model.dart';
+import '../../../../ModeView/community_members_model.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
@@ -8,7 +8,11 @@ import '../../../../utils/app_dimensions.dart';
 /// Le nombre de stats affichées varie (le "en retard" n'apparaît que
 /// côté admin, via [CommunitySummary.lateCount] nullable).
 class CommunitySummaryCard extends StatelessWidget {
-  const CommunitySummaryCard({super.key, required this.summary, this.previewCount = 3});
+  const CommunitySummaryCard({
+    super.key,
+    required this.summary,
+    this.previewCount = 3,
+  });
 
   final CommunitySummary summary;
   final int previewCount;
@@ -19,7 +23,8 @@ class CommunitySummaryCard extends StatelessWidget {
       '${summary.totalMembers} ${AppLocalizations.t('members_label')}',
       '${summary.adminCount} Admin',
       '${summary.activeCount} ${AppLocalizations.t('active_label')}',
-      if (summary.lateCount != null) '${summary.lateCount} ${AppLocalizations.t('late_label')}',
+      if (summary.lateCount != null)
+        '${summary.lateCount} ${AppLocalizations.t('late_label')}',
     ];
 
     return Container(
@@ -34,18 +39,30 @@ class CommunitySummaryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.groups_outlined, color: AppColors.white, size: 18),
+              const Icon(
+                Icons.groups_outlined,
+                color: AppColors.white,
+                size: 18,
+              ),
               const SizedBox(width: 6),
               Text(
                 AppLocalizations.t('the_community'),
-                style: const TextStyle(color: AppColors.white, fontSize: 15, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                  color: AppColors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
           SizedBox(height: AppDimensions.spaceSm.h),
           Text(
             statsParts.join(' • '),
-            style: const TextStyle(color: AppColors.white, fontSize: 12, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              color: AppColors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
@@ -58,7 +75,10 @@ class CommunitySummaryCard extends StatelessWidget {
             ),
           ),
           SizedBox(height: AppDimensions.spaceMd.h),
-          _AvatarPreviewRow(total: summary.totalMembers, previewCount: previewCount),
+          _AvatarPreviewRow(
+            total: summary.totalMembers,
+            previewCount: previewCount,
+          ),
         ],
       ),
     );
@@ -111,7 +131,11 @@ class _AvatarPreviewRow extends StatelessWidget {
                 ),
                 child: Text(
                   '+$remaining',
-                  style: const TextStyle(color: AppColors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    color: AppColors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),

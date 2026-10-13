@@ -1,4 +1,4 @@
-import '../Models/cycle_completion_model.dart';
+import '../ModeView/cycle_completion_model.dart';
 
 /// Données mock de l'écran "Cycle terminé", en attendant l'API.
 class CycleCompletionMockDatasource {
@@ -14,8 +14,17 @@ class CycleCompletionMockDatasource {
   );
 
   static const beneficiaryHistory = [
-    BeneficiaryHistoryEntry(name: 'Jean Tchoumba', periodLabel: 'Jan 2026 - 200,000 FCFA'),
-    BeneficiaryHistoryEntry(name: 'Marie Ndzié', periodLabel: 'Mar 2026 - 200,000 FCFA'),
-    BeneficiaryHistoryEntry(name: 'Alex Ngassa', periodLabel: 'Avr 2026 - 200,000 FCFA'),
+    BeneficiaryHistoryEntry(
+      name: 'Jean Tchoumba',
+      periodLabel: 'Jan 2026 - 200,000 FCFA',
+    ),
+    BeneficiaryHistoryEntry(
+      name: 'Marie Ndzié',
+      periodLabel: 'Mar 2026 - 200,000 FCFA',
+    ),
+    BeneficiaryHistoryEntry(
+      name: 'Alex Ngassa',
+      periodLabel: 'Avr 2026 - 200,000 FCFA',
+    ),
   ];
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../Models/community_admin_dashboard_model.dart';
+import '../../../ModeView/community_admin_dashboard_model.dart';
 import '../../../localization/app_localizations.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/app_dimensions.dart';
@@ -95,7 +95,10 @@ class AdminDashboardPage extends StatelessWidget {
           SizedBox(height: AppDimensions.spaceLg.h),
           _SectionTitle(AppLocalizations.t('members_status')),
           SizedBox(height: AppDimensions.spaceSm.h),
-          MembersStatusCard(stats: memberStatus, onManageMembers: onManageMembers),
+          MembersStatusCard(
+            stats: memberStatus,
+            onManageMembers: onManageMembers,
+          ),
           SizedBox(height: AppDimensions.spaceLg.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -136,7 +139,11 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+      style: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textPrimary,
+      ),
     );
   }
 }

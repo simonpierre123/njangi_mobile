@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../Models/community_model.dart';
+import '../ModeView/community_model.dart';
 
 /// Source de données mock pour le tableau de bord, en attendant
 /// l'intégration API réelle. À remplacer par un vrai datasource

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../Models/preferences_model.dart';
+import '../ModeView/preferences_model.dart';
 import '../utils/app_colors.dart';
 
 /// Données mock des préférences, en attendant l'API.

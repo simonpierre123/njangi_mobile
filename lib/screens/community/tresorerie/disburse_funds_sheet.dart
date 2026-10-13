@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../Models/beneficiary_model.dart';
-import '../../../Models/contribution_model.dart';
+import '../../../ModeView/beneficiary_model.dart';
+import '../../../ModeView/contribution_model.dart';
 import '../../../common/basewidget/app_button.dart';
 import '../../../common/basewidget/app_text_field.dart';
 import '../../../common/basewidget/labeled_date_field.dart';
@@ -36,7 +36,9 @@ class DisburseFundsSheet extends StatefulWidget {
 }
 
 class _DisburseFundsSheetState extends State<DisburseFundsSheet> {
-  late final TextEditingController _amountController = TextEditingController(text: '600 000');
+  late final TextEditingController _amountController = TextEditingController(
+    text: '600 000',
+  );
   late final TextEditingController _notesController = TextEditingController();
 
   PaymentMethod _method = PaymentMethod.cash;
@@ -53,11 +55,15 @@ class _DisburseFundsSheetState extends State<DisburseFundsSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppDimensions.radiusCard)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppDimensions.radiusCard),
+          ),
         ),
         child: SafeArea(
           top: false,
@@ -76,24 +82,39 @@ class _DisburseFundsSheetState extends State<DisburseFundsSheet> {
                   children: [
                     Text(
                       AppLocalizations.t('record_disbursement_title'),
-                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     InkWell(
                       onTap: widget.onCancel,
                       borderRadius: BorderRadius.circular(16),
                       child: const Padding(
                         padding: EdgeInsets.all(4),
-                        child: Icon(Icons.close, size: 20, color: AppColors.textSecondary),
+                        child: Icon(
+                          Icons.close,
+                          size: 20,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                Text(widget.communityName, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Text(
+                  widget.communityName,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
                 SizedBox(height: AppDimensions.spaceLg.h),
                 BeneficiaryDueCard(beneficiary: widget.beneficiary),
                 SizedBox(height: AppDimensions.spaceLg.h),
                 AppTextField(
-                  label: AppLocalizations.t('amount_paid_out_label').toUpperCase(),
+                  label:
+                      AppLocalizations.t('amount_paid_out_label').toUpperCase(),
                   hint: '0',
                   controller: _amountController,
                   keyboardType: TextInputType.number,
@@ -102,27 +123,48 @@ class _DisburseFundsSheetState extends State<DisburseFundsSheet> {
                 SizedBox(height: AppDimensions.spaceMd.h),
                 Text(
                   AppLocalizations.t('payment_method_label').toUpperCase(),
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                    letterSpacing: 0.5,
+                  ),
                 ),
                 SizedBox(height: AppDimensions.spaceSm.h),
-                PaymentMethodGrid(selected: _method, onSelect: (m) => setState(() => _method = m)),
+                PaymentMethodGrid(
+                  selected: _method,
+                  onSelect: (m) => setState(() => _method = m),
+                ),
                 SizedBox(height: AppDimensions.spaceMd.h),
                 LabeledDateField(
-                  label: AppLocalizations.t('disbursement_date_label').toUpperCase(),
+                  label:
+                      AppLocalizations.t(
+                        'disbursement_date_label',
+                      ).toUpperCase(),
                   value: _date,
                   onChanged: (d) => setState(() => _date = d),
                 ),
                 SizedBox(height: AppDimensions.spaceMd.h),
                 Text(
                   AppLocalizations.t('receipt_optional_label').toUpperCase(),
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                    letterSpacing: 0.5,
+                  ),
                 ),
                 SizedBox(height: AppDimensions.spaceSm.h),
                 ReceiptSourceGrid(onFilePicked: (path) {}),
                 SizedBox(height: AppDimensions.spaceMd.h),
                 Text(
                   AppLocalizations.t('observation_section').toUpperCase(),
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                    letterSpacing: 0.5,
+                  ),
                 ),
                 SizedBox(height: AppDimensions.spaceSm.h),
                 TextField(
@@ -130,21 +172,33 @@ class _DisburseFundsSheetState extends State<DisburseFundsSheet> {
                   maxLines: 3,
                   decoration: InputDecoration(
                     hintText: AppLocalizations.t('observation_hint'),
-                    hintStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    hintStyle: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
                     filled: true,
                     fillColor: AppColors.white,
                     contentPadding: const EdgeInsets.all(14),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusMd,
+                      ),
                       borderSide: BorderSide(color: AppColors.inputBorder),
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusMd,
+                      ),
                       borderSide: BorderSide(color: AppColors.inputBorder),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
-                      borderSide: const BorderSide(color: AppColors.primaryDark, width: 1.5),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusMd,
+                      ),
+                      borderSide: const BorderSide(
+                        color: AppColors.primaryDark,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -156,7 +210,8 @@ class _DisburseFundsSheetState extends State<DisburseFundsSheet> {
                     children: [
                       Checkbox(
                         value: _confirmed,
-                        onChanged: (v) => setState(() => _confirmed = v ?? false),
+                        onChanged:
+                            (v) => setState(() => _confirmed = v ?? false),
                         activeColor: AppColors.primaryDark,
                       ),
                       Expanded(
@@ -164,7 +219,10 @@ class _DisburseFundsSheetState extends State<DisburseFundsSheet> {
                           padding: const EdgeInsets.only(top: 12),
                           child: Text(
                             AppLocalizations.t('confirm_disbursement_checkbox'),
-                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ),
                       ),
@@ -174,10 +232,15 @@ class _DisburseFundsSheetState extends State<DisburseFundsSheet> {
                 SizedBox(height: AppDimensions.spaceLg.h),
                 AppButton(
                   label: AppLocalizations.t('confirm_disbursement_button'),
-                  onPressed: _confirmed
-                      ? widget.onConfirm
-                      : () => ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(AppLocalizations.t('confirm_required_message'))),
+                  onPressed:
+                      _confirmed
+                          ? widget.onConfirm
+                          : () => ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                AppLocalizations.t('confirm_required_message'),
+                              ),
+                            ),
                           ),
                 ),
                 SizedBox(height: AppDimensions.spaceSm.h),

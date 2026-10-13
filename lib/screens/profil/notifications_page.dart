@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../Models/notification_settings_model.dart';
+import '../../ModeView/notification_settings_model.dart';
 import '../../common/basewidget/simple_app_bar.dart';
 import '../../localization/app_localizations.dart';
 import '../../utils/app_colors.dart';
@@ -42,7 +42,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
-      appBar: SimpleAppBar(title: AppLocalizations.t('nav_notifications'), onBack: widget.onBack),
+      appBar: SimpleAppBar(
+        title: AppLocalizations.t('nav_notifications'),
+        onBack: widget.onBack,
+      ),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -55,12 +58,19 @@ class _NotificationsPageState extends State<NotificationsPage> {
             children: [
               Text(
                 AppLocalizations.t('push_notifications_title'),
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
               SizedBox(height: AppDimensions.spaceXs.h),
               Text(
                 AppLocalizations.t('push_notifications_desc'),
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
               ),
               SizedBox(height: AppDimensions.spaceMd.h),
               NotificationMasterCard(
@@ -90,11 +100,17 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         for (var i = 0; i < section.items.length; i++) ...[
                           NotificationToggleRow(
                             label: AppLocalizations.t(section.items[i].label),
-                            value: _values[section.items[i].key] ?? section.items[i].value,
+                            value:
+                                _values[section.items[i].key] ??
+                                section.items[i].value,
                             enabled: _masterEnabled,
-                            onChanged: (v) => setState(() => _values[section.items[i].key] = v),
+                            onChanged:
+                                (v) => setState(
+                                  () => _values[section.items[i].key] = v,
+                                ),
                           ),
-                          if (i != section.items.length - 1) SizedBox(height: AppDimensions.spaceSm.h),
+                          if (i != section.items.length - 1)
+                            SizedBox(height: AppDimensions.spaceSm.h),
                         ],
                         SizedBox(height: AppDimensions.spaceLg.h),
                       ],

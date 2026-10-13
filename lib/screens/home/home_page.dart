@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../Models/community_model.dart';
+import '../../ModeView/community_model.dart';
 import '../../common/basewidget/activity_summary_card.dart';
 import '../../common/basewidget/app_search_field.dart';
 import '../../common/basewidget/community_card.dart';
@@ -32,6 +32,8 @@ class HomePage extends StatefulWidget {
     required this.isProfileComplete,
     required this.onIdentify,
     required this.onCommunityTap,
+    required this.onRefresh,
+    required this.onLock,
   });
 
   final String userName;
@@ -42,6 +44,8 @@ class HomePage extends StatefulWidget {
   final bool isProfileComplete;
   final VoidCallback onIdentify;
   final ValueChanged<CommunityModel> onCommunityTap;
+  final Future<void> Function() onRefresh;
+  final Future<void> Function() onLock;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -52,68 +56,90 @@ class _HomePageState extends State<HomePage> {
 
   bool _bannerDismissed = false;
   bool _showAllCommunities = false;
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
     AppScale.init(context);
     final hasCommunities = widget.communities.isNotEmpty;
+    final normalizedQuery = _searchQuery.trim().toLowerCase();
+    final matchingCommunities = widget.communities
+        .where(
+          (community) => community.name.toLowerCase().contains(normalizedQuery),
+        )
+        .toList(growable: false);
     final showBanner = !widget.isProfileComplete && !_bannerDismissed;
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.symmetric(
-        horizontal: AppDimensions.screenPaddingH.w,
-        vertical: AppDimensions.spaceMd.h,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          GreetingHeader(
-            userName: widget.userName,
-            photoUrl: widget.userPhotoUrl,
-            subtitleKey: widget.greetingSubtitleKey,
-          ),
-          if (showBanner) ...[
+    return RefreshIndicator(
+      onRefresh: widget.onRefresh,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.symmetric(
+          horizontal: AppDimensions.screenPaddingH.w,
+          vertical: AppDimensions.spaceMd.h,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            GreetingHeader(
+              userName: widget.userName,
+              photoUrl: widget.userPhotoUrl,
+              subtitleKey: widget.greetingSubtitleKey,
+              onLock: widget.onLock,
+            ),
+            if (showBanner) ...[
+              SizedBox(height: AppDimensions.spaceMd.h),
+              ProfileIncompleteBanner(
+                onIdentify: widget.onIdentify,
+                onDismiss: () => setState(() => _bannerDismissed = true),
+              ),
+            ],
             SizedBox(height: AppDimensions.spaceMd.h),
-            ProfileIncompleteBanner(
-              onIdentify: widget.onIdentify,
-              onDismiss: () => setState(() => _bannerDismissed = true),
+            _buildSummary(hasCommunities),
+            SizedBox(
+              height:
+                  (hasCommunities
+                          ? AppDimensions.spaceMd
+                          : AppDimensions.spaceSm)
+                      .h,
             ),
+            AppSearchField(
+              hint: AppLocalizations.t('search_community_hint'),
+              onChanged: (value) => setState(() => _searchQuery = value),
+            ),
+            SizedBox(
+              height:
+                  (hasCommunities
+                          ? AppDimensions.spaceLg
+                          : AppDimensions.spaceSm)
+                      .h,
+            ),
+            if (widget.isLoadingCommunities) ...[
+              const CommunityCardSkeleton(),
+              const CommunityCardSkeleton(),
+            ] else if (!hasCommunities)
+              _EmptyCommunities()
+            else if (matchingCommunities.isEmpty)
+              _NoMatchingCommunities()
+            else
+              _CommunitiesList(
+                allCommunities: matchingCommunities,
+                visibleCommunities:
+                    normalizedQuery.isNotEmpty ||
+                            _showAllCommunities ||
+                            matchingCommunities.length <= _previewCount
+                        ? matchingCommunities
+                        : matchingCommunities.take(_previewCount).toList(),
+                isExpanded: normalizedQuery.isEmpty && _showAllCommunities,
+                onTap: widget.onCommunityTap,
+                onToggle:
+                    () => setState(
+                      () => _showAllCommunities = !_showAllCommunities,
+                    ),
+              ),
+            SizedBox(height: AppDimensions.spaceXl.h),
           ],
-          SizedBox(height: AppDimensions.spaceMd.h),
-          _buildSummary(hasCommunities),
-          SizedBox(
-            height:
-                (hasCommunities ? AppDimensions.spaceMd : AppDimensions.spaceSm)
-                    .h,
-          ),
-          AppSearchField(hint: AppLocalizations.t('search_community_hint')),
-          SizedBox(
-            height:
-                (hasCommunities ? AppDimensions.spaceLg : AppDimensions.spaceSm)
-                    .h,
-          ),
-          if (widget.isLoadingCommunities) ...[
-            const CommunityCardSkeleton(),
-            const CommunityCardSkeleton(),
-          ] else if (!hasCommunities)
-            _EmptyCommunities()
-          else
-            _CommunitiesList(
-              allCommunities: widget.communities,
-              visibleCommunities:
-                  _showAllCommunities ||
-                          widget.communities.length <= _previewCount
-                      ? widget.communities
-                      : widget.communities.take(_previewCount).toList(),
-              isExpanded: _showAllCommunities,
-              onTap: widget.onCommunityTap,
-              onToggle:
-                  () => setState(
-                    () => _showAllCommunities = !_showAllCommunities,
-                  ),
-            ),
-          SizedBox(height: AppDimensions.spaceXl.h),
-        ],
+        ),
       ),
     );
   }
@@ -174,6 +200,27 @@ class _HomePageState extends State<HomePage> {
       // TODO (Njoya) : calculer/formater ce montant depuis les vraies
       // données une fois l'API branchée.
       pendingAmount: '75 000 FCFA',
+    );
+  }
+}
+
+class _NoMatchingCommunities extends StatelessWidget {
+  const _NoMatchingCommunities();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: AppDimensions.spaceLg.h),
+      child: Center(
+        child: Text(
+          AppLocalizations.t('community_search_no_results'),
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 14,
+            color: AppColors.neutralGreenGray,
+          ),
+        ),
+      ),
     );
   }
 }

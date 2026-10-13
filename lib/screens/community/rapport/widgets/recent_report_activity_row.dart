@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/report_model.dart';
+import '../../../../ModeView/report_model.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
 
@@ -17,7 +17,10 @@ class RecentReportActivityRow extends StatelessWidget {
         Container(
           width: 36,
           height: 36,
-          decoration: BoxDecoration(color: activity.iconBg, shape: BoxShape.circle),
+          decoration: BoxDecoration(
+            color: activity.iconBg,
+            shape: BoxShape.circle,
+          ),
           child: Icon(activity.icon, size: 16, color: activity.iconColor),
         ),
         SizedBox(width: AppDimensions.spaceSm.w),
@@ -27,15 +30,27 @@ class RecentReportActivityRow extends StatelessWidget {
             children: [
               Text.rich(
                 TextSpan(
-                  style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textPrimary,
+                  ),
                   children: [
                     TextSpan(text: '${activity.titlePrefix} '),
-                    TextSpan(text: activity.personName, style: const TextStyle(fontWeight: FontWeight.w700)),
+                    TextSpan(
+                      text: activity.personName,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(height: 2),
-              Text(activity.timeLabel, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+              Text(
+                activity.timeLabel,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textSecondary,
+                ),
+              ),
             ],
           ),
         ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../Models/report_model.dart';
+import '../ModeView/report_model.dart';
 import '../utils/app_colors.dart';
 
 /// Données mock des rapports, en attendant l'API.

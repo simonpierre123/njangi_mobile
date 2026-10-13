@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/report_model.dart';
+import '../../../../ModeView/report_model.dart';
 import '../../../../common/basewidget/percent_ring.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
@@ -28,14 +28,30 @@ class ParticipationRingCard extends StatelessWidget {
           SizedBox(height: AppDimensions.spaceSm.h),
           Text(
             '${data.totalMembers} ${AppLocalizations.t('members_word')}',
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
           ),
           SizedBox(height: AppDimensions.spaceMd.h),
-          _LegendRow(color: AppColors.primary, label: AppLocalizations.t('up_to_date'), count: data.upToDateCount),
+          _LegendRow(
+            color: AppColors.primary,
+            label: AppLocalizations.t('up_to_date'),
+            count: data.upToDateCount,
+          ),
           const SizedBox(height: 6),
-          _LegendRow(color: AppColors.alertRed, label: AppLocalizations.t('overdue_label'), count: data.lateCount),
+          _LegendRow(
+            color: AppColors.alertRed,
+            label: AppLocalizations.t('overdue_label'),
+            count: data.lateCount,
+          ),
           const SizedBox(height: 6),
-          _LegendRow(color: AppColors.warningText, label: AppLocalizations.t('pending_label'), count: data.partialCount),
+          _LegendRow(
+            color: AppColors.warningText,
+            label: AppLocalizations.t('pending_label'),
+            count: data.partialCount,
+          ),
         ],
       ),
     );
@@ -43,7 +59,11 @@ class ParticipationRingCard extends StatelessWidget {
 }
 
 class _LegendRow extends StatelessWidget {
-  const _LegendRow({required this.color, required this.label, required this.count});
+  const _LegendRow({
+    required this.color,
+    required this.label,
+    required this.count,
+  });
 
   final Color color;
   final String label;
@@ -53,11 +73,25 @@ class _LegendRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        Container(
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
         const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
         const Spacer(),
-        Text('$count', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+        Text(
+          '$count',
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
+        ),
       ],
     );
   }

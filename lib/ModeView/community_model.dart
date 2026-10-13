@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'MembreGroupe.dart';
+import '../Models/MembreGroupe.dart';
 
 /// Statut visuel d'un badge de communauté.
 enum CommunityBadgeType { info, warning, none }

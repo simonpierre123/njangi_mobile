@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/report_model.dart';
+import '../../../../ModeView/report_model.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
@@ -28,13 +28,24 @@ class LoanReportCard extends StatelessWidget {
               Container(
                 width: 28,
                 height: 28,
-                decoration: const BoxDecoration(color: AppColors.mintPale, shape: BoxShape.circle),
-                child: const Icon(Icons.description_outlined, size: 15, color: AppColors.primaryDeepest),
+                decoration: const BoxDecoration(
+                  color: AppColors.mintPale,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.description_outlined,
+                  size: 15,
+                  color: AppColors.primaryDeepest,
+                ),
               ),
               SizedBox(width: AppDimensions.spaceXs.w),
               Text(
                 AppLocalizations.t('loan_details_section'),
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ],
           ),
@@ -42,18 +53,27 @@ class LoanReportCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _MiniStat(label: AppLocalizations.t('active_loans_word'), value: '${data.activeLoans}'),
+                child: _MiniStat(
+                  label: AppLocalizations.t('active_loans_word'),
+                  value: '${data.activeLoans}',
+                ),
               ),
               SizedBox(width: AppDimensions.spaceSm.w),
               Expanded(
-                child: _MiniStat(label: AppLocalizations.t('repayment_word'), value: data.repaymentRateLabel),
+                child: _MiniStat(
+                  label: AppLocalizations.t('repayment_word'),
+                  value: data.repaymentRateLabel,
+                ),
               ),
             ],
           ),
           SizedBox(height: AppDimensions.spaceSm.h),
           Container(
             width: double.infinity,
-            padding: EdgeInsets.symmetric(horizontal: AppDimensions.spaceSm.w, vertical: AppDimensions.spaceSm.h),
+            padding: EdgeInsets.symmetric(
+              horizontal: AppDimensions.spaceSm.w,
+              vertical: AppDimensions.spaceSm.h,
+            ),
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
@@ -63,12 +83,21 @@ class LoanReportCard extends StatelessWidget {
               children: [
                 Text(
                   AppLocalizations.t('total_loan_amount_label').toUpperCase(),
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.textSecondary, letterSpacing: 0.5),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                    letterSpacing: 0.5,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   data.totalLoanAmount,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ],
             ),
@@ -89,7 +118,10 @@ class _MiniStat extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: AppDimensions.spaceSm.w, vertical: AppDimensions.spaceSm.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppDimensions.spaceSm.w,
+        vertical: AppDimensions.spaceSm.h,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
@@ -97,9 +129,22 @@ class _MiniStat extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: valueColor ?? AppColors.textPrimary)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: valueColor ?? AppColors.textPrimary,
+            ),
+          ),
         ],
       ),
     );

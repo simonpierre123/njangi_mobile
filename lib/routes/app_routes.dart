@@ -40,6 +40,7 @@ class AppRoutes {
   static const editProfile = '/profile/edit';
   static const security = '/profile/security';
   static const notifications = '/profile/notifications';
+  static const invitationDetails = '/notifications/invitation';
   static const preferences = '/profile/preferences';
 
   // Créer une communauté (5 étapes prévues, 1 et 2 construites pour

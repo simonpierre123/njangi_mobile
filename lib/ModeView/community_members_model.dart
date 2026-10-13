@@ -8,6 +8,44 @@ import 'package:flutter/material.dart';
 
 enum MemberRowStatus { upToDate, pending, late }
 
+class MemberPersonalDetails {
+  const MemberPersonalDetails({
+    this.userId,
+    this.role,
+    this.status,
+    this.memberSince,
+    this.phone,
+    this.email,
+    this.gender,
+    this.photoUrl,
+    this.address,
+    this.city,
+    this.country,
+    this.createdAt,
+    this.cniFront,
+    this.cniBack,
+    this.passport,
+    this.drivingLicense,
+  });
+
+  final String? userId;
+  final String? role;
+  final String? status;
+  final String? memberSince;
+  final String? phone;
+  final String? email;
+  final String? gender;
+  final String? photoUrl;
+  final String? address;
+  final String? city;
+  final String? country;
+  final String? createdAt;
+  final String? cniFront;
+  final String? cniBack;
+  final String? passport;
+  final String? drivingLicense;
+}
+
 /// Une ligne de l'annuaire des membres — vue non-admin.
 class MemberDirectoryEntry {
   const MemberDirectoryEntry({
@@ -16,6 +54,7 @@ class MemberDirectoryEntry {
     required this.status,
     this.role,
     this.isHighlighted = false,
+    this.details = const MemberPersonalDetails(),
   });
 
   final String name;
@@ -23,6 +62,7 @@ class MemberDirectoryEntry {
   final String memberSinceLabel;
   final MemberRowStatus status;
   final bool isHighlighted; // étoile (membre exemplaire)
+  final MemberPersonalDetails details;
 }
 
 /// Une ligne de l'annuaire des membres — vue admin. Contenu de 2ᵉ ligne
@@ -36,6 +76,7 @@ class AdminMemberEntry {
     this.role,
     this.isHighlighted = false,
     this.hasUrgentAction = false,
+    this.details = const MemberPersonalDetails(),
   });
 
   final String name;
@@ -45,6 +86,7 @@ class AdminMemberEntry {
   final Color statusColor;
   final bool isHighlighted;
   final bool hasUrgentAction; // affiche l'icône enveloppe au lieu du menu "..."
+  final MemberPersonalDetails details;
 }
 
 /// Synthèse de la communauté affichée dans la carte verte "La communauté".

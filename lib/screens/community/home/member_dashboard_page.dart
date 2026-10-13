@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../Models/community_admin_dashboard_model.dart';
-import '../../../Models/community_member_dashboard_model.dart';
+import '../../../ModeView/community_admin_dashboard_model.dart';
+import '../../../ModeView/community_member_dashboard_model.dart';
 import '../../../localization/app_localizations.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/app_dimensions.dart';
@@ -67,7 +67,8 @@ class MemberDashboardPage extends StatelessWidget {
               onAction: () => onActionPay(requiredActions[i]),
               onTap: () => onActionTap(requiredActions[i]),
             ),
-            if (i != requiredActions.length - 1) SizedBox(height: AppDimensions.spaceSm.h),
+            if (i != requiredActions.length - 1)
+              SizedBox(height: AppDimensions.spaceSm.h),
           ],
           SizedBox(height: AppDimensions.spaceLg.h),
           _SectionTitle(AppLocalizations.t('quick_actions')),
@@ -99,7 +100,10 @@ class MemberDashboardPage extends StatelessWidget {
           SizedBox(height: AppDimensions.spaceLg.h),
           MemberCycleCard(info: cycle),
           SizedBox(height: AppDimensions.spaceLg.h),
-          MembersOverviewCard(stats: memberStatus, onSeeAllMembers: onSeeAllMembers),
+          MembersOverviewCard(
+            stats: memberStatus,
+            onSeeAllMembers: onSeeAllMembers,
+          ),
           SizedBox(height: AppDimensions.spaceLg.h),
           _SectionTitle(AppLocalizations.t('recent_activity')),
           SizedBox(height: AppDimensions.spaceSm.h),
@@ -120,7 +124,11 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+      style: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textPrimary,
+      ),
     );
   }
 }

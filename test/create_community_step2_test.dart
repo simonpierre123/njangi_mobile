@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:njangi/Models/create_community_model.dart';
+import 'package:njangi/ModeView/create_community_model.dart';
 import 'package:njangi/localization/app_localizations.dart';
 import 'package:njangi/routes/app_router.dart';
 import 'package:njangi/routes/app_routes.dart';

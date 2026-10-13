@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/treasury_model.dart';
+import '../../../../ModeView/treasury_model.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
@@ -36,14 +36,21 @@ class FinancialPositionCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
                 ),
                 child: Text(
                   '${position.participationPercent}% ${AppLocalizations.t('participation_suffix')}',
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.white),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.white,
+                  ),
                 ),
               ),
             ],
@@ -54,30 +61,54 @@ class FinancialPositionCard extends StatelessWidget {
               Container(
                 width: 8,
                 height: 8,
-                decoration: const BoxDecoration(color: AppColors.mintLight, shape: BoxShape.circle),
+                decoration: const BoxDecoration(
+                  color: AppColors.mintLight,
+                  shape: BoxShape.circle,
+                ),
               ),
               const SizedBox(width: 6),
               Text(
                 position.statusLabel,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.white),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.white,
+                ),
               ),
             ],
           ),
           SizedBox(height: AppDimensions.spaceLg.h),
           Row(
             children: [
-              Expanded(child: _Stat(label: AppLocalizations.t('total_contributed'), value: position.totalContributed)),
-              Expanded(child: _Stat(label: AppLocalizations.t('active_loans'), value: position.activeLoanLabel)),
+              Expanded(
+                child: _Stat(
+                  label: AppLocalizations.t('total_contributed'),
+                  value: position.totalContributed,
+                ),
+              ),
+              Expanded(
+                child: _Stat(
+                  label: AppLocalizations.t('active_loans'),
+                  value: position.activeLoanLabel,
+                ),
+              ),
             ],
           ),
           SizedBox(height: AppDimensions.spaceMd.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(AppLocalizations.t('next_due_date'), style: TextStyle(fontSize: 12, color: AppColors.white70)),
+              Text(
+                AppLocalizations.t('next_due_date'),
+                style: TextStyle(fontSize: 12, color: AppColors.white70),
+              ),
               Text(
                 position.nextDueDate,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.white),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.white,
+                ),
               ),
             ],
           ),
@@ -100,7 +131,14 @@ class _Stat extends StatelessWidget {
       children: [
         Text(label, style: TextStyle(fontSize: 11, color: AppColors.white70)),
         const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.white)),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: AppColors.white,
+          ),
+        ),
       ],
     );
   }

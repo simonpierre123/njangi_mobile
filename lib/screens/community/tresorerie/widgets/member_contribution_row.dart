@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/treasury_model.dart';
+import '../../../../ModeView/treasury_model.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
@@ -30,7 +30,10 @@ class MemberContributionRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CircleAvatar(radius: 18, backgroundColor: AppColors.neutralGrayLight),
+          const CircleAvatar(
+            radius: 18,
+            backgroundColor: AppColors.neutralGrayLight,
+          ),
           SizedBox(width: AppDimensions.spaceSm.w),
           Expanded(
             child: Column(
@@ -41,11 +44,19 @@ class MemberContributionRow extends StatelessWidget {
                   children: [
                     Text(
                       contribution.name,
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     Text(
                       contribution.amount,
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ],
                 ),
@@ -53,13 +64,31 @@ class MemberContributionRow extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(contribution.dateLabel, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    Text(
+                      contribution.dateLabel,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(color: colors.$1, borderRadius: BorderRadius.circular(AppDimensions.radiusSm)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.$1,
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusSm,
+                        ),
+                      ),
                       child: Text(
                         _statusLabel(contribution.status),
-                        style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: colors.$2),
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: colors.$2,
+                        ),
                       ),
                     ),
                   ],

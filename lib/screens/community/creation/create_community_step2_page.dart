@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../Models/create_community_model.dart';
+import '../../../ModeView/create_community_model.dart';
 import '../../../common/basewidget/app_button.dart';
 import '../../../common/basewidget/app_text_field.dart';
 import '../../../common/basewidget/labeled_date_field.dart';
@@ -26,27 +26,31 @@ class CreateCommunityStep2Page extends StatefulWidget {
   final ValueChanged<CommunityDraft> onContinue;
 
   @override
-  State<CreateCommunityStep2Page> createState() => _CreateCommunityStep2PageState();
+  State<CreateCommunityStep2Page> createState() =>
+      _CreateCommunityStep2PageState();
 }
 
 class _CreateCommunityStep2PageState extends State<CreateCommunityStep2Page> {
-  late final TextEditingController _amountController =
-      TextEditingController(text: widget.draft.contributionAmount);
-  late final TextEditingController _membersController =
-      TextEditingController(text: widget.draft.expectedMemberCount);
+  late final TextEditingController _amountController = TextEditingController(
+    text: widget.draft.contributionAmount,
+  );
+  late final TextEditingController _membersController = TextEditingController(
+    text: widget.draft.expectedMemberCount,
+  );
   late ContributionFrequency? _frequency = widget.draft.frequency;
   late DateTime? _startDate = widget.draft.startDate;
-  late String _dueDay = widget.draft.dueDayLabel ?? AppLocalizations.t('due_day_monday');
+  late String _dueDay =
+      widget.draft.dueDayLabel ?? AppLocalizations.t('due_day_monday');
 
   List<String> get _weekdayOptions => [
-        AppLocalizations.t('due_day_monday'),
-        AppLocalizations.t('due_day_tuesday'),
-        AppLocalizations.t('due_day_wednesday'),
-        AppLocalizations.t('due_day_thursday'),
-        AppLocalizations.t('due_day_friday'),
-        AppLocalizations.t('due_day_saturday'),
-        AppLocalizations.t('due_day_sunday'),
-      ];
+    AppLocalizations.t('due_day_monday'),
+    AppLocalizations.t('due_day_tuesday'),
+    AppLocalizations.t('due_day_wednesday'),
+    AppLocalizations.t('due_day_thursday'),
+    AppLocalizations.t('due_day_friday'),
+    AppLocalizations.t('due_day_saturday'),
+    AppLocalizations.t('due_day_sunday'),
+  ];
 
   @override
   void dispose() {
@@ -56,13 +60,15 @@ class _CreateCommunityStep2PageState extends State<CreateCommunityStep2Page> {
   }
 
   void _continue() {
-    widget.onContinue(widget.draft.copyWith(
-      contributionAmount: _amountController.text,
-      frequency: _frequency,
-      startDate: _startDate,
-      dueDayLabel: _dueDay,
-      expectedMemberCount: _membersController.text,
-    ));
+    widget.onContinue(
+      widget.draft.copyWith(
+        contributionAmount: _amountController.text,
+        frequency: _frequency,
+        startDate: _startDate,
+        dueDayLabel: _dueDay,
+        expectedMemberCount: _membersController.text,
+      ),
+    );
   }
 
   @override
@@ -75,12 +81,16 @@ class _CreateCommunityStep2PageState extends State<CreateCommunityStep2Page> {
         child: Column(
           children: [
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppDimensions.screenPaddingH.w),
+              padding: EdgeInsets.symmetric(
+                horizontal: AppDimensions.screenPaddingH.w,
+              ),
               child: StepHeader(step: 2, totalSteps: 5, onBack: widget.onBack),
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: AppDimensions.screenPaddingH.w),
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppDimensions.screenPaddingH.w,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -92,7 +102,10 @@ class _CreateCommunityStep2PageState extends State<CreateCommunityStep2Page> {
                     SizedBox(height: AppDimensions.spaceXs.h),
                     Text(
                       AppLocalizations.t('financial_config_subtitle'),
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     SizedBox(height: AppDimensions.spaceLg.h),
                     Row(
@@ -100,19 +113,33 @@ class _CreateCommunityStep2PageState extends State<CreateCommunityStep2Page> {
                         Container(
                           width: 28,
                           height: 28,
-                          decoration: const BoxDecoration(color: AppColors.mintPale, shape: BoxShape.circle),
-                          child: const Icon(Icons.payments_outlined, size: 15, color: AppColors.primaryDeepest),
+                          decoration: const BoxDecoration(
+                            color: AppColors.mintPale,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.payments_outlined,
+                            size: 15,
+                            color: AppColors.primaryDeepest,
+                          ),
                         ),
                         SizedBox(width: AppDimensions.spaceXs.w),
                         Text(
                           AppLocalizations.t('contribution_section'),
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ],
                     ),
                     SizedBox(height: AppDimensions.spaceMd.h),
                     AppTextField(
-                      label: AppLocalizations.t('contribution_amount_label').toUpperCase(),
+                      label:
+                          AppLocalizations.t(
+                            'contribution_amount_label',
+                          ).toUpperCase(),
                       hint: '0',
                       controller: _amountController,
                       keyboardType: TextInputType.number,
@@ -121,29 +148,48 @@ class _CreateCommunityStep2PageState extends State<CreateCommunityStep2Page> {
                     SizedBox(height: AppDimensions.spaceMd.h),
                     Text(
                       AppLocalizations.t('frequency_label').toUpperCase(),
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     SizedBox(height: AppDimensions.spaceSm.h),
-                    FrequencyOptionGrid(selected: _frequency, onSelect: (f) => setState(() => _frequency = f)),
+                    FrequencyOptionGrid(
+                      selected: _frequency,
+                      onSelect: (f) => setState(() => _frequency = f),
+                    ),
                     SizedBox(height: AppDimensions.spaceLg.h),
                     Row(
                       children: [
                         Container(
                           width: 28,
                           height: 28,
-                          decoration: const BoxDecoration(color: AppColors.mintPale, shape: BoxShape.circle),
-                          child: const Icon(Icons.event_repeat, size: 15, color: AppColors.primaryDeepest),
+                          decoration: const BoxDecoration(
+                            color: AppColors.mintPale,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.event_repeat,
+                            size: 15,
+                            color: AppColors.primaryDeepest,
+                          ),
                         ),
                         SizedBox(width: AppDimensions.spaceXs.w),
                         Text(
                           AppLocalizations.t('cycle_section'),
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ],
                     ),
                     SizedBox(height: AppDimensions.spaceMd.h),
                     LabeledDateField(
-                      label: AppLocalizations.t('start_date_label').toUpperCase(),
+                      label:
+                          AppLocalizations.t('start_date_label').toUpperCase(),
                       value: _startDate,
                       onChanged: (d) => setState(() => _startDate = d),
                     ),
@@ -157,11 +203,17 @@ class _CreateCommunityStep2PageState extends State<CreateCommunityStep2Page> {
                     SizedBox(height: AppDimensions.spaceXs.h),
                     Text(
                       AppLocalizations.t('due_day_helper'),
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     SizedBox(height: AppDimensions.spaceMd.h),
                     AppTextField(
-                      label: AppLocalizations.t('expected_members_label').toUpperCase(),
+                      label:
+                          AppLocalizations.t(
+                            'expected_members_label',
+                          ).toUpperCase(),
                       hint: AppLocalizations.t('expected_members_hint'),
                       controller: _membersController,
                       keyboardType: TextInputType.number,
@@ -169,7 +221,10 @@ class _CreateCommunityStep2PageState extends State<CreateCommunityStep2Page> {
                     SizedBox(height: AppDimensions.spaceXs.h),
                     Text(
                       AppLocalizations.t('expected_members_helper'),
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     SizedBox(height: AppDimensions.spaceLg.h),
                     const TrustSecurityBanner(),

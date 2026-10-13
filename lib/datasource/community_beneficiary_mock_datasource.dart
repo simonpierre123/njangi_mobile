@@ -1,4 +1,4 @@
-import '../Models/beneficiary_model.dart';
+import '../ModeView/beneficiary_model.dart';
 
 /// Données mock de l'onglet Bénéficiaires, en attendant l'API.
 class CommunityBeneficiaryMockDatasource {
@@ -43,7 +43,15 @@ class CommunityBeneficiaryMockDatasource {
   ];
 
   static const payoutHistory = [
-    PayoutHistoryEntry(name: 'Thomas L.', cycleLabel: 'Cycle 7/12', amount: '600 000 FCFA'),
-    PayoutHistoryEntry(name: 'Sophie M.', cycleLabel: 'Cycle 6/12', amount: '600 000 FCFA'),
+    PayoutHistoryEntry(
+      name: 'Thomas L.',
+      cycleLabel: 'Cycle 7/12',
+      amount: '600 000 FCFA',
+    ),
+    PayoutHistoryEntry(
+      name: 'Sophie M.',
+      cycleLabel: 'Cycle 6/12',
+      amount: '600 000 FCFA',
+    ),
   ];
 }

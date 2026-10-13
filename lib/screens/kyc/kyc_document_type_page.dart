@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../Models/kyc_model.dart';
+import '../../ModeView/kyc_model.dart';
 import '../../common/basewidget/app_button.dart';
 import '../../common/basewidget/simple_app_bar.dart';
 import '../../localization/app_localizations.dart';
@@ -58,7 +58,11 @@ class _KycDocumentTypePageState extends State<KycDocumentTypePage> {
                 child: Text(
                   AppLocalizations.t('kyc2_title'),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
               SizedBox(height: AppDimensions.spaceSm.h),
@@ -67,7 +71,10 @@ class _KycDocumentTypePageState extends State<KycDocumentTypePage> {
                 child: Text(
                   AppLocalizations.t('kyc2_desc'),
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
               SizedBox(height: AppDimensions.spaceXl.h),
@@ -79,7 +86,8 @@ class _KycDocumentTypePageState extends State<KycDocumentTypePage> {
                   isSelected: _selected == widget.options[i].id,
                   onTap: () => setState(() => _selected = widget.options[i].id),
                 ),
-                if (i != widget.options.length - 1) SizedBox(height: AppDimensions.spaceMd.h),
+                if (i != widget.options.length - 1)
+                  SizedBox(height: AppDimensions.spaceMd.h),
               ],
               SizedBox(height: AppDimensions.spaceXl.h),
               KycChecklistBox(
@@ -102,7 +110,11 @@ class _KycDocumentTypePageState extends State<KycDocumentTypePage> {
                   onTap: widget.onBack,
                   child: Text(
                     AppLocalizations.t('back_button'),
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ),

@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../Controllers_distant/UserController.dart';
-import '../../Models/profile_model.dart';
+import '../../ModeView/profile_model.dart';
 import '../../Models/user_model.dart';
 import '../../common/basewidget/app_button.dart';
 import '../../common/basewidget/app_text_field.dart';

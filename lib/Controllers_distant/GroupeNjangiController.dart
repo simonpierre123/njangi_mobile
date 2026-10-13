@@ -4,10 +4,11 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:njangi/Controllers_distant/CycleController.dart';
+import 'package:njangi/Controllers_distant/MembreGroupeCycleController.dart';
 import 'package:njangi/Models/Cycle.dart';
 import 'package:njangi/Models/GroupeNjangi.dart';
 import 'package:njangi/Models/MembreGroupe.dart';
-import 'package:njangi/Models/community_model.dart';
+import 'package:njangi/ModeView/community_model.dart';
 import 'package:njangi/datasource/api_service.dart';
 import 'package:njangi/datasource/community_mock_datasource.dart';
 import 'package:njangi/localization/app_localizations.dart';
@@ -47,7 +48,7 @@ class GroupeNjangiController {
         memberships.asMap().entries.map((entry) async {
           final membership = Map<String, dynamic>.from(entry.value);
           // Tant que l'invitation n'est pas acceptée, le groupe reste masqué.
-          if (membership['role']?.toString().toUpperCase() == 'INVITE') {
+          if (membership['role']?.toString().trim().toUpperCase() == 'INVITE') {
             return null;
           }
           final groupValue = membership['groupe'];
@@ -73,6 +74,21 @@ class GroupeNjangiController {
                   : CommunityMockDatasource.sample[entry.key %
                       CommunityMockDatasource.sample.length];
           final cycle = _selectCycle(cycles ?? const []);
+          final cycleId = cycle?.id;
+          if (cycleId != null && cycleId.isNotEmpty) {
+            final cycleMembers = await MembreGroupeCycleController.getForCycle(
+              cycleId,
+            );
+            final currentCycleMembership = cycleMembers?.where(
+              (member) => member.utilisateurId == user.id,
+            );
+            if (currentCycleMembership?.any(
+                  (member) => member.role.trim().toUpperCase() == 'INVITE',
+                ) ??
+                false) {
+              return null;
+            }
+          }
           final type = group['type']?.toString() ?? '';
           final rawLogo = group['logo']?.toString();
           final logoUrl =
@@ -96,7 +112,10 @@ class GroupeNjangiController {
             icon: _iconForType(type),
             role: membership['role']?.toString(),
             cycleCurrent: cycle?.number ?? staticCommunity?.cycleCurrent ?? 0,
-            cycleTotal: staticCommunity?.cycleTotal ?? 0,
+            cycleTotal:
+                cycles == null
+                    ? staticCommunity?.cycleTotal ?? 0
+                    : cycles.length,
             memberCount:
                 memberRows == null
                     ? staticCommunity?.memberCount ?? 0

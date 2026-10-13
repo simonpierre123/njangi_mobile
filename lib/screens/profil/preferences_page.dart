@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../Models/preferences_model.dart';
+import '../../ModeView/preferences_model.dart';
 import '../../datasource/preferences_mock_datasource.dart';
 import '../../common/basewidget/simple_app_bar.dart';
 import '../../localization/app_localizations.dart';

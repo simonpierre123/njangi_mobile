@@ -1,17 +1,20 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import '../Controllers_distant/AuthController.dart';
 import '../Controllers_distant/CycleController.dart';
+import '../Controllers_distant/MembreGroupeCycleController.dart';
 import '../Controllers_distant/UserController.dart';
 import '../Models/Cycle.dart';
-import '../Models/MembreGroupe.dart';
 import '../Models/Invitation.dart';
-import '../Models/community_model.dart';
-import '../Models/community_members_model.dart';
-import '../Models/create_community_model.dart';
-import '../Models/kyc_model.dart';
+import '../Models/MembreGroupe.dart';
+import '../Models/Notification.dart' as app_notification;
+import '../ModeView/community_model.dart';
+import '../ModeView/community_members_model.dart';
+import '../ModeView/create_community_model.dart';
+import '../ModeView/kyc_model.dart';
 import '../common/basewidget/coming_soon_page.dart';
 import '../datasource/community_admin_mock_datasource.dart';
 import '../datasource/community_beneficiary_mock_datasource.dart';
@@ -22,7 +25,6 @@ import '../datasource/community_treasury_mock_datasource.dart';
 import '../datasource/contribution_mock_datasource.dart';
 import '../datasource/cycle_completion_mock_datasource.dart';
 import '../datasource/kyc_mock_datasource.dart';
-import '../datasource/notification_feed_mock_datasource.dart';
 import '../datasource/notification_settings_mock_datasource.dart';
 import '../datasource/profile_mock_datasource.dart';
 import '../datasource/report_mock_datasource.dart';
@@ -46,6 +48,7 @@ import '../screens/community/creation/create_community_step5_page.dart';
 import '../screens/community/creation/invite/invite_contacts_page.dart';
 import '../screens/community/creation/invite/invite_join_page.dart';
 import '../screens/community/creation/invite/invite_phone_page.dart';
+import '../screens/community/membres/member_details_page.dart';
 import '../screens/community/rapport/detailed_report_page.dart';
 import '../screens/community/rapport/financial_summary_page.dart';
 import '../screens/community/tresorerie/contribution_detail_page.dart';
@@ -53,6 +56,7 @@ import '../screens/community/tresorerie/cycle_completed_page.dart';
 import '../screens/community/tresorerie/disburse_funds_sheet.dart';
 import '../screens/community/tresorerie/record_contribution_sheet.dart';
 import '../screens/home/home_shell.dart';
+import '../screens/home/invitation_detail_page.dart';
 import '../screens/kyc/kyc_capture_page.dart';
 import '../screens/kyc/kyc_document_type_page.dart';
 import '../screens/kyc/kyc_intro_page.dart';
@@ -63,6 +67,7 @@ import '../screens/profil/notifications_page.dart';
 import '../screens/profil/preferences_page.dart';
 import '../screens/profil/security_page.dart';
 import '../utils/management/storage_manager.dart';
+import '../utils/app_constants.dart';
 import 'app_routes.dart';
 
 /// Table de routage centralisée. Les écrans ne connaissent que leurs
@@ -144,6 +149,51 @@ class AppRouter {
 
   static void _popUntil(String route) =>
       navigatorKey.currentState!.popUntil(ModalRoute.withName(route));
+
+  static void _openMemberDetails({
+    required String name,
+    required String? role,
+    required MemberPersonalDetails details,
+  }) {
+    final navigator = navigatorKey.currentState;
+    if (navigator == null) return;
+    unawaited(
+      navigator.push<void>(
+        MaterialPageRoute<void>(
+          builder:
+              (_) =>
+                  MemberDetailsPage(name: name, role: role, details: details),
+        ),
+      ),
+    );
+  }
+
+  static MemberPersonalDetails _memberPersonalDetails(MembreGroupe member) =>
+      MemberPersonalDetails(
+        userId: member.utilisateurId,
+        role: member.role,
+        status: member.statut,
+        memberSince: member.dateAdhesion,
+        phone: member.telephone,
+        email: member.email,
+        gender: member.sexe,
+        photoUrl: _mediaUrl(member.photo),
+        address: member.adresse,
+        city: member.ville,
+        country: member.pays,
+        createdAt: member.utilisateurCreatedAt,
+        cniFront: member.cniRecto,
+        cniBack: member.cniVerso,
+        passport: member.passport,
+        drivingLicense: member.permis,
+      );
+
+  static String? _mediaUrl(String? path) {
+    final value = path?.trim();
+    if (value == null || value.isEmpty) return null;
+    if (value.startsWith('http')) return value;
+    return '${AppConstants.imageBaseUrl}${value.replaceFirst(RegExp(r'^/+'), '')}';
+  }
 
   static void openCommunity(CommunityModel community) {
     if (community.cyclesLoaded && !community.hasCycle) {
@@ -314,6 +364,7 @@ class AppRouter {
         statusColor: fallback.statusColor,
         isHighlighted: fallback.isHighlighted,
         hasUrgentAction: fallback.hasUrgentAction,
+        details: _memberPersonalDetails(member),
       );
     });
   }
@@ -333,6 +384,7 @@ class AppRouter {
             member.dateAdhesion?.split('T').first ?? fallback.memberSinceLabel,
         status: fallback.status,
         isHighlighted: fallback.isHighlighted,
+        details: _memberPersonalDetails(member),
       );
     });
   }
@@ -629,7 +681,12 @@ class AppRouter {
             // rôle — le shell décide lui-même de la variante à afficher.
             onCommunityTap: openCommunity,
             onAddCommunity: () => _pushAndWait(AppRoutes.createCommunityStep1),
-            notifications: NotificationFeedMockDatasource.items,
+            onOpenInvitation:
+                (notification) => _pushAndWait(
+                  AppRoutes.invitationDetails,
+                  arguments: notification,
+                ),
+            onLock: lockSession,
             user: ProfileMockDatasource.user,
             profileActivity: ProfileMockDatasource.activity,
             profileCommunities: const [],
@@ -643,6 +700,15 @@ class AppRouter {
                 () => _push(AppRoutes.comingSoon, arguments: 'À propos'),
             onLogout: _logout,
           ),
+        );
+
+      case AppRoutes.invitationDetails:
+        final notification = settings.arguments;
+        if (notification is! app_notification.Notification) {
+          return page(const _MissingCommunityRedirect());
+        }
+        return page(
+          InvitationDetailPage(notification: notification, onBack: _pop),
         );
 
       // ---------------- Espace communauté (shell) ----------------
@@ -755,7 +821,18 @@ class AppRouter {
                   AppRoutes.comingSoon,
                   arguments: 'Relancer ${m.name}',
                 ),
-            onMemberTap: (m) => _push(AppRoutes.comingSoon, arguments: m.name),
+            onAdminMemberTap:
+                (m) => _openMemberDetails(
+                  name: m.name,
+                  role: m.details.role ?? m.role,
+                  details: m.details,
+                ),
+            onMemberTap:
+                (m) => _openMemberDetails(
+                  name: m.name,
+                  role: m.details.role ?? m.role,
+                  details: m.details,
+                ),
             // Profil (même contenu que dans HomeShell)
             user: ProfileMockDatasource.user,
             profileActivity: ProfileMockDatasource.activity,
@@ -918,6 +995,18 @@ class AppRouter {
                 };
               }
 
+              final membership =
+                  await MembreGroupeCycleController.addCurrentUserAsAdmin(
+                    cycleId: cycleId,
+                  );
+              if (membership['success'] != true) {
+                return {
+                  'success': false,
+                  'cycleId': cycleId,
+                  'message': membership['message'],
+                };
+              }
+
               _push(
                 AppRoutes.createCommunityStep4,
                 arguments: updated.copyWith(cycleId: cycleId),
@@ -1004,6 +1093,8 @@ class AppRouter {
         return page(
           InvitePhonePage(
             groupId: draft.groupId ?? '',
+            groupName: draft.name,
+            cycleId: draft.cycleId,
             onBack: _pop,
             onDone: _popWithResult,
           ),

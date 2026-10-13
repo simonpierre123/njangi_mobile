@@ -11,11 +11,13 @@ class RegisteredUser {
     required this.id,
     required this.name,
     required this.phone,
+    this.tokenFirebase,
   });
 
   final String id;
   final String name;
   final String phone;
+  final String? tokenFirebase;
 }
 
 class PhoneContact {
@@ -34,6 +36,7 @@ class Invitation {
     this.token,
     this.displayName,
     this.phone,
+    this.pushSent = true,
   });
 
   final String id;
@@ -43,6 +46,7 @@ class Invitation {
   final String? token;
   final String? displayName;
   final String? phone;
+  final bool pushSent;
 
   String? get link =>
       token == null ? null : '${AppConstants.inviteBaseUrl}$token';
@@ -60,6 +64,7 @@ class Invitation {
       token: token,
       displayName: displayName ?? this.displayName,
       phone: phone ?? this.phone,
+      pushSent: pushSent,
     );
   }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/community_admin_dashboard_model.dart';
+import '../../../ModeView/community_admin_dashboard_model.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
@@ -7,7 +7,11 @@ import '../../../../utils/app_dimensions.dart';
 /// Carte "Statut des membres" — répartition total/à jour/en attente/en
 /// retard + accès à la gestion des membres.
 class MembersStatusCard extends StatelessWidget {
-  const MembersStatusCard({super.key, required this.stats, required this.onManageMembers});
+  const MembersStatusCard({
+    super.key,
+    required this.stats,
+    required this.onManageMembers,
+  });
 
   final MemberStatusStats stats;
   final VoidCallback onManageMembers;
@@ -69,7 +73,9 @@ class MembersStatusCard extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppColors.borderMint),
                 backgroundColor: AppColors.iconBgMint,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusMd)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: Row(
@@ -77,10 +83,18 @@ class MembersStatusCard extends StatelessWidget {
                 children: [
                   Text(
                     AppLocalizations.t('manage_members'),
-                    style: const TextStyle(color: AppColors.primaryDark, fontWeight: FontWeight.w700, fontSize: 13),
+                    style: const TextStyle(
+                      color: AppColors.primaryDark,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(Icons.chevron_right, size: 16, color: AppColors.primaryDark),
+                  const Icon(
+                    Icons.chevron_right,
+                    size: 16,
+                    color: AppColors.primaryDark,
+                  ),
                 ],
               ),
             ),
@@ -129,7 +143,14 @@ class _StatusBox extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            Text(count, style: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.w700)),
+            Text(
+              count,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ],
         ),
       ),

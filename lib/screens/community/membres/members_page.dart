@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../Models/community_members_model.dart';
+import '../../../ModeView/community_members_model.dart';
 import '../../../common/basewidget/app_search_field.dart';
 import '../../../common/basewidget/member_filter_chips.dart';
 import '../../../localization/app_localizations.dart';
@@ -47,16 +47,19 @@ class _MembersPageState extends State<MembersPage> {
       AppLocalizations.t('up_to_date'),
     ];
 
-    final filtered = widget.directory.where((m) {
-      final matchesFilter = switch (_filterIndex) {
-        1 => m.role == 'ADMIN',
-        2 => m.role == null,
-        3 => m.status == MemberRowStatus.upToDate,
-        _ => true,
-      };
-      final matchesQuery = _query.isEmpty || m.name.toLowerCase().contains(_query.toLowerCase());
-      return matchesFilter && matchesQuery;
-    }).toList();
+    final filtered =
+        widget.directory.where((m) {
+          final matchesFilter = switch (_filterIndex) {
+            1 => m.role == 'ADMIN',
+            2 => m.role == null,
+            3 => m.status == MemberRowStatus.upToDate,
+            _ => true,
+          };
+          final matchesQuery =
+              _query.isEmpty ||
+              m.name.toLowerCase().contains(_query.toLowerCase());
+          return matchesFilter && matchesQuery;
+        }).toList();
 
     return SingleChildScrollView(
       padding: EdgeInsets.symmetric(
@@ -84,7 +87,8 @@ class _MembersPageState extends State<MembersPage> {
               onTap: () => widget.onMemberTap(filtered[i]),
               child: MemberDirectoryRow(entry: filtered[i]),
             ),
-            if (i != filtered.length - 1) SizedBox(height: AppDimensions.spaceSm.h),
+            if (i != filtered.length - 1)
+              SizedBox(height: AppDimensions.spaceSm.h),
           ],
           SizedBox(height: AppDimensions.spaceLg.h),
           TrustScoreCard(score: widget.trustScore),

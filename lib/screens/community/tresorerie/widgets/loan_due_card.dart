@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/treasury_model.dart';
+import '../../../../ModeView/treasury_model.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
@@ -22,8 +22,15 @@ class LoanDueCard extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(color: AppColors.primaryDark, shape: BoxShape.circle),
-            child: const Icon(Icons.event_repeat, color: AppColors.white, size: 18),
+            decoration: const BoxDecoration(
+              color: AppColors.primaryDark,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.event_repeat,
+              color: AppColors.white,
+              size: 18,
+            ),
           ),
           SizedBox(width: AppDimensions.spaceSm.w),
           Expanded(
@@ -32,16 +39,30 @@ class LoanDueCard extends StatelessWidget {
               children: [
                 Text(
                   AppLocalizations.t('next_due_date'),
-                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 2),
-                Text(due.dueDate, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, color: AppColors.textPrimary)),
+                Text(
+                  due.dueDate,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
               ],
             ),
           ),
           Text(
             due.amount,
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: AppColors.secondaryGreen),
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              color: AppColors.secondaryGreen,
+            ),
           ),
         ],
       ),

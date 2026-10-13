@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/treasury_model.dart';
+import '../../../../ModeView/treasury_model.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
@@ -33,18 +33,31 @@ class LoanSummaryCard extends StatelessWidget {
                 children: [
                   Text(
                     AppLocalizations.t('loan_title'),
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.white),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.white,
+                    ),
                   ),
                   SizedBox(height: AppDimensions.spaceXs.h),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusXl,
+                      ),
                     ),
                     child: Text(
                       loan.statusLabel,
-                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.white),
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -52,11 +65,18 @@ class LoanSummaryCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(AppLocalizations.t('borrowed_amount'), style: TextStyle(fontSize: 10, color: AppColors.white70)),
+                  Text(
+                    AppLocalizations.t('borrowed_amount'),
+                    style: TextStyle(fontSize: 10, color: AppColors.white70),
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     loan.borrowedAmount,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.white),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.white,
+                    ),
                   ),
                 ],
               ),
@@ -66,10 +86,17 @@ class LoanSummaryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(AppLocalizations.t('repayment_label'), style: TextStyle(fontSize: 12, color: AppColors.white70)),
+              Text(
+                AppLocalizations.t('repayment_label'),
+                style: TextStyle(fontSize: 12, color: AppColors.white70),
+              ),
               Text(
                 '${(loan.repaymentPercent * 100).round()}%',
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.white),
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.white,
+                ),
               ),
             ],
           ),
@@ -86,8 +113,18 @@ class LoanSummaryCard extends StatelessWidget {
           SizedBox(height: AppDimensions.spaceLg.h),
           Row(
             children: [
-              Expanded(child: _Stat(label: AppLocalizations.t('total_repaid'), value: loan.totalRepaid)),
-              Expanded(child: _Stat(label: AppLocalizations.t('remaining_balance'), value: loan.remainingBalance)),
+              Expanded(
+                child: _Stat(
+                  label: AppLocalizations.t('total_repaid'),
+                  value: loan.totalRepaid,
+                ),
+              ),
+              Expanded(
+                child: _Stat(
+                  label: AppLocalizations.t('remaining_balance'),
+                  value: loan.remainingBalance,
+                ),
+              ),
             ],
           ),
         ],
@@ -109,7 +146,14 @@ class _Stat extends StatelessWidget {
       children: [
         Text(label, style: TextStyle(fontSize: 11, color: AppColors.white70)),
         const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.white)),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: AppColors.white,
+          ),
+        ),
       ],
     );
   }

@@ -1,4 +1,4 @@
-import '../Models/create_community_model.dart';
+import '../ModeView/create_community_model.dart';
 import '../utils/app_colors.dart';
 
 /// Données mock des invitations déjà envoyées, en attendant l'API.

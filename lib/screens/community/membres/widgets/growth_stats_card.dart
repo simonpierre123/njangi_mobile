@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/community_members_model.dart';
+import '../../../../ModeView/community_members_model.dart';
 import '../../../../common/basewidget/percent_ring.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
@@ -28,16 +28,28 @@ class GrowthStatsCard extends StatelessWidget {
             children: [
               Text(
                 AppLocalizations.t('growth_title'),
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
                 growth.newMembersLabel,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.primaryDark),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryDark,
+                ),
               ),
             ],
           ),
-          PercentRing(percent: growth.percent, size: 48, strokeWidth: 5, color: AppColors.primaryDark),
+          PercentRing(
+            percent: growth.percent,
+            size: 48,
+            strokeWidth: 5,
+            color: AppColors.primaryDark,
+          ),
         ],
       ),
     );

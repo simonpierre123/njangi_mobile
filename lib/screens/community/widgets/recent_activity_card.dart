@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
-import '../../../../Models/community_admin_dashboard_model.dart';
+import '../../../ModeView/community_admin_dashboard_model.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
 
 /// Carte "Activité récente" — dernières actions sur la communauté.
 class RecentActivityCard extends StatelessWidget {
-  const RecentActivityCard({super.key, required this.items, required this.onSeeAll});
+  const RecentActivityCard({
+    super.key,
+    required this.items,
+    required this.onSeeAll,
+  });
 
   final List<ActivityItem> items;
   final VoidCallback onSeeAll;
@@ -34,7 +38,9 @@ class RecentActivityCard extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: AppColors.borderMint),
                 backgroundColor: AppColors.iconBgMint,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimensions.radiusMd)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: Row(
@@ -42,10 +48,18 @@ class RecentActivityCard extends StatelessWidget {
                 children: [
                   Text(
                     AppLocalizations.t('see_full_history'),
-                    style: const TextStyle(color: AppColors.primaryDark, fontWeight: FontWeight.w700, fontSize: 13),
+                    style: const TextStyle(
+                      color: AppColors.primaryDark,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                    ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(Icons.chevron_right, size: 16, color: AppColors.primaryDark),
+                  const Icon(
+                    Icons.chevron_right,
+                    size: 16,
+                    color: AppColors.primaryDark,
+                  ),
                 ],
               ),
             ),
@@ -66,15 +80,32 @@ class _ActivityRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CircleAvatar(radius: 18, backgroundColor: item.iconBg, child: Icon(item.icon, color: item.iconColor, size: 18)),
+        CircleAvatar(
+          radius: 18,
+          backgroundColor: item.iconBg,
+          child: Icon(item.icon, color: item.iconColor, size: 18),
+        ),
         SizedBox(width: AppDimensions.spaceSm.w),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(item.title, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 13)),
+              Text(
+                item.title,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text(item.subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+              Text(
+                item.subtitle,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                ),
+              ),
             ],
           ),
         ),

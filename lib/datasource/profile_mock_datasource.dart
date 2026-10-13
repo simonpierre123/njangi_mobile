@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../Models/community_model.dart';
-import '../Models/profile_model.dart';
+import '../ModeView/community_model.dart';
+import '../ModeView/profile_model.dart';
 import '../utils/app_colors.dart';
 import 'community_mock_datasource.dart';
 

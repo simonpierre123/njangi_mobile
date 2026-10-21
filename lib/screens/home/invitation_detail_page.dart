@@ -15,10 +15,12 @@ class InvitationDetailPage extends StatefulWidget {
     super.key,
     required this.notification,
     required this.onBack,
+    required this.onCompleteProfile,
   });
 
   final Notification notification;
   final VoidCallback onBack;
+  final Future<bool> Function() onCompleteProfile;
 
   @override
   State<InvitationDetailPage> createState() => _InvitationDetailPageState();
@@ -29,6 +31,8 @@ class _InvitationDetailPageState extends State<InvitationDetailPage> {
   bool _loading = true;
   bool _accepting = false;
   bool _accepted = false;
+  bool _stale = false;
+  bool _profileCompletionRequired = false;
   String? _loadError;
 
   String? get _cycleId =>
@@ -73,9 +77,15 @@ class _InvitationDetailPageState extends State<InvitationDetailPage> {
       widget.notification,
     );
     if (!mounted) return;
+    if (result['refreshRequired'] == true) {
+      await _loadCycle();
+      if (!mounted) return;
+    }
     setState(() {
       _accepting = false;
       _accepted = result['success'] == true;
+      _stale = result['refreshRequired'] == true;
+      _profileCompletionRequired = result['requiresProfileCompletion'] == true;
     });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -91,6 +101,13 @@ class _InvitationDetailPageState extends State<InvitationDetailPage> {
             result['success'] == true ? AppColors.primaryDark : Colors.red,
       ),
     );
+  }
+
+  Future<void> _completeProfileAndAccept() async {
+    final completed = await widget.onCompleteProfile();
+    if (!mounted || !completed) return;
+    setState(() => _profileCompletionRequired = false);
+    await _accept();
   }
 
   String _frequencyLabel(String? frequency) => switch (frequency
@@ -245,19 +262,45 @@ class _InvitationDetailPageState extends State<InvitationDetailPage> {
                 AppDimensions.screenPaddingH.w,
                 AppDimensions.spaceMd.h,
               ),
-              child: AppButton(
-                label: AppLocalizations.t(
-                  _accepted
-                      ? 'invitation_accepted_button'
-                      : 'invitation_accept_button',
-                ),
-                icon: _accepted ? Icons.check_circle_outline : Icons.check,
-                iconLeading: true,
-                isLoading: _accepting,
-                onPressed:
-                    _loading || _loadError != null || _accepted
-                        ? null
-                        : _accept,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_profileCompletionRequired) ...[
+                    Text(
+                      AppLocalizations.t('invitation_profile_required'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: AppColors.textSecondary),
+                    ),
+                    SizedBox(height: AppDimensions.spaceSm.h),
+                    AppButton(
+                      label: AppLocalizations.t('complete_profile_button'),
+                      icon: Icons.person_outline,
+                      iconLeading: true,
+                      onPressed: _accepting ? null : _completeProfileAndAccept,
+                    ),
+                    SizedBox(height: AppDimensions.spaceSm.h),
+                  ],
+                  AppButton(
+                    label: AppLocalizations.t(
+                      _accepted
+                          ? 'invitation_accepted_button'
+                          : _stale
+                          ? 'invitation_state_changed'
+                          : 'invitation_accept_button',
+                    ),
+                    icon: _accepted ? Icons.check_circle_outline : Icons.check,
+                    iconLeading: true,
+                    isLoading: _accepting,
+                    onPressed:
+                        _loading ||
+                                _loadError != null ||
+                                _accepted ||
+                                _stale ||
+                                _profileCompletionRequired
+                            ? null
+                            : _accept,
+                  ),
+                ],
               ),
             ),
           ],

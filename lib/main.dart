@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:njangi/api/firebase_api.dart';
 import 'package:njangi/datasource/api_service.dart';
+import 'package:njangi/Models/Notification.dart' as app_notification;
 import 'localization/app_localizations.dart';
 import 'routes/app_router.dart';
 import 'routes/app_routes.dart';
@@ -76,6 +77,16 @@ Future<void> main() async {
   ApiService.initializeInterceptors();
   await Firebase.initializeApp();
   await FirebaseApi.initializeFCM();
+
+  FirebaseApi.setNotificationTapHandler((data) async {
+    final user = await StorageManager.getUser();
+    if (user == null) return;
+    final notification = app_notification.Notification.fromFcmData(
+      data,
+      userId: user.id,
+    );
+    AppRouter.openInvitationNotification(notification);
+  });
 
   final savedLocale = await LocaleManager.getSavedLocale();
   AppLocalizations.setLocale(savedLocale.languageCode);

@@ -46,12 +46,26 @@ class _CreateCommunityStep3PageState extends State<CreateCommunityStep3Page> {
                 ? '1'
                 : widget.draft.maxSimultaneousLoans,
       );
+  late final TextEditingController _savingsMinController =
+      TextEditingController(text: widget.draft.savingsMinAmount);
+  late final TextEditingController _savingsMaxController =
+      TextEditingController(text: widget.draft.savingsMaxAmount);
+  late final TextEditingController _savingsFixedController =
+      TextEditingController(text: widget.draft.savingsFixedAmount);
 
   late bool _allowLoans = widget.draft.allowLoans;
   late bool _adminValidation = widget.draft.adminValidationRequired;
   late bool _penalties = widget.draft.penaltiesEnabled;
   late int _maxAdmins = widget.draft.maxAdminCount;
   late bool _collectiveValidation = widget.draft.collectiveValidation;
+  late bool _savingsActive = widget.draft.savingsActive;
+  late String _savingsMode = widget.draft.savingsMode ?? 'LIBRE';
+  late String _savingsCalendarMode = widget.draft.savingsCalendarMode;
+  late bool _emergencyFundActive = widget.draft.emergencyFundActive;
+  late bool _emergencyIncludeBeneficiary =
+      widget.draft.emergencyIncludeBeneficiary;
+  late bool _tontineActive = widget.draft.tontineActive;
+  late bool _tontineNextVisible = widget.draft.tontineNextVisible;
   late String? _cycleId = widget.draft.cycleId;
   bool _isSaving = false;
 
@@ -60,6 +74,9 @@ class _CreateCommunityStep3PageState extends State<CreateCommunityStep3Page> {
     _maxAmountController.dispose();
     _maxDurationController.dispose();
     _maxSimultaneousController.dispose();
+    _savingsMinController.dispose();
+    _savingsMaxController.dispose();
+    _savingsFixedController.dispose();
     super.dispose();
   }
 
@@ -75,6 +92,16 @@ class _CreateCommunityStep3PageState extends State<CreateCommunityStep3Page> {
       penaltiesEnabled: _penalties,
       maxAdminCount: _maxAdmins,
       collectiveValidation: _collectiveValidation,
+      savingsActive: _savingsActive,
+      savingsMode: _savingsMode,
+      savingsFixedAmount: _savingsFixedController.text,
+      savingsMinAmount: _savingsMinController.text,
+      savingsMaxAmount: _savingsMaxController.text,
+      savingsCalendarMode: _savingsCalendarMode,
+      emergencyFundActive: _emergencyFundActive,
+      emergencyIncludeBeneficiary: _emergencyIncludeBeneficiary,
+      tontineActive: _tontineActive,
+      tontineNextVisible: _tontineNextVisible,
       cycleId: _cycleId,
     );
 
@@ -238,6 +265,185 @@ class _CreateCommunityStep3PageState extends State<CreateCommunityStep3Page> {
                         onChanged: (v) => setState(() => _penalties = v),
                       ),
                     ],
+                    SizedBox(height: AppDimensions.spaceLg.h),
+                    Text(
+                      AppLocalizations.t('cycle_modules_section'),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(height: AppDimensions.spaceMd.h),
+                    Container(
+                      padding: EdgeInsets.all(AppDimensions.spaceMd.w),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusLg,
+                        ),
+                        border: Border.all(color: AppColors.inputBorder),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ToggleSettingRow(
+                            bordered: false,
+                            leading: const CircledSettingIcon(
+                              icon: Icons.savings_outlined,
+                            ),
+                            title: AppLocalizations.t('savings_active_title'),
+                            value: _savingsActive,
+                            onChanged:
+                                (value) =>
+                                    setState(() => _savingsActive = value),
+                          ),
+                          if (_savingsActive) ...[
+                            SizedBox(height: AppDimensions.spaceSm.h),
+                            SegmentedButton<String>(
+                              showSelectedIcon: false,
+                              segments: [
+                                ButtonSegment(
+                                  value: 'LIBRE',
+                                  label: Text(
+                                    AppLocalizations.t('savings_mode_free'),
+                                  ),
+                                ),
+                                ButtonSegment(
+                                  value: 'FIXE',
+                                  label: Text(
+                                    AppLocalizations.t('savings_mode_fixed'),
+                                  ),
+                                ),
+                              ],
+                              selected: {_savingsMode},
+                              onSelectionChanged:
+                                  (values) => setState(
+                                    () => _savingsMode = values.first,
+                                  ),
+                            ),
+                            SizedBox(height: AppDimensions.spaceSm.h),
+                            if (_savingsMode == 'FIXE')
+                              AppTextField(
+                                label: AppLocalizations.t(
+                                  'savings_fixed_amount_label',
+                                ),
+                                hint: '10000',
+                                controller: _savingsFixedController,
+                                keyboardType: TextInputType.number,
+                              )
+                            else ...[
+                              AppTextField(
+                                label: AppLocalizations.t(
+                                  'savings_min_amount_label',
+                                ),
+                                hint: '1000',
+                                controller: _savingsMinController,
+                                keyboardType: TextInputType.number,
+                              ),
+                              SizedBox(height: AppDimensions.spaceSm.h),
+                              AppTextField(
+                                label: AppLocalizations.t(
+                                  'savings_max_amount_label',
+                                ),
+                                hint: '50000',
+                                controller: _savingsMaxController,
+                                keyboardType: TextInputType.number,
+                              ),
+                            ],
+                            SizedBox(height: AppDimensions.spaceSm.h),
+                            DropdownButtonFormField<String>(
+                              value: _savingsCalendarMode,
+                              decoration: InputDecoration(
+                                labelText: AppLocalizations.t(
+                                  'savings_calendar_label',
+                                ),
+                              ),
+                              items: [
+                                DropdownMenuItem(
+                                  value: 'MEME_QUE_TONTINE',
+                                  child: Text(
+                                    AppLocalizations.t('savings_calendar_same'),
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'INDEPENDANT',
+                                  child: Text(
+                                    AppLocalizations.t(
+                                      'savings_calendar_independent',
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(() => _savingsCalendarMode = value);
+                                }
+                              },
+                            ),
+                          ],
+                          SizedBox(height: AppDimensions.spaceMd.h),
+                          ToggleSettingRow(
+                            bordered: false,
+                            leading: const Icon(
+                              Icons.health_and_safety_outlined,
+                              size: 20,
+                              color: AppColors.textSecondary,
+                            ),
+                            title: AppLocalizations.t(
+                              'emergency_fund_active_title',
+                            ),
+                            value: _emergencyFundActive,
+                            onChanged:
+                                (value) => setState(
+                                  () => _emergencyFundActive = value,
+                                ),
+                          ),
+                          if (_emergencyFundActive) ...[
+                            SizedBox(height: AppDimensions.spaceSm.h),
+                            ToggleSettingRow(
+                              bordered: false,
+                              title: AppLocalizations.t(
+                                'emergency_include_beneficiary_title',
+                              ),
+                              value: _emergencyIncludeBeneficiary,
+                              onChanged:
+                                  (value) => setState(
+                                    () => _emergencyIncludeBeneficiary = value,
+                                  ),
+                            ),
+                          ],
+                          SizedBox(height: AppDimensions.spaceMd.h),
+                          ToggleSettingRow(
+                            bordered: false,
+                            leading: const Icon(
+                              Icons.autorenew,
+                              size: 20,
+                              color: AppColors.textSecondary,
+                            ),
+                            title: AppLocalizations.t('tontine_active_title'),
+                            value: _tontineActive,
+                            onChanged:
+                                (value) =>
+                                    setState(() => _tontineActive = value),
+                          ),
+                          if (_tontineActive) ...[
+                            SizedBox(height: AppDimensions.spaceSm.h),
+                            ToggleSettingRow(
+                              bordered: false,
+                              title: AppLocalizations.t(
+                                'tontine_next_visible_title',
+                              ),
+                              value: _tontineNextVisible,
+                              onChanged:
+                                  (value) => setState(
+                                    () => _tontineNextVisible = value,
+                                  ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                     SizedBox(height: AppDimensions.spaceLg.h),
                     Row(
                       children: [

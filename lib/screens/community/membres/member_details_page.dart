@@ -81,7 +81,6 @@ class MemberDetailsPage extends StatelessWidget {
                       radius: 42,
                       seed: name.hashCode.abs() % 70 + 1,
                       imageUrl: details.photoUrl,
-                      useGeneratedFallback: false,
                       fallbackBg: AppColors.neutralGrayLight,
                     ),
                     SizedBox(height: AppDimensions.spaceSm.h),

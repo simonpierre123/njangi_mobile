@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../Controllers_distant/CycleController.dart';
+import '../../Controllers_distant/CycleTontineTourController.dart';
 import '../../ModeView/beneficiary_model.dart';
 import '../../ModeView/community_admin_dashboard_model.dart';
 import '../../ModeView/community_member_dashboard_model.dart';
@@ -69,7 +71,6 @@ class CommunityShell extends StatefulWidget {
     required this.onRequestLoan,
     required this.currentBeneficiary,
     required this.beneficiaryStats,
-    required this.passageOrder,
     required this.payoutHistory,
     required this.onDisburse,
     required this.onSeeAllPayoutHistory,
@@ -133,7 +134,6 @@ class CommunityShell extends StatefulWidget {
   final VoidCallback onRequestLoan;
   final CurrentBeneficiary currentBeneficiary;
   final BeneficiaryStats beneficiaryStats;
-  final List<PassageOrderEntry> passageOrder;
   final List<PayoutHistoryEntry> payoutHistory;
   final VoidCallback onDisburse;
   final VoidCallback onSeeAllPayoutHistory;
@@ -169,12 +169,90 @@ class CommunityShell extends StatefulWidget {
 class _CommunityShellState extends State<CommunityShell> {
   int _tabIndex = 0;
   late UserProfile _profileUser;
+  String? _cycleId;
+  List<PassageOrderEntry> _passageOrder = const [];
+  bool _isLoadingPassageOrder = true;
+  String? _passageOrderError;
 
   @override
   void initState() {
     super.initState();
+    _cycleId = widget.community.cycleId;
     _profileUser = widget.user;
     _loadProfileUser();
+    _loadPassageOrder();
+  }
+
+  Future<void> _loadPassageOrder() async {
+    if (!_isAdmin && !widget.community.tontineNextVisible) {
+      setState(() => _isLoadingPassageOrder = false);
+      return;
+    }
+
+    var cycleId = _cycleId;
+    if (cycleId == null || cycleId.isEmpty) {
+      final cycles = await CycleController.getForGroup(widget.community.id);
+      if (cycles != null && cycles.isNotEmpty) {
+        final activeCycles = cycles.where(
+          (cycle) => cycle.status == 'EN_COURS',
+        );
+        cycleId =
+            activeCycles.isEmpty ? cycles.first.id : activeCycles.first.id;
+      }
+    }
+
+    if (cycleId == null || cycleId.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingPassageOrder = false;
+        _passageOrderError = AppLocalizations.t('cycle_tontine_load_error');
+      });
+      return;
+    }
+
+    _cycleId = cycleId;
+    final result = await CycleTontineTourController.getForCycle(cycleId);
+    if (!mounted) return;
+    if (result['success'] != true ||
+        result['entries'] is! List<PassageOrderEntry>) {
+      setState(() {
+        _isLoadingPassageOrder = false;
+        _passageOrderError =
+            result['message']?.toString() ??
+            AppLocalizations.t('cycle_tontine_load_error');
+      });
+      return;
+    }
+
+    setState(() {
+      _passageOrder = List<PassageOrderEntry>.of(
+        result['entries'] as List<PassageOrderEntry>,
+      );
+      _isLoadingPassageOrder = false;
+      _passageOrderError = null;
+    });
+  }
+
+  Future<List<PassageOrderEntry>?> _savePassageOrder(
+    List<PassageOrderEntry> entries,
+  ) async {
+    final cycleId = _cycleId;
+    if (cycleId == null || cycleId.isEmpty) return null;
+
+    final result = await CycleTontineTourController.setOrder(
+      cycleId: cycleId,
+      entries: entries,
+    );
+    if (result['success'] != true ||
+        result['entries'] is! List<PassageOrderEntry>) {
+      return null;
+    }
+
+    final savedEntries = List<PassageOrderEntry>.of(
+      result['entries'] as List<PassageOrderEntry>,
+    );
+    if (mounted) setState(() => _passageOrder = savedEntries);
+    return savedEntries;
   }
 
   Future<void> _loadProfileUser() async {
@@ -237,7 +315,13 @@ class _CommunityShellState extends State<CommunityShell> {
     totalCycle: widget.community.cycleTotal,
   );
 
-  void _goToTab(int index) => setState(() => _tabIndex = index);
+  void _goToTab(int index) {
+    if (index == _tabIndex) return;
+    setState(() => _tabIndex = index);
+    if (index == 1) {
+      _loadPassageOrder();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -339,7 +423,12 @@ class _CommunityShellState extends State<CommunityShell> {
               onRequestLoan: widget.onRequestLoan,
               currentBeneficiary: widget.currentBeneficiary,
               beneficiaryStats: widget.beneficiaryStats,
-              passageOrder: widget.passageOrder,
+              passageOrder: _passageOrder,
+              passageOrderLoading: _isLoadingPassageOrder,
+              passageOrderError: _passageOrderError,
+              onReorderPassageOrder: _savePassageOrder,
+              onRefresh: _loadPassageOrder,
+              showPassageOrderToMembers: widget.community.tontineNextVisible,
               payoutHistory: widget.payoutHistory,
               onDisburse: widget.onDisburse,
               onSeeAllPayoutHistory: widget.onSeeAllPayoutHistory,

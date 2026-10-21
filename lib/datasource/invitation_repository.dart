@@ -1,13 +1,12 @@
+import 'dart:convert' show jsonEncode;
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import '../api/firebase_api.dart';
 import '../Controllers_distant/CycleController.dart';
-import '../Controllers_distant/MembreGroupeController.dart';
 import '../Controllers_distant/MembreGroupeCycleController.dart';
-import '../Controllers_distant/NotificationController.dart';
 import '../Controllers_distant/UserController.dart';
 import '../Models/Invitation.dart';
-import '../Models/Notification.dart';
 import '../localization/app_localizations.dart';
 
 /// Point d'entrée unique des invitations ; remplacer [instance] par
@@ -25,6 +24,13 @@ abstract class InvitationRepository {
     required RegisteredUser user,
   });
 
+  Future<Invitation> invitePhone({
+    required String groupId,
+    required String groupName,
+    String? cycleId,
+    required String phone,
+  });
+
   /// Jeton d'adhésion partagé par lien ou QR code.
   Future<Invitation> createJoinToken({
     required String groupId,
@@ -35,6 +41,8 @@ abstract class InvitationRepository {
 
   Future<List<Invitation>> inviteContacts({
     required String groupId,
+    required String groupName,
+    String? cycleId,
     required List<PhoneContact> contacts,
   });
 
@@ -111,6 +119,24 @@ class SimulatedInvitationRepository implements InvitationRepository {
   }
 
   @override
+  Future<Invitation> invitePhone({
+    required String groupId,
+    required String groupName,
+    String? cycleId,
+    required String phone,
+  }) async {
+    await Future<void>.delayed(latency);
+    return Invitation(
+      id: _newId(),
+      groupId: groupId,
+      method: InvitationMethod.phone,
+      displayName: phone,
+      phone: phone,
+      pushSent: false,
+    );
+  }
+
+  @override
   Future<Invitation> createJoinToken({
     required String groupId,
     required InvitationMethod method,
@@ -133,6 +159,8 @@ class SimulatedInvitationRepository implements InvitationRepository {
   @override
   Future<List<Invitation>> inviteContacts({
     required String groupId,
+    required String groupName,
+    String? cycleId,
     required List<PhoneContact> contacts,
   }) async {
     await Future<void>.delayed(latency);
@@ -182,99 +210,228 @@ class ApiInvitationRepository extends SimulatedInvitationRepository {
     String? cycleId,
     required RegisteredUser user,
   }) async {
-    var stage = 'recherche exacte du téléphone';
+    var stage = 'validation du destinataire';
     debugPrint(
       '[INVITATION] Début: groupId=$groupId '
       'cycleId=${cycleId ?? '(à déterminer)'} '
       'phoneSuffix=${user.phone.length > 4 ? user.phone.substring(user.phone.length - 4) : user.phone}',
     );
     try {
-      final invitee = await UserController.getByPhone(user.phone);
-      if (invitee == null || invitee.id.isEmpty) {
+      if (user.id.isEmpty) {
         throw InviteFlowException(AppLocalizations.t('invite_user_not_found'));
       }
       debugPrint(
-        '[INVITATION] Utilisateur trouvé: id=${invitee.id}, '
-        'tokenFcmPresent=${invitee.tokenFirebase?.trim().isNotEmpty == true}.',
+        '[INVITATION] Utilisateur trouvé: id=${user.id}, '
+        'tokenFcmPresent=${user.tokenFirebase?.trim().isNotEmpty == true}.',
       );
+      if (kDebugMode) {
+        debugPrint(
+          '[FCM][INVITATION] userId=${user.id} '
+          'token_firebase=${user.tokenFirebase?.trim().isNotEmpty == true ? user.tokenFirebase : '(absent)'}.',
+        );
+      }
 
       stage = 'résolution du cycle';
-      var targetCycleId = cycleId;
-      if (targetCycleId == null || targetCycleId.isEmpty) {
-        final cycles = await CycleController.getForGroup(groupId);
-        if (cycles == null || cycles.isEmpty) {
-          throw InviteFlowException(AppLocalizations.t('invite_cycle_missing'));
-        }
-        targetCycleId =
-            cycles
-                .where((cycle) {
-                  final status = cycle.status?.toUpperCase();
-                  return status == 'EN_COURS' || status == 'ACTIF';
-                })
-                .firstOrNull
-                ?.id ??
-            cycles.first.id;
-        if (targetCycleId == null || targetCycleId.isEmpty) {
-          throw InviteFlowException(AppLocalizations.t('invite_cycle_missing'));
-        }
-      }
+      final targetCycleId = await _resolveCycleId(groupId, cycleId);
 
-      stage = 'ajout au groupe';
-      final groupMembership = await MembreGroupeController.addUserAsInvite(
-        groupeId: groupId,
-        utilisateurId: invitee.id,
-      );
-      if (groupMembership['success'] != true) {
-        debugPrint('[INVITATION] Échec ($stage): $groupMembership');
+      stage = 'création de l\'invitation de cycle';
+      final cycleInvitation =
+          await MembreGroupeCycleController.createCycleInvitation(
+            cycleId: targetCycleId,
+            inviteeId: user.id,
+          );
+      if (cycleInvitation['success'] != true) {
+        debugPrint('[INVITATION] Échec ($stage): $cycleInvitation');
         throw InviteFlowException(
-          groupMembership['message']?.toString() ??
+          cycleInvitation['message']?.toString() ??
               AppLocalizations.t('invite_persist_error'),
         );
       }
 
-      stage = 'ajout au cycle';
-      final cycleMembership = await MembreGroupeCycleController.addUserAsInvite(
-        cycleId: targetCycleId,
-        utilisateurId: invitee.id,
-      );
-      if (cycleMembership['success'] != true) {
-        debugPrint('[INVITATION] Échec ($stage): $cycleMembership');
-        throw InviteFlowException(
-          cycleMembership['message']?.toString() ??
-              AppLocalizations.t('invite_persist_error'),
-        );
+      final invitationId = cycleInvitation['invitationId']?.toString();
+      final invitationData = cycleInvitation['data'];
+      final pushStatus =
+          invitationData is Map
+              ? invitationData['push_envoye'] ??
+                  invitationData['push_sent'] ??
+                  (invitationData['notification'] is Map
+                      ? (invitationData['notification'] as Map)['push_envoye']
+                      : null)
+              : null;
+      if (invitationId == null || invitationId.isEmpty) {
+        throw InviteFlowException(AppLocalizations.t('invite_persist_error'));
       }
-
-      stage = 'création notification et envoi push';
-      final notificationResult = await NotificationController.createInvitation(
-        userId: invitee.id,
-        tokenFirebase: invitee.tokenFirebase,
-        groupId: groupId,
-        cycleId: targetCycleId,
-        groupName: groupName,
-      );
-      if (notificationResult['success'] != true) {
-        debugPrint('[INVITATION] Échec ($stage): $notificationResult');
-        throw InviteFlowException(
-          notificationResult['message']?.toString() ??
-              AppLocalizations.t('invite_notification_error'),
+      var pushSent = false;
+      final token = user.tokenFirebase?.trim();
+      if (token != null && token.isNotEmpty) {
+        final notificationBody = AppLocalizations.t(
+          'invitation_notification_body',
+          args: [groupName],
         );
+        try {
+          pushSent = await FirebaseApi().sendPushNotification(
+            deviceToken: token,
+            title: AppLocalizations.t('invitation_notification_title'),
+            body: notificationBody,
+            data: {
+              'type_evenement': 'INVITATION_PROCHAINS_CYCLES',
+              'portee': 'CYCLE',
+              'screen': 'INVITATION_DETAILS',
+              'notification_id': '',
+              'invitation_id': invitationId,
+              'groupe_id': groupId,
+              'cycle_id': targetCycleId,
+              'payload': jsonEncode({
+                'screen': 'INVITATION_DETAILS',
+                'invitation_id': invitationId,
+                'groupe_id': groupId,
+                'cycle_id': targetCycleId,
+              }),
+            },
+          );
+        } catch (error, stackTrace) {
+          debugPrint('[FCM][INVITATION] Envoi direct échoué: $error');
+          debugPrintStack(stackTrace: stackTrace);
+        }
       }
-
-      final notification = notificationResult['notification'] as Notification;
       return Invitation(
-        id: notification.id ?? _newId(),
+        id: invitationId,
         groupId: groupId,
         method: InvitationMethod.phone,
-        displayName: invitee.name,
-        phone: invitee.phone,
-        pushSent: notification.pushSent,
+        displayName: user.name,
+        phone: user.phone,
+        pushSent: pushSent,
       );
     } catch (error, stackTrace) {
       debugPrint('[INVITATION] Échec pendant $stage: $error');
       debugPrintStack(stackTrace: stackTrace);
       rethrow;
     }
+  }
+
+  bool? _parsePushStatus(dynamic value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      return switch (value.toLowerCase()) {
+        '1' || 'true' => true,
+        '0' || 'false' => false,
+        _ => null,
+      };
+    }
+    return null;
+  }
+
+  @override
+  Future<Invitation> invitePhone({
+    required String groupId,
+    required String groupName,
+    String? cycleId,
+    required String phone,
+  }) async {
+    final normalizedPhone = phone.trim();
+    if (normalizedPhone.isEmpty) {
+      throw InviteFlowException(AppLocalizations.t('invite_persist_error'));
+    }
+
+    final targetCycleId = await _resolveCycleId(groupId, cycleId);
+    final result = await MembreGroupeCycleController.createCycleInvitation(
+      cycleId: targetCycleId,
+      telephone: normalizedPhone,
+    );
+    if (result['success'] != true) {
+      throw InviteFlowException(
+        result['message']?.toString() ??
+            AppLocalizations.t('invite_persist_error'),
+      );
+    }
+
+    final invitationId = result['invitationId']?.toString();
+    if (invitationId == null || invitationId.isEmpty) {
+      throw InviteFlowException(AppLocalizations.t('invite_persist_error'));
+    }
+    return Invitation(
+      id: invitationId,
+      groupId: groupId,
+      method: InvitationMethod.phone,
+      displayName: normalizedPhone,
+      phone: normalizedPhone,
+      pushSent: false,
+    );
+  }
+
+  Future<String> _resolveCycleId(String groupId, String? cycleId) async {
+    if (cycleId != null && cycleId.isNotEmpty) return cycleId;
+
+    final cycles = await CycleController.getForGroup(groupId);
+    if (cycles == null || cycles.isEmpty) {
+      throw InviteFlowException(AppLocalizations.t('invite_cycle_missing'));
+    }
+    final selectedCycle =
+        cycles.where((cycle) {
+          final status = cycle.status?.toUpperCase();
+          return status == 'EN_COURS' || status == 'ACTIF';
+        }).firstOrNull ??
+        cycles.first;
+    final targetCycleId = selectedCycle.id;
+    if (targetCycleId == null || targetCycleId.isEmpty) {
+      throw InviteFlowException(AppLocalizations.t('invite_cycle_missing'));
+    }
+    return targetCycleId;
+  }
+
+  @override
+  Future<List<Invitation>> inviteContacts({
+    required String groupId,
+    required String groupName,
+    String? cycleId,
+    required List<PhoneContact> contacts,
+  }) async {
+    if (cycleId == null || cycleId.isEmpty) {
+      throw InviteFlowException(AppLocalizations.t('invite_cycle_missing'));
+    }
+
+    final invitations = <Invitation>[];
+    for (final contact in contacts) {
+      final user = await UserController.getByPhone(contact.phone);
+      if (user != null) {
+        invitations.add(
+          await inviteUser(
+            groupId: groupId,
+            groupName: groupName,
+            cycleId: cycleId,
+            user: user,
+          ),
+        );
+        continue;
+      }
+
+      final result = await MembreGroupeCycleController.createCycleInvitation(
+        cycleId: cycleId,
+        telephone: contact.phone,
+      );
+      if (result['success'] != true) {
+        throw InviteFlowException(
+          result['message']?.toString() ??
+              AppLocalizations.t('invite_persist_error'),
+        );
+      }
+      final invitationId = result['invitationId']?.toString();
+      if (invitationId == null || invitationId.isEmpty) {
+        throw InviteFlowException(AppLocalizations.t('invite_persist_error'));
+      }
+      invitations.add(
+        Invitation(
+          id: invitationId,
+          groupId: groupId,
+          method: InvitationMethod.contact,
+          displayName: contact.name,
+          phone: contact.phone,
+          pushSent: false,
+        ),
+      );
+    }
+    return invitations;
   }
 
   @override
@@ -295,25 +452,6 @@ class ApiInvitationRepository extends SimulatedInvitationRepository {
   Future<List<PhoneContact>> loadDeviceContacts() async {
     await Future<void>.delayed(latency);
     return SimulatedInvitationRepository._contacts;
-  }
-
-  @override
-  Future<List<Invitation>> inviteContacts({
-    required String groupId,
-    required List<PhoneContact> contacts,
-  }) async {
-    await Future<void>.delayed(latency);
-    return [
-      for (final contact in contacts)
-        Invitation(
-          id: _newId(),
-          groupId: groupId,
-          method: InvitationMethod.contact,
-          token: _newToken(),
-          displayName: contact.name,
-          phone: contact.phone,
-        ),
-    ];
   }
 
   @override

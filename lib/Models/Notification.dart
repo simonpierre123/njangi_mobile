@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class Notification {
   const Notification({
     this.id,
@@ -42,6 +44,11 @@ class Notification {
   bool get isUpcomingCycleInvitation =>
       eventType == 'INVITATION_PROCHAINS_CYCLES';
 
+  bool get isCycleRuleNotification =>
+      payload?['action']?.toString().startsWith('CYCLE_RULE') ?? false;
+
+  bool get isActionable => isInvitation || isCycleRuleNotification;
+
   Notification copyWith({bool? isRead, bool? pushSent}) => Notification(
     id: id,
     userId: userId,
@@ -75,19 +82,22 @@ class Notification {
   };
 
   factory Notification.fromJson(Map<String, dynamic> json) {
-    final rawPayload = json['payload'];
+    final payload = _decodePayload(json['payload']);
     return Notification(
       id: json['id']?.toString(),
       userId: json['utilisateur_id']?.toString() ?? '',
       scope: json['portee']?.toString() ?? 'UTILISATEUR',
-      groupId: json['groupe_id']?.toString(),
-      cycleId: json['cycle_id']?.toString(),
+      groupId:
+          json['groupe_id']?.toString() ??
+          payload?['groupe_id']?.toString() ??
+          payload?['group_id']?.toString(),
+      cycleId: json['cycle_id']?.toString() ?? payload?['cycle_id']?.toString(),
       title: json['titre']?.toString() ?? '',
       description: json['description']?.toString() ?? '',
       eventType: json['type_evenement']?.toString() ?? '',
       notifiableType: json['notifiable_type']?.toString(),
       notifiableId: json['notifiable_id']?.toString(),
-      payload: rawPayload is Map ? Map<String, dynamic>.from(rawPayload) : null,
+      payload: payload,
       isRead: json['est_lu'] == true || json['est_lu']?.toString() == '1',
       pushSent:
           json['push_envoye'] == true || json['push_envoye']?.toString() == '1',
@@ -95,5 +105,42 @@ class Notification {
       expiresAt: DateTime.tryParse(json['expire_at']?.toString() ?? ''),
       createdAt: DateTime.tryParse(json['created_at']?.toString() ?? ''),
     );
+  }
+
+  factory Notification.fromFcmData(
+    Map<String, dynamic> data, {
+    required String userId,
+    String title = '',
+    String description = '',
+  }) {
+    final payload = _decodePayload(data['payload']) ?? <String, dynamic>{};
+    for (final key in ['invitation_id', 'groupe_id', 'cycle_id']) {
+      final value = data[key];
+      if (value != null) payload.putIfAbsent(key, () => value.toString());
+    }
+
+    return Notification.fromJson({
+      'id': data['notification_id'],
+      'utilisateur_id': userId,
+      'portee': data['portee'] ?? 'CYCLE',
+      'groupe_id': data['groupe_id'],
+      'cycle_id': data['cycle_id'],
+      'titre': title,
+      'description': description,
+      'type_evenement': data['type_evenement'] ?? data['type'],
+      'payload': payload,
+    });
+  }
+}
+
+Map<String, dynamic>? _decodePayload(dynamic rawPayload) {
+  if (rawPayload is Map) return Map<String, dynamic>.from(rawPayload);
+  if (rawPayload is! String || rawPayload.isEmpty) return null;
+
+  try {
+    final decoded = jsonDecode(rawPayload);
+    return decoded is Map ? Map<String, dynamic>.from(decoded) : null;
+  } on FormatException {
+    return null;
   }
 }

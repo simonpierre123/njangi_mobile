@@ -22,6 +22,7 @@ class AppConstants {
   static const String groupes = 'groupes';
   static const String cycles = 'cycles';
   static const String utilisateurs = 'utilisateurs';
+  static const String invitations = 'invitations';
 
   // Invitations (domaine à confirmer avec le backend)
   static const String inviteBaseUrl = 'https://njangi.app/join/';

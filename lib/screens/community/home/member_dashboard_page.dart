@@ -87,8 +87,8 @@ class MemberDashboardPage extends StatelessWidget {
               ),
               QuickAction(
                 icon: Icons.people_outline,
-                label: AppLocalizations.t('members_label'),
-                onTap: () => onQuickAction('members'),
+                label: AppLocalizations.t('cycle_rules_title'),
+                onTap: () => onQuickAction('rules'),
               ),
               QuickAction(
                 icon: Icons.insert_chart_outlined,

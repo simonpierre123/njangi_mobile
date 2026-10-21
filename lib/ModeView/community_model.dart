@@ -27,7 +27,9 @@ class CommunityModel {
     this.members = const [],
     this.membersLoaded = false,
     this.cyclesLoaded = false,
+    this.cycleId,
     this.hasCycle = true,
+    this.tontineNextVisible = false,
     this.meetingDay,
     this.logoUrl,
     this.role,
@@ -50,7 +52,9 @@ class CommunityModel {
   final List<MembreGroupe> members;
   final bool membersLoaded;
   final bool cyclesLoaded;
+  final String? cycleId;
   final bool hasCycle;
+  final bool tontineNextVisible;
   final String contributionAmount;
   final String contributionFrequency;
   final String? meetingDay;
@@ -75,7 +79,9 @@ class CommunityModel {
     List<MembreGroupe>? members,
     bool? membersLoaded,
     bool? cyclesLoaded,
+    String? cycleId,
     bool? hasCycle,
+    bool? tontineNextVisible,
     String? contributionAmount,
     String? contributionFrequency,
     String? meetingDay,
@@ -101,7 +107,9 @@ class CommunityModel {
       members: members ?? this.members,
       membersLoaded: membersLoaded ?? this.membersLoaded,
       cyclesLoaded: cyclesLoaded ?? this.cyclesLoaded,
+      cycleId: cycleId ?? this.cycleId,
       hasCycle: hasCycle ?? this.hasCycle,
+      tontineNextVisible: tontineNextVisible ?? this.tontineNextVisible,
       contributionAmount: contributionAmount ?? this.contributionAmount,
       contributionFrequency:
           contributionFrequency ?? this.contributionFrequency,

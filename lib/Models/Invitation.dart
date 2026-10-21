@@ -2,7 +2,7 @@ import '../utils/app_constants.dart';
 
 enum InvitationMethod { link, qr, phone, contact }
 
-/// pending = rôle INVITE (groupe masqué chez l'invité), joined = rôle MEMBRE.
+/// pending = invitation enregistrée ; joined = membre après acceptation.
 enum InvitationStatus { pending, joined }
 
 /// Utilisateur trouvé par la recherche de numéro dans le système.
@@ -46,7 +46,7 @@ class Invitation {
   final String? token;
   final String? displayName;
   final String? phone;
-  final bool pushSent;
+  final bool? pushSent;
 
   String? get link =>
       token == null ? null : '${AppConstants.inviteBaseUrl}$token';

@@ -2,19 +2,14 @@ import 'package:flutter/material.dart';
 import '../../utils/app_colors.dart';
 import 'shimmer_loading.dart';
 
-/// Avatar chargé depuis internet (service de photos de démonstration
-/// pravatar.cc) — pour donner un visage réaliste aux avatars encore
-/// placeholders. Si le réseau échoue (pas de connexion, timeout...),
-/// errorBuilder de Image.network reprend automatiquement le placeholder
-/// exact déjà utilisé avant (icône générique sur fond neutre), donc
-/// rien ne casse hors-ligne.
+/// Avatar utilisateur chargé depuis son profil, avec une image locale
+/// commune quand aucune photo n'est enregistrée ou que le chargement échoue.
 class NetworkAvatar extends StatelessWidget {
   const NetworkAvatar({
     super.key,
     required this.radius,
     required this.seed,
     this.imageUrl,
-    this.useGeneratedFallback = true,
     this.fallbackIcon = Icons.person,
     this.fallbackIconColor = AppColors.neutralGray,
     this.fallbackBg = AppColors.neutralGrayLighter,
@@ -22,9 +17,7 @@ class NetworkAvatar extends StatelessWidget {
 
   final double radius;
   final String? imageUrl;
-  final bool useGeneratedFallback;
-  // Numéro pravatar.cc (1 à 70) — détermine quel visage est affiché,
-  // pour varier les visages d'un avatar à l'autre.
+  // Conservé pour compatibilité avec les appels existants.
   final int seed;
   final IconData? fallbackIcon;
   final Color fallbackIconColor;
@@ -33,22 +26,9 @@ class NetworkAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = radius * 2;
-    final url =
-        imageUrl ??
-        (useGeneratedFallback ? 'https://i.pravatar.cc/150?img=$seed' : null);
+    final url = imageUrl?.trim();
     if (url == null || url.isEmpty) {
-      return ClipOval(
-        child: Container(
-          width: size,
-          height: size,
-          color: fallbackBg,
-          alignment: Alignment.center,
-          child:
-              fallbackIcon == null
-                  ? null
-                  : Icon(fallbackIcon, size: radius, color: fallbackIconColor),
-        ),
-      );
+      return _defaultAvatar(size);
     }
 
     return ClipOval(
@@ -57,22 +37,32 @@ class NetworkAvatar extends StatelessWidget {
         width: size,
         height: size,
         fit: BoxFit.cover,
-        errorBuilder:
-            (context, error, stackTrace) => Container(
-              width: size,
-              height: size,
-              color: fallbackBg,
-              alignment: Alignment.center,
-              child:
-                  fallbackIcon != null
-                      ? Icon(
-                        fallbackIcon,
-                        size: radius,
-                        color: fallbackIconColor,
-                      )
-                      : null,
-            ),
+        errorBuilder: (context, error, stackTrace) => _defaultAvatar(size),
       ),
     );
   }
+
+  Widget _defaultAvatar(double size) => ClipOval(
+    child: Image.asset(
+      'assets/images/user.png',
+      width: size,
+      height: size,
+      fit: BoxFit.cover,
+      errorBuilder:
+          (context, error, stackTrace) => Container(
+            width: size,
+            height: size,
+            color: fallbackBg,
+            alignment: Alignment.center,
+            child:
+                fallbackIcon == null
+                    ? null
+                    : Icon(
+                      fallbackIcon,
+                      size: radius,
+                      color: fallbackIconColor,
+                    ),
+          ),
+    ),
+  );
 }

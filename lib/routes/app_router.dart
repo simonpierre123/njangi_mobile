@@ -5,7 +5,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../Controllers_distant/AuthController.dart';
 import '../Controllers_distant/CycleController.dart';
-import '../Controllers_distant/MembreGroupeCycleController.dart';
 import '../Controllers_distant/UserController.dart';
 import '../Models/Cycle.dart';
 import '../Models/Invitation.dart';
@@ -50,6 +49,7 @@ import '../screens/community/creation/invite/invite_join_page.dart';
 import '../screens/community/creation/invite/invite_phone_page.dart';
 import '../screens/community/membres/member_details_page.dart';
 import '../screens/community/rapport/detailed_report_page.dart';
+import '../screens/community/regles/cycle_rules_page.dart';
 import '../screens/community/rapport/financial_summary_page.dart';
 import '../screens/community/tresorerie/contribution_detail_page.dart';
 import '../screens/community/tresorerie/cycle_completed_page.dart';
@@ -83,6 +83,55 @@ class AppRouter {
 
   static final navigatorKey = GlobalKey<NavigatorState>();
   static final sessionActive = ValueNotifier<bool>(false);
+  static String? _openingInvitationId;
+  static app_notification.Notification? _pendingInvitationNotification;
+
+  static void openInvitationNotification(
+    app_notification.Notification notification,
+  ) {
+    final navigator = navigatorKey.currentState;
+    final isRuleNotification = notification.isCycleRuleNotification;
+    final String? actionId;
+    if (isRuleNotification) {
+      actionId =
+          notification.payload?['proposal_id']?.toString() ??
+          notification.cycleId;
+    } else {
+      actionId = notification.payload?['invitation_id']?.toString();
+    }
+    if ((!notification.isInvitation && !isRuleNotification) ||
+        actionId == null ||
+        actionId.isEmpty ||
+        actionId == _openingInvitationId) {
+      return;
+    }
+    if (!sessionActive.value || navigator == null) {
+      _pendingInvitationNotification = notification;
+      return;
+    }
+
+    _openingInvitationId = actionId;
+    unawaited(
+      _pushAndWait(
+        isRuleNotification ? AppRoutes.cycleRules : AppRoutes.invitationDetails,
+        arguments:
+            isRuleNotification
+                ? CycleRulesRouteArgs(
+                  cycleId:
+                      notification.cycleId ??
+                      notification.payload?['cycle_id']?.toString(),
+                  proposalId: notification.payload?['proposal_id']?.toString(),
+                )
+                : notification,
+      ).whenComplete(() => _openingInvitationId = null),
+    );
+  }
+
+  static void _openPendingInvitationNotification() {
+    final notification = _pendingInvitationNotification;
+    _pendingInvitationNotification = null;
+    if (notification != null) openInvitationNotification(notification);
+  }
 
   static void _push(String route, {Object? arguments}) =>
       navigatorKey.currentState!.pushNamed(route, arguments: arguments);
@@ -93,6 +142,9 @@ class AppRouter {
       arguments: arguments,
     );
   }
+
+  static Future<Object?> _pushForResult(String route) =>
+      navigatorKey.currentState!.pushNamed<Object?>(route);
 
   static void _replace(String route, {Object? arguments}) => navigatorKey
       .currentState!
@@ -105,6 +157,9 @@ class AppRouter {
   static void _openHome() {
     sessionActive.value = true;
     _replaceAll(AppRoutes.home);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _openPendingInvitationNotification();
+    });
   }
 
   static Future<void> _logout() async {
@@ -682,10 +737,23 @@ class AppRouter {
             onCommunityTap: openCommunity,
             onAddCommunity: () => _pushAndWait(AppRoutes.createCommunityStep1),
             onOpenInvitation:
-                (notification) => _pushAndWait(
-                  AppRoutes.invitationDetails,
-                  arguments: notification,
-                ),
+                (notification) =>
+                    notification.isCycleRuleNotification
+                        ? _pushAndWait(
+                          AppRoutes.cycleRules,
+                          arguments: CycleRulesRouteArgs(
+                            cycleId:
+                                notification.cycleId ??
+                                notification.payload?['cycle_id']?.toString(),
+                            proposalId:
+                                notification.payload?['proposal_id']
+                                    ?.toString(),
+                          ),
+                        )
+                        : _pushAndWait(
+                          AppRoutes.invitationDetails,
+                          arguments: notification,
+                        ),
             onLock: lockSession,
             user: ProfileMockDatasource.user,
             profileActivity: ProfileMockDatasource.activity,
@@ -708,7 +776,12 @@ class AppRouter {
           return page(const _MissingCommunityRedirect());
         }
         return page(
-          InvitationDetailPage(notification: notification, onBack: _pop),
+          InvitationDetailPage(
+            notification: notification,
+            onBack: _pop,
+            onCompleteProfile:
+                () async => await _pushForResult(AppRoutes.editProfile) == true,
+          ),
         );
 
       // ---------------- Espace communauté (shell) ----------------
@@ -751,6 +824,16 @@ class AppRouter {
               }
               if (action == 'reports') {
                 _push(AppRoutes.financialSummary, arguments: community);
+                return;
+              }
+              if (action == 'rules') {
+                _push(
+                  AppRoutes.cycleRules,
+                  arguments: CycleRulesRouteArgs(
+                    community: community,
+                    isAdmin: isAdmin,
+                  ),
+                );
                 return;
               }
               _push(AppRoutes.comingSoon, arguments: action);
@@ -797,7 +880,6 @@ class AppRouter {
                     _push(AppRoutes.comingSoon, arguments: 'Demander un prêt'),
             currentBeneficiary: CommunityBeneficiaryMockDatasource.current,
             beneficiaryStats: CommunityBeneficiaryMockDatasource.stats,
-            passageOrder: CommunityBeneficiaryMockDatasource.passageOrder,
             payoutHistory: CommunityBeneficiaryMockDatasource.payoutHistory,
             onDisburse: () => _showDisburseFundsSheet(community),
             onSeeAllPayoutHistory:
@@ -865,7 +947,7 @@ class AppRouter {
         return page(
           EditProfilePage(
             onCancel: _pop,
-            onSave: _pop,
+            onSave: () => _popWithResult(true),
             onChangeNumber:
                 () => _push(
                   AppRoutes.comingSoon,
@@ -995,18 +1077,6 @@ class AppRouter {
                 };
               }
 
-              final membership =
-                  await MembreGroupeCycleController.addCurrentUserAsAdmin(
-                    cycleId: cycleId,
-                  );
-              if (membership['success'] != true) {
-                return {
-                  'success': false,
-                  'cycleId': cycleId,
-                  'message': membership['message'],
-                };
-              }
-
               _push(
                 AppRoutes.createCommunityStep4,
                 arguments: updated.copyWith(cycleId: cycleId),
@@ -1106,6 +1176,7 @@ class AppRouter {
           InviteContactsPage(
             groupId: draft.groupId ?? '',
             groupName: draft.name,
+            cycleId: draft.cycleId,
             onBack: _pop,
             onDone: _popWithResult,
           ),
@@ -1331,6 +1402,17 @@ class AppRouter {
       case AppRoutes.comingSoon:
         final label = settings.arguments as String? ?? '';
         return page(ComingSoonPage(label: label));
+
+      case AppRoutes.cycleRules:
+        final args = settings.arguments;
+        return page(
+          CycleRulesPage(
+            args:
+                args is CycleRulesRouteArgs
+                    ? args
+                    : const CycleRulesRouteArgs(),
+          ),
+        );
 
       default:
         return page(

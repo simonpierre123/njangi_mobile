@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:njangi/Controllers_distant/CycleController.dart';
+import 'package:njangi/Controllers_distant/CycleFinanceController.dart';
 import 'package:njangi/ModeView/create_community_model.dart';
 import 'package:njangi/datasource/api_service.dart';
 
@@ -29,6 +30,13 @@ void main() {
         maxAdminCount: 2,
         collectiveValidation: true,
         penaltiesEnabled: false,
+        savingsActive: true,
+        savingsMode: 'LIBRE',
+        savingsMinAmount: '1000',
+        savingsMaxAmount: '50000',
+        emergencyFundActive: true,
+        tontineActive: true,
+        tontineNextVisible: false,
       ),
     );
 
@@ -36,6 +44,8 @@ void main() {
     expect(adapter.request!.method, 'POST');
     expect(adapter.request!.uri.path, '/api/groupes/group-uuid/cycles');
     expect(adapter.request!.data, {
+      'numero': 1,
+      'nom': 'Cycle 1',
       'nombre_membres': 12,
       'nombre_admin': 2,
       'montant_cotisation': 50000,
@@ -48,11 +58,86 @@ void main() {
       'date_debut': '2026-08-01',
       'date_fin': '2027-07-31',
       'statut': 'EN_ATTENTE',
-      'module_pret_actif': '1',
+      'module_pret_actif': true,
       'validation_pret_colectif': '1',
       'appliquer_penalites': '0',
+      'epargne_active': true,
+      'epargne_mode': 'LIBRE',
+      'epargne_montant_fixe': null,
+      'epargne_montant_min': 1000,
+      'epargne_montant_max': 50000,
+      'epargne_calendrier_mode': 'MEME_QUE_TONTINE',
+      'caisse_secours_active': true,
+      'secours_inclure_beneficiaire': true,
+      'tontine_active': true,
+      'tontine_prochain_visible': false,
     });
   });
+
+  test(
+    'sends cycle emergency, operation, decision, and closure requests',
+    () async {
+      final adapter = _CycleFinanceApiAdapter();
+      ApiService.dio.httpClientAdapter = adapter;
+
+      final results = [
+        await CycleFinanceController.createEmergencyRequest(
+          cycleId: 'cycle-uuid',
+          motif: 'Urgence familiale',
+          montantDemande: 50000,
+        ),
+        await CycleFinanceController.decideEmergencyRequest(
+          cycleId: 'cycle-uuid',
+          demandeId: 'request-uuid',
+          decision: 'APPROUVEE',
+          montantAlloue: 50000,
+        ),
+        await CycleFinanceController.submitOperation(
+          cycleId: 'cycle-uuid',
+          type: 'VERSEMENT',
+          utilisateurId: 'member-uuid',
+          montant: 10000,
+          description: 'Cotisation du mois',
+        ),
+        await CycleFinanceController.decideOperation(
+          cycleId: 'cycle-uuid',
+          operationId: 'operation-uuid',
+          decision: 'VALIDE',
+          commentaire: 'Cotisation validée',
+        ),
+        await CycleFinanceController.closeCycle('cycle-uuid'),
+      ];
+
+      expect(results.map((result) => result['success']), everyElement(isTrue));
+      expect(adapter.requests.map((request) => request.uri.path), [
+        '/api/cycles/cycle-uuid/secours/demandes',
+        '/api/cycles/cycle-uuid/secours/demandes/request-uuid/decision',
+        '/api/cycles/cycle-uuid/operations',
+        '/api/cycles/cycle-uuid/operations/operation-uuid/decision',
+        '/api/cycles/cycle-uuid/cloture',
+      ]);
+      expect(adapter.requests[0].data, {
+        'motif': 'Urgence familiale',
+        'montant_demande': 50000,
+      });
+      expect(adapter.requests[1].data, {
+        'decision': 'APPROUVEE',
+        'montant_alloue': 50000,
+      });
+      expect(adapter.requests[2].data, {
+        'type': 'VERSEMENT',
+        'utilisateur_id': 'member-uuid',
+        'montant': 10000,
+        'description': 'Cotisation du mois',
+        'statut': 'EN_ATTENTE',
+      });
+      expect(adapter.requests[3].data, {
+        'decision': 'VALIDE',
+        'commentaire': 'Cotisation validée',
+      });
+      expect(adapter.requests[4].data, isNull);
+    },
+  );
 }
 
 class _CycleApiAdapter implements HttpClientAdapter {
@@ -85,6 +170,32 @@ class _CycleApiAdapter implements HttpClientAdapter {
         },
       }),
       201,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+class _CycleFinanceApiAdapter implements HttpClientAdapter {
+  final requests = <RequestOptions>[];
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    requests.add(options);
+    return ResponseBody.fromString(
+      jsonEncode({
+        'success': true,
+        'data': {'id': 'response-uuid'},
+      }),
+      200,
       headers: {
         Headers.contentTypeHeader: [Headers.jsonContentType],
       },

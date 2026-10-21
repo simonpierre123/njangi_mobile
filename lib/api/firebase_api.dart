@@ -1,4 +1,5 @@
-import 'dart:convert' show jsonEncode;
+import 'dart:async';
+import 'dart:convert' show jsonDecode, jsonEncode;
 import 'dart:developer';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -16,6 +17,9 @@ class FirebaseApi {
       FirebaseMessaging.instance;
   static final FlutterLocalNotificationsPlugin _localNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
+  static Future<void> Function(Map<String, dynamic>)? _notificationTapHandler;
+  static Map<String, dynamic>? _pendingNotificationTap;
+  static bool _listenersRegistered = false;
 
   // static Future<void> initializeFCM() async {
   //   // Permission (iOS & Android 13+)
@@ -43,6 +47,8 @@ class FirebaseApi {
   // }
 
   static Future<void> initializeFCM() async {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
     // Permissions
     await _firebaseMessaging.requestPermission();
 
@@ -63,7 +69,16 @@ class FirebaseApi {
     // Initialisation flutter_local_notifications
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
     const settings = InitializationSettings(android: android);
-    await _localNotificationsPlugin.initialize(settings);
+    await _localNotificationsPlugin.initialize(
+      settings,
+      onDidReceiveNotificationResponse:
+          (response) => _queueLocalNotificationTap(response.payload),
+    );
+    final launchDetails =
+        await _localNotificationsPlugin.getNotificationAppLaunchDetails();
+    if (launchDetails?.didNotificationLaunchApp == true) {
+      _queueLocalNotificationTap(launchDetails?.notificationResponse?.payload);
+    }
     final token = await _firebaseMessaging.getToken();
     if (token != null && token.isNotEmpty) {
       await StorageManager.saveTokenFireBase(token);
@@ -90,14 +105,52 @@ class FirebaseApi {
     // await AuthController().updateUser(userId: id);
     // print('🔥 FCM Token: $token   ID: $id');
 
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('📩 [Foreground] Message: ${message.notification?.title}');
-      _showNotification(message);
-    });
+    if (!_listenersRegistered) {
+      _listenersRegistered = true;
+      FirebaseMessaging.onMessage.listen(_showNotification);
+      FirebaseMessaging.onMessageOpenedApp.listen((message) {
+        unawaited(_dispatchNotificationTap(message.data));
+      });
+      final initialMessage = await _firebaseMessaging.getInitialMessage();
+      if (initialMessage != null) {
+        _pendingNotificationTap = Map<String, dynamic>.from(
+          initialMessage.data,
+        );
+      }
+    }
+  }
 
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('🟢 [Opened App] Message: ${message.notification?.title}');
-    });
+  static void setNotificationTapHandler(
+    Future<void> Function(Map<String, dynamic>)? handler,
+  ) {
+    _notificationTapHandler = handler;
+    final pending = _pendingNotificationTap;
+    if (handler == null || pending == null) return;
+    _pendingNotificationTap = null;
+    unawaited(handler(pending));
+  }
+
+  static Future<void> _dispatchNotificationTap(
+    Map<String, dynamic> data,
+  ) async {
+    final handler = _notificationTapHandler;
+    if (handler == null) {
+      _pendingNotificationTap = Map<String, dynamic>.from(data);
+      return;
+    }
+    await handler(Map<String, dynamic>.from(data));
+  }
+
+  static void _queueLocalNotificationTap(String? payload) {
+    if (payload == null || payload.isEmpty) return;
+    try {
+      final decoded = jsonDecode(payload);
+      if (decoded is Map) {
+        unawaited(_dispatchNotificationTap(Map<String, dynamic>.from(decoded)));
+      }
+    } on FormatException catch (error) {
+      log('Payload de notification locale invalide: $error');
+    }
   }
 
   static Future<void> syncTokenOnHomeEntry() async {
@@ -163,6 +216,7 @@ class FirebaseApi {
       message.notification?.title ?? 'Titre',
       message.notification?.body ?? 'Contenu',
       notifDetails,
+      payload: jsonEncode(message.data),
     );
   }
 

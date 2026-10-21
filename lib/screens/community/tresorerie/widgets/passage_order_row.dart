@@ -48,7 +48,11 @@ class PassageOrderRow extends StatelessWidget {
             SizedBox(width: AppDimensions.spaceXs.w),
           ],
           if (!entry.isCurrent) ...[
-            NetworkAvatar(radius: 16, seed: entry.order),
+            NetworkAvatar(
+              radius: 16,
+              seed: entry.order,
+              imageUrl: entry.photoUrl,
+            ),
             SizedBox(width: AppDimensions.spaceSm.w),
           ],
           Expanded(

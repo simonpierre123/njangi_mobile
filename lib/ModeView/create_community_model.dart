@@ -118,6 +118,16 @@ class CommunityDraft {
     this.penaltiesEnabled = true,
     this.maxAdminCount = 3,
     this.collectiveValidation = true,
+    this.savingsActive = false,
+    this.savingsMode,
+    this.savingsFixedAmount = '',
+    this.savingsMinAmount = '',
+    this.savingsMaxAmount = '',
+    this.savingsCalendarMode = 'MEME_QUE_TONTINE',
+    this.emergencyFundActive = false,
+    this.emergencyIncludeBeneficiary = true,
+    this.tontineActive = true,
+    this.tontineNextVisible = false,
     // Étape 4 — Inviter des membres
     this.invitedMembers = const [],
   });
@@ -144,6 +154,16 @@ class CommunityDraft {
   final bool penaltiesEnabled;
   final int maxAdminCount;
   final bool collectiveValidation;
+  final bool savingsActive;
+  final String? savingsMode;
+  final String savingsFixedAmount;
+  final String savingsMinAmount;
+  final String savingsMaxAmount;
+  final String savingsCalendarMode;
+  final bool emergencyFundActive;
+  final bool emergencyIncludeBeneficiary;
+  final bool tontineActive;
+  final bool tontineNextVisible;
 
   final List<InvitedMember> invitedMembers;
 
@@ -169,6 +189,16 @@ class CommunityDraft {
     bool? penaltiesEnabled,
     int? maxAdminCount,
     bool? collectiveValidation,
+    bool? savingsActive,
+    String? savingsMode,
+    String? savingsFixedAmount,
+    String? savingsMinAmount,
+    String? savingsMaxAmount,
+    String? savingsCalendarMode,
+    bool? emergencyFundActive,
+    bool? emergencyIncludeBeneficiary,
+    bool? tontineActive,
+    bool? tontineNextVisible,
     List<InvitedMember>? invitedMembers,
   }) {
     return CommunityDraft(
@@ -195,6 +225,17 @@ class CommunityDraft {
       penaltiesEnabled: penaltiesEnabled ?? this.penaltiesEnabled,
       maxAdminCount: maxAdminCount ?? this.maxAdminCount,
       collectiveValidation: collectiveValidation ?? this.collectiveValidation,
+      savingsActive: savingsActive ?? this.savingsActive,
+      savingsMode: savingsMode ?? this.savingsMode,
+      savingsFixedAmount: savingsFixedAmount ?? this.savingsFixedAmount,
+      savingsMinAmount: savingsMinAmount ?? this.savingsMinAmount,
+      savingsMaxAmount: savingsMaxAmount ?? this.savingsMaxAmount,
+      savingsCalendarMode: savingsCalendarMode ?? this.savingsCalendarMode,
+      emergencyFundActive: emergencyFundActive ?? this.emergencyFundActive,
+      emergencyIncludeBeneficiary:
+          emergencyIncludeBeneficiary ?? this.emergencyIncludeBeneficiary,
+      tontineActive: tontineActive ?? this.tontineActive,
+      tontineNextVisible: tontineNextVisible ?? this.tontineNextVisible,
       invitedMembers: invitedMembers ?? this.invitedMembers,
     );
   }

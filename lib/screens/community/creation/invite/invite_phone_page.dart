@@ -11,11 +11,9 @@ import '../../../../datasource/invitation_repository.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
-import 'invite_simulation_banner.dart';
 
-/// Invitation par numéro : la recherche filtre les utilisateurs déjà
-/// inscrits au fur et à mesure de la saisie ; toucher un résultat envoie
-/// l'invitation (rôle INVITE).
+/// Recherche les comptes existants et permet aussi d'inviter un numéro inscrit
+/// qui n'a pas encore de compte.
 class InvitePhonePage extends StatefulWidget {
   const InvitePhonePage({
     super.key,
@@ -115,13 +113,10 @@ class _InvitePhonePageState extends State<InvitePhonePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            AppLocalizations.t(
-              invitation.pushSent
-                  ? 'invite_sent_success'
-                  : 'invite_saved_no_push',
-            ),
+            AppLocalizations.t(_inviteResultKey(invitation.pushSent)),
           ),
-          backgroundColor: invitation.pushSent ? Colors.green : Colors.orange,
+          backgroundColor:
+              invitation.pushSent == false ? Colors.orange : Colors.green,
         ),
       );
     } catch (error) {
@@ -134,6 +129,53 @@ class _InvitePhonePageState extends State<InvitePhonePage> {
       }
     } finally {
       _inviting.remove(user.phone);
+      if (mounted) setState(() {});
+    }
+  }
+
+  String _inviteResultKey(bool? pushSent) => switch (pushSent) {
+    true => 'invite_sent_success',
+    false => 'invite_saved_no_push',
+    null => 'invite_saved_success',
+  };
+
+  Future<void> _inviteUnregisteredNumber() async {
+    final phone = _controller.text.trim();
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 8 ||
+        _invited.containsKey(phone) ||
+        !_inviting.add(phone)) {
+      return;
+    }
+
+    setState(() {});
+    try {
+      final invitation = await _repository.invitePhone(
+        groupId: widget.groupId,
+        groupName: widget.groupName,
+        cycleId: widget.cycleId,
+        phone: phone,
+      );
+      if (!mounted) return;
+      setState(
+        () => _invited[phone] = InvitedMember.fromInvitation(invitation),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.t('invite_saved_no_push')),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    } catch (error) {
+      if (mounted) {
+        _showError(
+          error is InviteFlowException
+              ? error.message
+              : AppLocalizations.t('invite_persist_error'),
+        );
+      }
+    } finally {
+      _inviting.remove(phone);
       if (mounted) setState(() {});
     }
   }
@@ -171,8 +213,6 @@ class _InvitePhonePageState extends State<InvitePhonePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const InviteSimulationBanner(),
-                    SizedBox(height: AppDimensions.spaceMd.h),
                     Text(
                       AppLocalizations.t('invite_phone_desc'),
                       style: const TextStyle(
@@ -244,17 +284,33 @@ class _InvitePhonePageState extends State<InvitePhonePage> {
       );
     }
     if (_searched && _results.isEmpty) {
+      final phone = _controller.text.trim();
+      final digits = phone.replaceAll(RegExp(r'\D'), '');
       return Padding(
         padding: EdgeInsets.symmetric(vertical: AppDimensions.spaceMd.h),
-        child: Center(
-          child: Text(
-            AppLocalizations.t('invite_phone_no_result'),
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
+        child: Column(
+          children: [
+            Text(
+              AppLocalizations.t('invite_phone_no_result'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+              ),
             ),
-          ),
+            if (digits.length >= 8) ...[
+              SizedBox(height: AppDimensions.spaceMd.h),
+              AppButton(
+                label: AppLocalizations.t('invite_phone_unregistered_button'),
+                icon: Icons.person_add_alt_1,
+                isLoading: _inviting.contains(phone),
+                onPressed:
+                    _inviting.contains(phone)
+                        ? null
+                        : _inviteUnregisteredNumber,
+              ),
+            ],
+          ],
         ),
       );
     }

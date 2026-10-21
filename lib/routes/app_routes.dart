@@ -62,6 +62,7 @@ class AppRoutes {
 
   static const financialSummary = '/community/report/summary';
   static const detailedReport = '/community/report/detailed';
+  static const cycleRules = '/community/cycle-rules';
 
   static const cycleCompleted = '/community/cycle-completed';
 

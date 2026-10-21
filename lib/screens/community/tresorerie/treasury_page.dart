@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../../ModeView/beneficiary_model.dart';
 import '../../../ModeView/treasury_model.dart';
@@ -50,6 +52,11 @@ class TreasuryPage extends StatefulWidget {
     required this.currentBeneficiary,
     required this.beneficiaryStats,
     required this.passageOrder,
+    required this.passageOrderLoading,
+    required this.passageOrderError,
+    required this.onReorderPassageOrder,
+    required this.onRefresh,
+    required this.showPassageOrderToMembers,
     required this.payoutHistory,
     required this.onSeeReceipt,
     required this.onHistoryItemTap,
@@ -78,6 +85,14 @@ class TreasuryPage extends StatefulWidget {
   final CurrentBeneficiary currentBeneficiary;
   final BeneficiaryStats beneficiaryStats;
   final List<PassageOrderEntry> passageOrder;
+  final bool passageOrderLoading;
+  final String? passageOrderError;
+  final Future<List<PassageOrderEntry>?> Function(
+    List<PassageOrderEntry> entries,
+  )
+  onReorderPassageOrder;
+  final Future<void> Function() onRefresh;
+  final bool showPassageOrderToMembers;
   final List<PayoutHistoryEntry> payoutHistory;
   final VoidCallback onSeeReceipt;
   final ValueChanged<ContributionHistoryItem> onHistoryItemTap;
@@ -114,10 +129,20 @@ class _TreasuryPageState extends State<TreasuryPage> {
               AppLocalizations.t('treasury_tab_beneficiaries'),
             ],
             currentIndex: _tabIndex,
-            onChanged: (i) => setState(() => _tabIndex = i),
+            onChanged: (i) {
+              setState(() => _tabIndex = i);
+              if (i == 3) {
+                unawaited(widget.onRefresh());
+              }
+            },
           ),
           SizedBox(height: AppDimensions.spaceLg.h),
-          Expanded(child: _buildTabContent()),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: widget.onRefresh,
+              child: _buildTabContent(),
+            ),
+          ),
         ],
       ),
     );
@@ -157,6 +182,10 @@ class _TreasuryPageState extends State<TreasuryPage> {
           current: widget.currentBeneficiary,
           stats: widget.beneficiaryStats,
           passageOrder: widget.passageOrder,
+          passageOrderLoading: widget.passageOrderLoading,
+          passageOrderError: widget.passageOrderError,
+          onReorderPassageOrder: widget.onReorderPassageOrder,
+          showPassageOrderToMembers: widget.showPassageOrderToMembers,
           payoutHistory: widget.payoutHistory,
           onDisburse: widget.onDisburse,
           onSeeAllPayoutHistory: widget.onSeeAllPayoutHistory,
@@ -185,6 +214,7 @@ class _MyTreasuryTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -262,6 +292,7 @@ class _ContributionsTab extends StatelessWidget {
     };
 
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -351,6 +382,7 @@ class _LoansTab extends StatelessWidget {
   Widget build(BuildContext context) {
     if (loan == null) {
       return SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -368,6 +400,7 @@ class _LoansTab extends StatelessWidget {
     }
 
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -420,6 +453,10 @@ class _BeneficiairesTab extends StatefulWidget {
     required this.current,
     required this.stats,
     required this.passageOrder,
+    required this.passageOrderLoading,
+    required this.passageOrderError,
+    required this.onReorderPassageOrder,
+    required this.showPassageOrderToMembers,
     required this.payoutHistory,
     required this.onDisburse,
     required this.onSeeAllPayoutHistory,
@@ -429,6 +466,13 @@ class _BeneficiairesTab extends StatefulWidget {
   final CurrentBeneficiary current;
   final BeneficiaryStats stats;
   final List<PassageOrderEntry> passageOrder;
+  final bool passageOrderLoading;
+  final String? passageOrderError;
+  final Future<List<PassageOrderEntry>?> Function(
+    List<PassageOrderEntry> entries,
+  )
+  onReorderPassageOrder;
+  final bool showPassageOrderToMembers;
   final List<PayoutHistoryEntry> payoutHistory;
   final VoidCallback onDisburse;
   final VoidCallback onSeeAllPayoutHistory;
@@ -438,92 +482,176 @@ class _BeneficiairesTab extends StatefulWidget {
 }
 
 class _BeneficiairesTabState extends State<_BeneficiairesTab> {
-  // État local pour le glisser-déposer (pur front de démonstration —
-  // aucune persistance réelle tant que l'API n'est pas branchée).
   late List<PassageOrderEntry> _order = List.of(widget.passageOrder);
+  bool _isSavingOrder = false;
+
+  @override
+  void didUpdateWidget(covariant _BeneficiairesTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.passageOrder != widget.passageOrder) {
+      _order = List.of(widget.passageOrder);
+    }
+  }
 
   void _reorder(int oldIndex, int newIndex) {
+    if (_isSavingOrder || oldIndex == newIndex) return;
     setState(() {
-      if (newIndex > oldIndex) newIndex -= 1;
-      final item = _order.removeAt(oldIndex);
-      _order.insert(newIndex, item);
+      _order = reorderPassageOrder(_order, oldIndex, newIndex);
+      _isSavingOrder = true;
     });
+    unawaited(_persistOrder());
+  }
+
+  Future<void> _persistOrder() async {
+    final previousOrder = List<PassageOrderEntry>.of(widget.passageOrder);
+    try {
+      final savedOrder = await widget.onReorderPassageOrder(_order);
+      if (!mounted) return;
+      setState(() {
+        _order = savedOrder ?? previousOrder;
+        _isSavingOrder = false;
+      });
+      if (savedOrder == null) _showOrderSaveError();
+    } catch (error) {
+      debugPrint('[TONTINE] Could not save reordered beneficiary list: $error');
+      if (!mounted) return;
+      setState(() {
+        _order = previousOrder;
+        _isSavingOrder = false;
+      });
+      _showOrderSaveError();
+    }
+  }
+
+  void _showOrderSaveError() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.t('cycle_tontine_save_error'))),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final currentEntries = _order.where((entry) => entry.isCurrent);
+    final currentEntry = currentEntries.isEmpty ? null : currentEntries.first;
+    final currentBeneficiary = CurrentBeneficiary(
+      name: currentEntry?.name ?? '—',
+      subtitle:
+          currentEntry == null
+              ? ''
+              : '${AppLocalizations.t('cycle_word')} ${currentEntry.order}',
+      statusLabel: currentEntry?.statusLabel ?? '',
+      amount: widget.current.amount,
+    );
+    final currentStats = BeneficiaryStats(
+      totalMembers: _order.length,
+      potAmount: widget.stats.potAmount,
+      servedCount: _order.where((entry) => entry.isPaid).length,
+      remainingCount: _order.where((entry) => !entry.isPaid).length,
+    );
+
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CurrentBeneficiaryCard(
-            beneficiary: widget.current,
+            beneficiary: currentBeneficiary,
             onDisburse: widget.isAdmin ? widget.onDisburse : null,
           ),
           SizedBox(height: AppDimensions.spaceLg.h),
-          BeneficiaryStatsGrid(stats: widget.stats),
+          BeneficiaryStatsGrid(stats: currentStats),
           SizedBox(height: AppDimensions.spaceLg.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                AppLocalizations.t('passage_order_section'),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.adminHintBg,
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusXl),
-                ),
-                child: Text(
-                  AppLocalizations.t(
-                    widget.isAdmin
-                        ? 'admin_view_reorder_hint'
-                        : 'member_view_hint',
-                  ),
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: AppDimensions.spaceSm.h),
-          if (widget.isAdmin)
-            ReorderableListView(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              buildDefaultDragHandles: false,
-              onReorder: _reorder,
+          if (widget.isAdmin || widget.showPassageOrderToMembers) ...[
+            Row(
               children: [
-                for (var i = 0; i < _order.length; i++)
-                  _TimelineStep(
-                    key: ValueKey(_order[i].order),
-                    entry: _order[i],
-                    isLast: i == _order.length - 1,
-                    child: ReorderableDragStartListener(
-                      index: i,
-                      child: PassageOrderRow(entry: _order[i], draggable: true),
+                Expanded(
+                  child: Text(
+                    AppLocalizations.t('passage_order_section'),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
                     ),
                   ),
+                ),
+                SizedBox(width: AppDimensions.spaceXs.w),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.adminHintBg,
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusXl,
+                      ),
+                    ),
+                    child: Text(
+                      AppLocalizations.t(
+                        widget.isAdmin
+                            ? 'admin_view_reorder_hint'
+                            : 'member_view_hint',
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
               ],
-            )
-          else
-            for (var i = 0; i < _order.length; i++)
-              _TimelineStep(
-                entry: _order[i],
-                isLast: i == _order.length - 1,
-                child: PassageOrderRow(entry: _order[i]),
-              ),
+            ),
+            SizedBox(height: AppDimensions.spaceSm.h),
+            if (widget.passageOrderLoading)
+              const Center(child: CircularProgressIndicator())
+            else if (_order.isEmpty)
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  vertical: AppDimensions.spaceMd.h,
+                ),
+                child: Text(
+                  widget.passageOrderError ??
+                      AppLocalizations.t('cycle_tontine_no_members'),
+                  style: const TextStyle(color: AppColors.textSecondary),
+                ),
+              )
+            else if (widget.isAdmin)
+              IgnorePointer(
+                ignoring: _isSavingOrder,
+                child: ReorderableListView(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  buildDefaultDragHandles: false,
+                  onReorder:
+                      (oldIndex, newIndex) => _reorder(oldIndex, newIndex),
+                  children: [
+                    for (var i = 0; i < _order.length; i++)
+                      _TimelineStep(
+                        key: ValueKey(_order[i].membershipId ?? 'position-$i'),
+                        entry: _order[i],
+                        isLast: i == _order.length - 1,
+                        child: ReorderableDragStartListener(
+                          index: i,
+                          child: PassageOrderRow(
+                            entry: _order[i],
+                            draggable: true,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              )
+            else
+              for (var i = 0; i < _order.length; i++)
+                _TimelineStep(
+                  entry: _order[i],
+                  isLast: i == _order.length - 1,
+                  child: PassageOrderRow(entry: _order[i]),
+                ),
+          ],
           SizedBox(height: AppDimensions.spaceLg.h),
           Text(
             AppLocalizations.t('payout_history_section'),

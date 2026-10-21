@@ -1,9 +1,3 @@
-/// Modèles pour l'onglet "Bénéficiaires" de la Trésorerie (tontines à
-/// bénéficiaire tournant).
-///
-/// TODO (Njoya) : à remplacer par les vraies données de l'API — alimentés
-/// pour l'instant par datasource/community_beneficiary_mock_datasource.dart.
-
 class CurrentBeneficiary {
   const CurrentBeneficiary({
     required this.name,
@@ -42,13 +36,61 @@ class PassageOrderEntry {
     required this.statusLabel,
     required this.dateBadge,
     required this.isCurrent,
+    this.membershipId,
+    this.isPaid = false,
+    this.photoUrl,
   });
 
+  final String? membershipId;
   final int order;
   final String name;
   final String statusLabel; // "Actuel · Cycle 8/12" / "Prochain · Cycle 9/12"
   final String dateBadge; // "AUJOURD'HUI" / "OCT 2023"
   final bool isCurrent;
+  final bool isPaid;
+  final String? photoUrl;
+
+  PassageOrderEntry copyWith({
+    String? membershipId,
+    int? order,
+    String? name,
+    String? statusLabel,
+    String? dateBadge,
+    bool? isCurrent,
+    bool? isPaid,
+    String? photoUrl,
+  }) {
+    return PassageOrderEntry(
+      membershipId: membershipId ?? this.membershipId,
+      order: order ?? this.order,
+      name: name ?? this.name,
+      statusLabel: statusLabel ?? this.statusLabel,
+      dateBadge: dateBadge ?? this.dateBadge,
+      isCurrent: isCurrent ?? this.isCurrent,
+      isPaid: isPaid ?? this.isPaid,
+      photoUrl: photoUrl ?? this.photoUrl,
+    );
+  }
+}
+
+List<PassageOrderEntry> reorderPassageOrder(
+  List<PassageOrderEntry> entries,
+  int oldIndex,
+  int newIndex,
+) {
+  final reordered = List<PassageOrderEntry>.of(entries);
+  if (newIndex > oldIndex) newIndex -= 1;
+  final movedEntry = reordered.removeAt(oldIndex);
+  reordered.insert(newIndex, movedEntry);
+
+  final currentIndex = reordered.indexWhere((entry) => !entry.isPaid);
+  return [
+    for (var index = 0; index < reordered.length; index++)
+      reordered[index].copyWith(
+        order: index + 1,
+        isCurrent: index == currentIndex,
+      ),
+  ];
 }
 
 class PayoutHistoryEntry {

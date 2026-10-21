@@ -117,6 +117,17 @@ void main() {
         find.text('Aucun utilisateur inscrit avec ce numéro.'),
         findsOneWidget,
       );
+
+      await tester.enterText(find.byType(TextField), '+237612345678');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Inviter ce numéro'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text(
+          'Invitation enregistrée, mais la notification push n\'a pas été envoyée.',
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('link page shows a link and simulates a join', (tester) async {

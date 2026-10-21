@@ -148,12 +148,26 @@ class MembreGroupeController {
         };
       }
 
+      final member = MembreGroupe.fromJson(
+        Map<String, dynamic>.from(body['data'] as Map),
+      );
+      if (member.role.trim().toUpperCase() != 'ADMIN' ||
+          member.active.trim() != '1' ||
+          member.statut.trim().toUpperCase() != 'ACTIF') {
+        debugPrint(
+          '[API] Creator membership returned unexpected values: '
+          'role=${member.role}, active=${member.active}, statut=${member.statut}',
+        );
+        return {
+          'success': false,
+          'message': AppLocalizations.t('community_member_add_error'),
+        };
+      }
+
       return {
         'success': true,
         'message': body['message']?.toString(),
-        'membre': MembreGroupe.fromJson(
-          Map<String, dynamic>.from(body['data'] as Map),
-        ),
+        'membre': member,
       };
     } on DioException catch (error) {
       ApiService.logServerError(error);

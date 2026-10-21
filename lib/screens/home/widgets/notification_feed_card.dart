@@ -65,7 +65,7 @@ class NotificationFeedCard extends StatelessWidget {
       color: AppColors.white,
       borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
       child: InkWell(
-        onTap: item.isInvitation || item.isRead ? null : onMarkAsRead,
+        onTap: item.isActionable || item.isRead ? null : onMarkAsRead,
         borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
         child: Container(
           padding: EdgeInsets.all(AppDimensions.spaceMd.w),
@@ -87,7 +87,7 @@ class NotificationFeedCard extends StatelessWidget {
                     height: 40,
                     decoration: BoxDecoration(
                       color:
-                          item.isInvitation
+                          item.isActionable
                               ? AppColors.tagMintBg
                               : item.scope == 'CYCLE'
                               ? AppColors.tagRedBg
@@ -98,7 +98,7 @@ class NotificationFeedCard extends StatelessWidget {
                       _icon,
                       size: 18,
                       color:
-                          item.isInvitation
+                          item.isActionable
                               ? AppColors.primaryDark
                               : AppColors.neutralGreenGray,
                     ),
@@ -151,7 +151,7 @@ class NotificationFeedCard extends StatelessWidget {
                   ),
                 ],
               ),
-              if (item.isInvitation) ...[
+              if (item.isActionable) ...[
                 SizedBox(height: AppDimensions.spaceSm.h),
                 Align(
                   alignment: Alignment.centerRight,

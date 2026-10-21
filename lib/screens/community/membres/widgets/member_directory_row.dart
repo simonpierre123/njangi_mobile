@@ -38,7 +38,6 @@ class MemberDirectoryRow extends StatelessWidget {
             radius: 20,
             seed: entry.name.hashCode.abs() % 70 + 1,
             imageUrl: entry.details.photoUrl,
-            useGeneratedFallback: false,
             fallbackIcon: null,
             fallbackBg: AppColors.neutralGrayLight,
           ),

@@ -128,7 +128,12 @@ class GroupeNjangiController {
             members: members,
             membersLoaded: memberRows != null,
             cyclesLoaded: cycles != null,
+            cycleId: cycleId,
             hasCycle: cycles?.isNotEmpty ?? false,
+            tontineNextVisible:
+                cycle?.tontineNextVisible ??
+                staticCommunity?.tontineNextVisible ??
+                false,
             contributionAmount:
                 amount == null
                     ? staticCommunity?.contributionAmount ?? ''

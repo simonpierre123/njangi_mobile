@@ -152,12 +152,20 @@ class CycleController {
     if (draft.startDate == null) {
       return AppLocalizations.t('cycle_start_date_required');
     }
+    if (draft.savingsActive && draft.savingsMode == 'FIXE') {
+      final fixedAmount = _parseAmount(draft.savingsFixedAmount);
+      if (fixedAmount == null || fixedAmount <= 0) {
+        return AppLocalizations.t('cycle_amount_required');
+      }
+    }
     return null;
   }
 
   static Cycle _cycleFromDraft(CommunityDraft draft) {
     final startDate = draft.startDate!;
     return Cycle(
+      number: 1,
+      cycleName: 'Cycle 1',
       memberCount: int.tryParse(draft.expectedMemberCount.trim()),
       adminCount: draft.maxAdminCount,
       contributionAmount: _parseAmount(draft.contributionAmount),
@@ -184,6 +192,25 @@ class CycleController {
       loanModuleActive: draft.allowLoans ? '1' : '0',
       collectiveLoanValidation: draft.collectiveValidation ? '1' : '0',
       penaltiesEnabled: draft.penaltiesEnabled ? '1' : '0',
+      savingsActive: draft.savingsActive,
+      savingsMode: draft.savingsMode,
+      savingsFixedAmount:
+          draft.savingsMode == 'FIXE'
+              ? _parseAmount(draft.savingsFixedAmount)
+              : null,
+      savingsMinAmount:
+          draft.savingsMode == 'LIBRE'
+              ? _parseAmount(draft.savingsMinAmount)
+              : null,
+      savingsMaxAmount:
+          draft.savingsMode == 'LIBRE'
+              ? _parseAmount(draft.savingsMaxAmount)
+              : null,
+      savingsCalendarMode: draft.savingsCalendarMode,
+      emergencyFundActive: draft.emergencyFundActive,
+      emergencyIncludeBeneficiary: draft.emergencyIncludeBeneficiary,
+      tontineActive: draft.tontineActive,
+      tontineNextVisible: draft.tontineNextVisible,
     );
   }
 

@@ -1,5 +1,6 @@
 import 'package:contacts_service/contacts_service.dart';
 import 'package:flutter/material.dart';
+import 'package:njangi/utils/app_constants.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../../Models/Invitation.dart';
 import '../../../../ModeView/create_community_model.dart';
@@ -10,9 +11,7 @@ import '../../../../common/basewidget/simple_app_bar.dart';
 import '../../../../datasource/invitation_repository.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
-import '../../../../utils/app_constants.dart';
 import '../../../../utils/app_dimensions.dart';
-import 'invite_simulation_banner.dart';
 
 /// Invitation depuis les contacts : chaque contact choisi reçoit un lien
 /// personnel par WhatsApp ou SMS ; ouvert, il ajoute l'utilisateur au
@@ -22,12 +21,14 @@ class InviteContactsPage extends StatefulWidget {
     super.key,
     required this.groupId,
     required this.groupName,
+    this.cycleId,
     required this.onBack,
     required this.onDone,
   });
 
   final String groupId;
   final String groupName;
+  final String? cycleId;
   final VoidCallback onBack;
   final ValueChanged<List<InvitedMember>> onDone;
 
@@ -140,6 +141,8 @@ class _InviteContactsPageState extends State<InviteContactsPage> {
     try {
       final invitations = await _repository.inviteContacts(
         groupId: widget.groupId,
+        groupName: widget.groupName,
+        cycleId: widget.cycleId,
         contacts: [contact],
       );
       if (!mounted) return;
@@ -155,7 +158,11 @@ class _InviteContactsPageState extends State<InviteContactsPage> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.t('invite_sent_simulated'))),
+        SnackBar(
+          content: Text(
+            AppLocalizations.t(_inviteResultKey(invitation.pushSent)),
+          ),
+        ),
       );
     } catch (_) {
       if (mounted) {
@@ -164,6 +171,12 @@ class _InviteContactsPageState extends State<InviteContactsPage> {
       }
     }
   }
+
+  String _inviteResultKey(bool? pushSent) => switch (pushSent) {
+    true => 'invite_sent_success',
+    false => 'invite_saved_no_push',
+    null => 'invite_saved_success',
+  };
 
   @override
   void dispose() {
@@ -203,7 +216,6 @@ class _InviteContactsPageState extends State<InviteContactsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const InviteSimulationBanner(),
                     SizedBox(height: AppDimensions.spaceMd.h),
                     Text(
                       AppLocalizations.t('invite_contacts_desc'),

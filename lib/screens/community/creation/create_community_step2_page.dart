@@ -40,7 +40,13 @@ class _CreateCommunityStep2PageState extends State<CreateCommunityStep2Page> {
   late ContributionFrequency? _frequency = widget.draft.frequency;
   late DateTime? _startDate = widget.draft.startDate;
   late String _dueDay =
-      widget.draft.dueDayLabel ?? AppLocalizations.t('due_day_monday');
+      _weekdayOptions.contains(widget.draft.dueDayLabel)
+          ? widget.draft.dueDayLabel!
+          : _weekdayOptions[widget.draft.tontineWeekday.clamp(1, 7).toInt() -
+              1];
+  late String _tontineCalendarMode = widget.draft.tontineCalendarMode;
+  late int _tontineWeekOrdinal = widget.draft.tontineWeekOrdinal;
+  late int _tontineWeekday = _weekdayOptions.indexOf(_dueDay) + 1;
 
   List<String> get _weekdayOptions => [
     AppLocalizations.t('due_day_monday'),
@@ -60,16 +66,55 @@ class _CreateCommunityStep2PageState extends State<CreateCommunityStep2Page> {
   }
 
   void _continue() {
+    final validationMessage =
+        _frequency == null
+            ? AppLocalizations.t('cycle_frequency_required')
+            : _startDate == null
+            ? AppLocalizations.t('cycle_start_date_required')
+            : _frequency == ContributionFrequency.personnalisee &&
+                (int.tryParse(_membersController.text.trim()) ?? 0) < 1
+            ? AppLocalizations.t('cycle_custom_member_count_required')
+            : _frequency == ContributionFrequency.mensuelle &&
+                _tontineCalendarMode == 'NIEME_JOUR_SEMAINE'
+            ? (_startDateMatchesMonthlyRule()
+                ? null
+                : AppLocalizations.t('tontine_start_date_rule_mismatch'))
+            : _usesWeekdaySchedule && !_startDateMatchesWeekday()
+            ? AppLocalizations.t('tontine_start_date_rule_mismatch')
+            : null;
+    if (validationMessage != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(validationMessage)));
+      return;
+    }
     widget.onContinue(
       widget.draft.copyWith(
         contributionAmount: _amountController.text,
         frequency: _frequency,
         startDate: _startDate,
-        dueDayLabel: _dueDay,
+        dueDayLabel: _usesWeekdaySchedule ? _dueDay : null,
+        tontineCalendarMode: _tontineCalendarMode,
+        tontineWeekOrdinal: _tontineWeekOrdinal,
+        tontineWeekday: _tontineWeekday,
         expectedMemberCount: _membersController.text,
       ),
     );
   }
+
+  bool _startDateMatchesMonthlyRule() {
+    final date = _startDate;
+    if (date == null || date.weekday != _tontineWeekday) return false;
+    return ((date.day - 1) ~/ 7) + 1 == _tontineWeekOrdinal;
+  }
+
+  bool get _usesWeekdaySchedule =>
+      _frequency == ContributionFrequency.hebdomadaire ||
+      _frequency == ContributionFrequency.bimensuelle ||
+      (_frequency == ContributionFrequency.mensuelle &&
+          _tontineCalendarMode == 'NIEME_JOUR_SEMAINE');
+
+  bool _startDateMatchesWeekday() => _startDate?.weekday == _tontineWeekday;
 
   @override
   Widget build(BuildContext context) {
@@ -157,7 +202,13 @@ class _CreateCommunityStep2PageState extends State<CreateCommunityStep2Page> {
                     SizedBox(height: AppDimensions.spaceSm.h),
                     FrequencyOptionGrid(
                       selected: _frequency,
-                      onSelect: (f) => setState(() => _frequency = f),
+                      onSelect:
+                          (f) => setState(() {
+                            _frequency = f;
+                            if (f != ContributionFrequency.mensuelle) {
+                              _tontineCalendarMode = 'DATE_MOIS';
+                            }
+                          }),
                     ),
                     SizedBox(height: AppDimensions.spaceLg.h),
                     Row(
@@ -193,26 +244,130 @@ class _CreateCommunityStep2PageState extends State<CreateCommunityStep2Page> {
                       value: _startDate,
                       onChanged: (d) => setState(() => _startDate = d),
                     ),
-                    SizedBox(height: AppDimensions.spaceMd.h),
-                    LabeledDropdownField(
-                      label: AppLocalizations.t('due_day_label').toUpperCase(),
-                      value: _dueDay,
-                      options: _weekdayOptions,
-                      onChanged: (v) => setState(() => _dueDay = v),
-                    ),
-                    SizedBox(height: AppDimensions.spaceXs.h),
-                    Text(
-                      AppLocalizations.t('due_day_helper'),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textSecondary,
+                    if (_frequency == ContributionFrequency.hebdomadaire ||
+                        _frequency == ContributionFrequency.bimensuelle) ...[
+                      SizedBox(height: AppDimensions.spaceMd.h),
+                      LabeledDropdownField(
+                        label:
+                            AppLocalizations.t('due_day_label').toUpperCase(),
+                        value: _dueDay,
+                        options: _weekdayOptions,
+                        onChanged: (value) {
+                          setState(() {
+                            _dueDay = value;
+                            _tontineWeekday =
+                                _weekdayOptions.indexOf(value) + 1;
+                          });
+                        },
                       ),
-                    ),
+                    ],
+                    if (_frequency == ContributionFrequency.mensuelle) ...[
+                      SizedBox(height: AppDimensions.spaceMd.h),
+                      DropdownButtonFormField<String>(
+                        isExpanded: true,
+                        value: _tontineCalendarMode,
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.t(
+                            'tontine_calendar_rule_label',
+                          ),
+                          border: const OutlineInputBorder(),
+                        ),
+                        items: [
+                          DropdownMenuItem(
+                            value: 'DATE_MOIS',
+                            child: Text(
+                              AppLocalizations.t('tontine_calendar_fixed_date'),
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: 'NIEME_JOUR_SEMAINE',
+                            child: Text(
+                              AppLocalizations.t(
+                                'tontine_calendar_nth_weekday',
+                              ),
+                            ),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _tontineCalendarMode = value);
+                          }
+                        },
+                      ),
+                      if (_tontineCalendarMode == 'NIEME_JOUR_SEMAINE') ...[
+                        SizedBox(height: AppDimensions.spaceSm.h),
+                        DropdownButtonFormField<int>(
+                          isExpanded: true,
+                          value: _tontineWeekOrdinal,
+                          decoration: InputDecoration(
+                            labelText: AppLocalizations.t(
+                              'tontine_week_ordinal_label',
+                            ),
+                            border: const OutlineInputBorder(),
+                          ),
+                          items: [
+                            for (var ordinal = 1; ordinal <= 4; ordinal++)
+                              DropdownMenuItem(
+                                value: ordinal,
+                                child: Text(
+                                  AppLocalizations.t(
+                                    'tontine_week_ordinal_$ordinal',
+                                  ),
+                                ),
+                              ),
+                          ],
+                          onChanged:
+                              (value) => setState(
+                                () => _tontineWeekOrdinal = value ?? 1,
+                              ),
+                        ),
+                        SizedBox(height: AppDimensions.spaceSm.h),
+                        LabeledDropdownField(
+                          label:
+                              AppLocalizations.t('due_day_label').toUpperCase(),
+                          value: _dueDay,
+                          options: _weekdayOptions,
+                          onChanged: (value) {
+                            setState(() {
+                              _dueDay = value;
+                              _tontineWeekday =
+                                  _weekdayOptions.indexOf(value) + 1;
+                            });
+                          },
+                        ),
+                        SizedBox(height: AppDimensions.spaceXs.h),
+                        Text(
+                          AppLocalizations.t(
+                            _startDateMatchesMonthlyRule()
+                                ? 'tontine_contribution_window_helper'
+                                : 'tontine_start_date_rule_mismatch',
+                          ),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color:
+                                _startDateMatchesMonthlyRule()
+                                    ? AppColors.textSecondary
+                                    : AppColors.error,
+                          ),
+                        ),
+                      ],
+                    ],
+                    SizedBox(height: AppDimensions.spaceXs.h),
+                    if (_usesWeekdaySchedule)
+                      Text(
+                        AppLocalizations.t('due_day_helper'),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
                     SizedBox(height: AppDimensions.spaceMd.h),
                     AppTextField(
                       label:
                           AppLocalizations.t(
-                            'expected_members_label',
+                            _frequency == ContributionFrequency.personnalisee
+                                ? 'expected_members_required_label'
+                                : 'expected_members_label',
                           ).toUpperCase(),
                       hint: AppLocalizations.t('expected_members_hint'),
                       controller: _membersController,
@@ -220,7 +375,11 @@ class _CreateCommunityStep2PageState extends State<CreateCommunityStep2Page> {
                     ),
                     SizedBox(height: AppDimensions.spaceXs.h),
                     Text(
-                      AppLocalizations.t('expected_members_helper'),
+                      AppLocalizations.t(
+                        _frequency == ContributionFrequency.personnalisee
+                            ? 'expected_members_custom_helper'
+                            : 'expected_members_helper',
+                      ),
                       style: const TextStyle(
                         fontSize: 11,
                         color: AppColors.textSecondary,

@@ -5,7 +5,6 @@ import '../../../utils/app_colors.dart';
 import '../../../utils/app_dimensions.dart';
 import '../widgets/cycle_progress_card.dart';
 import '../widgets/group_health_card.dart';
-import '../widgets/loans_management_card.dart';
 import '../widgets/members_status_card.dart';
 import '../widgets/priorities_card.dart';
 import '../widgets/quick_actions_grid.dart';
@@ -69,14 +68,14 @@ class AdminDashboardPage extends StatelessWidget {
           QuickActionsGrid(
             actions: [
               QuickAction(
-                icon: Icons.add_circle_outline,
-                label: AppLocalizations.t('record_contributions'),
-                onTap: () => onQuickAction('contributions'),
+                icon: Icons.receipt_long_outlined,
+                label: AppLocalizations.t('my_contributions'),
+                onTap: () => onQuickAction('my_contributions'),
               ),
               QuickAction(
-                icon: Icons.account_balance_outlined,
-                label: AppLocalizations.t('manage_loans'),
-                onTap: () => onQuickAction('loans'),
+                icon: Icons.request_quote_outlined,
+                label: AppLocalizations.t('request_loan'),
+                onTap: () => onQuickAction('request_loan'),
               ),
               QuickAction(
                 icon: Icons.people_outline,
@@ -99,26 +98,6 @@ class AdminDashboardPage extends StatelessWidget {
             stats: memberStatus,
             onManageMembers: onManageMembers,
           ),
-          SizedBox(height: AppDimensions.spaceLg.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _SectionTitle(AppLocalizations.t('loans_management')),
-              TextButton(
-                onPressed: onSeeLoanFiles,
-                child: Text(
-                  AppLocalizations.t('files_label'),
-                  style: const TextStyle(
-                    color: AppColors.secondaryGreen,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          LoansManagementCard(stats: loans),
           SizedBox(height: AppDimensions.spaceLg.h),
           _SectionTitle(AppLocalizations.t('recent_activity')),
           SizedBox(height: AppDimensions.spaceSm.h),

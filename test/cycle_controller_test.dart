@@ -7,11 +7,14 @@ import 'package:njangi/Controllers_distant/CycleController.dart';
 import 'package:njangi/Controllers_distant/CycleFinanceController.dart';
 import 'package:njangi/ModeView/create_community_model.dart';
 import 'package:njangi/datasource/api_service.dart';
+import 'package:njangi/localization/app_localizations.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('creates a cycle from the financial and rules draft', () async {
+    AppLocalizations.locale.value = 'fr';
+    await AppLocalizations.load();
     final adapter = _CycleApiAdapter();
     ApiService.dio.httpClientAdapter = adapter;
 
@@ -20,8 +23,11 @@ void main() {
       draft: CommunityDraft(
         contributionAmount: '50 000',
         frequency: ContributionFrequency.mensuelle,
-        startDate: DateTime(2026, 8, 1),
+        startDate: DateTime(2026, 8, 9),
         dueDayLabel: 'Chaque 5 du mois',
+        tontineCalendarMode: 'NIEME_JOUR_SEMAINE',
+        tontineWeekOrdinal: 2,
+        tontineWeekday: 7,
         expectedMemberCount: '12',
         allowLoans: true,
         maxLoanAmount: '500 000',
@@ -54,11 +60,14 @@ void main() {
       'duree_max_pret': 3,
       'nombre_max_pret_simultane': 2,
       'frequence_cycle': 'MENSUEL',
-      'jour_echeance': 'Chaque 5 du mois',
-      'date_debut': '2026-08-01',
-      'date_fin': '2027-07-31',
+      'jour_echeance': AppLocalizations.t('due_day_sunday'),
+      'tontine_calendrier_mode': 'NIEME_JOUR_SEMAINE',
+      'tontine_ordinal_semaine': 2,
+      'tontine_jour_semaine': 7,
+      'date_debut': '2026-08-09',
+      'date_fin': '2027-08-08',
       'statut': 'EN_ATTENTE',
-      'module_pret_actif': true,
+      'module_pret_actif': '1',
       'validation_pret_colectif': '1',
       'appliquer_penalites': '0',
       'epargne_active': true,
@@ -66,6 +75,8 @@ void main() {
       'epargne_montant_fixe': null,
       'epargne_montant_min': 1000,
       'epargne_montant_max': 50000,
+      'epargne_frequence': null,
+      'epargne_jour_echeance': null,
       'epargne_calendrier_mode': 'MEME_QUE_TONTINE',
       'caisse_secours_active': true,
       'secours_inclure_beneficiaire': true,
@@ -73,6 +84,67 @@ void main() {
       'tontine_prochain_visible': false,
     });
   });
+
+  test('loan module is opt-in and serialized in the API enum format', () async {
+    AppLocalizations.locale.value = 'fr';
+    await AppLocalizations.load();
+    final adapter = _CycleApiAdapter();
+    ApiService.dio.httpClientAdapter = adapter;
+
+    final result = await CycleController.createForGroup(
+      groupId: 'group-uuid',
+      draft: CommunityDraft(
+        contributionAmount: '10 000',
+        frequency: ContributionFrequency.mensuelle,
+        startDate: DateTime(2026, 8, 9),
+      ),
+    );
+
+    expect(result['success'], isTrue);
+    expect(CommunityDraft().allowLoans, isFalse);
+    expect(adapter.request!.data['module_pret_actif'], '0');
+    expect(adapter.request!.data['montant_max_pret'], isNull);
+  });
+
+  test(
+    'rejects inconsistent calendars and incomplete custom schedules',
+    () async {
+      AppLocalizations.locale.value = 'fr';
+      await AppLocalizations.load();
+      final adapter = _CycleApiAdapter();
+      ApiService.dio.httpClientAdapter = adapter;
+
+      final invalidWeekly = await CycleController.createForGroup(
+        groupId: 'group-uuid',
+        draft: CommunityDraft(
+          contributionAmount: '1000',
+          frequency: ContributionFrequency.hebdomadaire,
+          startDate: DateTime(2026, 11, 2),
+          tontineWeekday: 3,
+        ),
+      );
+      final incompleteCustom = await CycleController.createForGroup(
+        groupId: 'group-uuid',
+        draft: CommunityDraft(
+          contributionAmount: '1000',
+          frequency: ContributionFrequency.personnalisee,
+          startDate: DateTime(2026, 11, 2),
+        ),
+      );
+
+      expect(invalidWeekly['success'], isFalse);
+      expect(
+        invalidWeekly['message'],
+        AppLocalizations.t('tontine_start_date_rule_mismatch'),
+      );
+      expect(incompleteCustom['success'], isFalse);
+      expect(
+        incompleteCustom['message'],
+        AppLocalizations.t('cycle_custom_member_count_required'),
+      );
+      expect(adapter.request, isNull);
+    },
+  );
 
   test(
     'sends cycle emergency, operation, decision, and closure requests',

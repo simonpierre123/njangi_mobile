@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:njangi/utils/management/storage_manager.dart';
 import '../localization/app_localizations.dart';
 import '../utils/app_constants.dart';
@@ -72,6 +72,15 @@ class ApiService {
       'failed (status: ${error.response?.statusCode ?? 'network'}): '
       '${error.response?.data ?? error.message}',
     );
+  }
+
+  static void logServerResponse({
+    required String operation,
+    required int? statusCode,
+    required Object? body,
+  }) {
+    if (!kDebugMode) return;
+    debugPrint('[API][$operation] response (status: $statusCode): $body');
   }
 
   static void logUnexpectedError(String operation, Object error) {

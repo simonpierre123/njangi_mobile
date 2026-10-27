@@ -17,10 +17,13 @@ class Cycle {
     this.maxSimultaneousLoans,
     this.frequency,
     this.dueDay,
+    this.tontineCalendarMode = 'DATE_MOIS',
+    this.tontineWeekOrdinal,
+    this.tontineWeekday,
     this.startDate,
     this.endDate,
     this.status,
-    this.loanModuleActive = '1',
+    this.loanModuleActive = '0',
     this.collectiveLoanValidation = '1',
     this.penaltiesEnabled = '1',
     this.savingsActive = false,
@@ -55,6 +58,9 @@ class Cycle {
   final int? maxSimultaneousLoans;
   final String? frequency;
   final String? dueDay;
+  final String tontineCalendarMode;
+  final int? tontineWeekOrdinal;
+  final int? tontineWeekday;
   final DateTime? startDate;
   final DateTime? endDate;
   final String? status;
@@ -96,11 +102,15 @@ class Cycle {
       maxSimultaneousLoans: _toInt(json['nombre_max_pret_simultane']),
       frequency: json['frequence_cycle']?.toString(),
       dueDay: json['jour_echeance']?.toString(),
+      tontineCalendarMode:
+          json['tontine_calendrier_mode']?.toString() ?? 'DATE_MOIS',
+      tontineWeekOrdinal: _toInt(json['tontine_ordinal_semaine']),
+      tontineWeekday: _toInt(json['tontine_jour_semaine']),
       startDate: _toDate(json['date_debut']),
       endDate: _toDate(json['date_fin']),
       status: json['statut']?.toString(),
       loanModuleActive:
-          (_toBool(json['module_pret_actif']) ?? true) ? '1' : '0',
+          (_toBool(json['module_pret_actif']) ?? false) ? '1' : '0',
       collectiveLoanValidation:
           json['validation_pret_colectif']?.toString() ?? '1',
       penaltiesEnabled: json['appliquer_penalites']?.toString() ?? '1',
@@ -134,10 +144,19 @@ class Cycle {
     'nombre_max_pret_simultane': maxSimultaneousLoans,
     'frequence_cycle': frequency,
     'jour_echeance': dueDay,
+    'tontine_calendrier_mode': tontineCalendarMode,
+    'tontine_ordinal_semaine':
+        tontineCalendarMode == 'NIEME_JOUR_SEMAINE' ? tontineWeekOrdinal : null,
+    'tontine_jour_semaine':
+        tontineCalendarMode == 'NIEME_JOUR_SEMAINE' ||
+                frequency == 'HEBDO' ||
+                frequency == 'BIHEBDO'
+            ? tontineWeekday
+            : null,
     'date_debut': _formatDate(startDate),
     'date_fin': _formatDate(endDate),
     'statut': status ?? 'EN_ATTENTE',
-    'module_pret_actif': loanModuleActive == '1',
+    'module_pret_actif': loanModuleActive,
     'validation_pret_colectif': collectiveLoanValidation,
     'appliquer_penalites': penaltiesEnabled,
     'epargne_active': savingsActive,

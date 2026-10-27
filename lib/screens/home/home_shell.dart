@@ -207,7 +207,14 @@ class _HomeShellState extends State<HomeShell> with RouteAware {
       _profileActivity = ProfileActivity(
         communitiesCount: communities.length,
         adminCount:
-            communities.where((community) => community.role == 'ADMIN').length,
+            communities
+                .where(
+                  (community) =>
+                      ['ADMIN', 'CO_ADMIN'].contains(
+                        community.role?.toUpperCase(),
+                      ),
+                )
+                .length,
         totalContributions: widget.profileActivity.totalContributions,
         activeLoans: widget.profileActivity.activeLoans,
       );

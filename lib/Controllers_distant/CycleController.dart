@@ -142,15 +142,38 @@ class CycleController {
   }
 
   static String? _validateDraft(CommunityDraft draft) {
-    final contributionAmount = _parseAmount(draft.contributionAmount);
-    if (contributionAmount == null || contributionAmount <= 0) {
-      return AppLocalizations.t('cycle_amount_required');
-    }
-    if (draft.frequency == null) {
-      return AppLocalizations.t('cycle_frequency_required');
-    }
-    if (draft.startDate == null) {
-      return AppLocalizations.t('cycle_start_date_required');
+    if (draft.tontineActive) {
+      final contributionAmount = _parseAmount(draft.contributionAmount);
+      if (contributionAmount == null || contributionAmount <= 0) {
+        return AppLocalizations.t('cycle_amount_required');
+      }
+      if (draft.frequency == null) {
+        return AppLocalizations.t('cycle_frequency_required');
+      }
+      if (draft.startDate == null) {
+        return AppLocalizations.t('cycle_start_date_required');
+      }
+      if (draft.frequency == ContributionFrequency.personnalisee) {
+        final memberCount = int.tryParse(draft.expectedMemberCount.trim());
+        if (memberCount == null || memberCount < 1) {
+          return AppLocalizations.t('cycle_custom_member_count_required');
+        }
+      }
+      final usesWeekdaySchedule =
+          draft.frequency == ContributionFrequency.hebdomadaire ||
+          draft.frequency == ContributionFrequency.bimensuelle ||
+          (draft.frequency == ContributionFrequency.mensuelle &&
+              draft.tontineCalendarMode == 'NIEME_JOUR_SEMAINE');
+      if (usesWeekdaySchedule) {
+        final startDate = draft.startDate!;
+        final matchesSchedule =
+            startDate.weekday == draft.tontineWeekday &&
+            (draft.frequency != ContributionFrequency.mensuelle ||
+                ((startDate.day - 1) ~/ 7) + 1 == draft.tontineWeekOrdinal);
+        if (!matchesSchedule) {
+          return AppLocalizations.t('tontine_start_date_rule_mismatch');
+        }
+      }
     }
     if (draft.savingsActive && draft.savingsMode == 'FIXE') {
       final fixedAmount = _parseAmount(draft.savingsFixedAmount);
@@ -162,7 +185,13 @@ class CycleController {
   }
 
   static Cycle _cycleFromDraft(CommunityDraft draft) {
-    final startDate = draft.startDate!;
+    final startDate = draft.tontineActive ? draft.startDate : null;
+    final frequency = draft.tontineActive ? draft.frequency : null;
+    final usesWeekdaySchedule =
+        frequency == ContributionFrequency.hebdomadaire ||
+        frequency == ContributionFrequency.bimensuelle ||
+        (frequency == ContributionFrequency.mensuelle &&
+            draft.tontineCalendarMode == 'NIEME_JOUR_SEMAINE');
     return Cycle(
       number: 1,
       cycleName: 'Cycle 1',
@@ -180,14 +209,24 @@ class CycleController {
           draft.allowLoans
               ? int.tryParse(draft.maxSimultaneousLoans.trim())
               : null,
-      frequency: _apiFrequency(draft.frequency!),
-      dueDay: draft.dueDayLabel,
+      frequency: frequency == null ? null : _apiFrequency(frequency),
+      dueDay:
+          usesWeekdaySchedule
+              ? _localizedWeekdayLabel(draft.tontineWeekday)
+              : null,
+      tontineCalendarMode:
+          draft.tontineActive ? draft.tontineCalendarMode : 'DATE_MOIS',
+      tontineWeekOrdinal: draft.tontineActive ? draft.tontineWeekOrdinal : null,
+      tontineWeekday: usesWeekdaySchedule ? draft.tontineWeekday : null,
       startDate: startDate,
-      endDate: DateTime(
-        startDate.year + 1,
-        startDate.month,
-        startDate.day,
-      ).subtract(const Duration(days: 1)),
+      endDate:
+          startDate == null
+              ? null
+              : DateTime(
+                startDate.year + 1,
+                startDate.month,
+                startDate.day,
+              ).subtract(const Duration(days: 1)),
       status: 'EN_ATTENTE',
       loanModuleActive: draft.allowLoans ? '1' : '0',
       collectiveLoanValidation: draft.collectiveValidation ? '1' : '0',
@@ -216,6 +255,20 @@ class CycleController {
 
   static int? _parseAmount(String value) =>
       int.tryParse(value.replaceAll(RegExp(r'[^0-9]'), ''));
+
+  static String? _localizedWeekdayLabel(int weekday) {
+    final key = switch (weekday) {
+      1 => 'due_day_monday',
+      2 => 'due_day_tuesday',
+      3 => 'due_day_wednesday',
+      4 => 'due_day_thursday',
+      5 => 'due_day_friday',
+      6 => 'due_day_saturday',
+      7 => 'due_day_sunday',
+      _ => null,
+    };
+    return key == null ? null : AppLocalizations.t(key);
+  }
 
   static String _apiFrequency(ContributionFrequency frequency) =>
       switch (frequency) {

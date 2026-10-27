@@ -90,6 +90,11 @@ class _CreateCommunityStep5PageState extends State<CreateCommunityStep5Page> {
     AppScale.init(context);
     final draft = widget.draft;
     final hasInvites = draft.invitedMembers.isNotEmpty;
+    final hasWeekdaySchedule =
+        draft.frequency == ContributionFrequency.hebdomadaire ||
+        draft.frequency == ContributionFrequency.bimensuelle ||
+        (draft.frequency == ContributionFrequency.mensuelle &&
+            draft.tontineCalendarMode == 'NIEME_JOUR_SEMAINE');
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -242,31 +247,43 @@ class _CreateCommunityStep5PageState extends State<CreateCommunityStep5Page> {
                             ],
                           ),
                           SizedBox(height: AppDimensions.spaceSm.h),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _ReviewField(
-                                  label:
-                                      AppLocalizations.t(
-                                        'start_date_label',
-                                      ).toUpperCase(),
-                                  value:
-                                      draft.startDate != null
-                                          ? _formatDate(draft.startDate!)
-                                          : '—',
+                          if (hasWeekdaySchedule)
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _ReviewField(
+                                    label:
+                                        AppLocalizations.t(
+                                          'start_date_label',
+                                        ).toUpperCase(),
+                                    value:
+                                        draft.startDate != null
+                                            ? _formatDate(draft.startDate!)
+                                            : '—',
+                                  ),
                                 ),
-                              ),
-                              Expanded(
-                                child: _ReviewField(
-                                  label:
-                                      AppLocalizations.t(
-                                        'due_day_label',
-                                      ).toUpperCase(),
-                                  value: draft.dueDayLabel ?? '—',
+                                Expanded(
+                                  child: _ReviewField(
+                                    label:
+                                        AppLocalizations.t(
+                                          'due_day_label',
+                                        ).toUpperCase(),
+                                    value: draft.dueDayLabel ?? '—',
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            )
+                          else
+                            _ReviewField(
+                              label:
+                                  AppLocalizations.t(
+                                    'start_date_label',
+                                  ).toUpperCase(),
+                              value:
+                                  draft.startDate != null
+                                      ? _formatDate(draft.startDate!)
+                                      : '—',
+                            ),
                         ],
                       ),
                     ),

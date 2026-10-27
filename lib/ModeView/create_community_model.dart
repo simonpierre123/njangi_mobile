@@ -108,9 +108,12 @@ class CommunityDraft {
     this.frequency,
     this.startDate,
     this.dueDayLabel,
+    this.tontineCalendarMode = 'DATE_MOIS',
+    this.tontineWeekOrdinal = 2,
+    this.tontineWeekday = 7,
     this.expectedMemberCount = '',
     // Étape 3 — Règles de fonctionnement
-    this.allowLoans = true,
+    this.allowLoans = false,
     this.maxLoanAmount = '',
     this.maxLoanDurationMonths = '',
     this.maxSimultaneousLoans = '',
@@ -144,6 +147,9 @@ class CommunityDraft {
   final ContributionFrequency? frequency;
   final DateTime? startDate;
   final String? dueDayLabel;
+  final String tontineCalendarMode;
+  final int tontineWeekOrdinal;
+  final int tontineWeekday;
   final String expectedMemberCount;
 
   final bool allowLoans;
@@ -180,6 +186,9 @@ class CommunityDraft {
     ContributionFrequency? frequency,
     DateTime? startDate,
     String? dueDayLabel,
+    String? tontineCalendarMode,
+    int? tontineWeekOrdinal,
+    int? tontineWeekday,
     String? expectedMemberCount,
     bool? allowLoans,
     String? maxLoanAmount,
@@ -214,6 +223,9 @@ class CommunityDraft {
       frequency: frequency ?? this.frequency,
       startDate: startDate ?? this.startDate,
       dueDayLabel: dueDayLabel ?? this.dueDayLabel,
+      tontineCalendarMode: tontineCalendarMode ?? this.tontineCalendarMode,
+      tontineWeekOrdinal: tontineWeekOrdinal ?? this.tontineWeekOrdinal,
+      tontineWeekday: tontineWeekday ?? this.tontineWeekday,
       expectedMemberCount: expectedMemberCount ?? this.expectedMemberCount,
       allowLoans: allowLoans ?? this.allowLoans,
       maxLoanAmount: maxLoanAmount ?? this.maxLoanAmount,

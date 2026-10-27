@@ -46,7 +46,7 @@ abstract class InvitationRepository {
     required List<PhoneContact> contacts,
   });
 
-  /// Simulation uniquement : quelqu'un ouvre le lien ou scanne le QR code.
+  /// Test uniquement : quelqu'un ouvre le lien ou scanne le QR code.
   Future<Invitation> simulateJoin(Invitation invitation);
 
   Future<void> revoke(String invitationId);

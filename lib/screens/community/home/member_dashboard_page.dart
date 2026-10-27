@@ -5,6 +5,7 @@ import '../../../localization/app_localizations.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/app_dimensions.dart';
 import '../widgets/group_health_card.dart';
+import '../widgets/loans_management_card.dart';
 import '../widgets/member_cycle_card.dart';
 import '../widgets/members_overview_card.dart';
 import '../widgets/quick_actions_grid.dart';
@@ -24,7 +25,9 @@ import '../widgets/required_action_card.dart';
 class MemberDashboardPage extends StatelessWidget {
   const MemberDashboardPage({
     super.key,
+    required this.isTreasurer,
     required this.health,
+    required this.loans,
     required this.requiredActions,
     required this.cycle,
     required this.memberStatus,
@@ -36,7 +39,9 @@ class MemberDashboardPage extends StatelessWidget {
     required this.onSeeAllActivity,
   });
 
+  final bool isTreasurer;
   final GroupHealthStats health;
+  final LoanStats loans;
   final List<RequiredActionItem> requiredActions;
   final MemberCycleInfo cycle;
   final MemberStatusStats memberStatus;
@@ -75,21 +80,35 @@ class MemberDashboardPage extends StatelessWidget {
           SizedBox(height: AppDimensions.spaceSm.h),
           QuickActionsGrid(
             actions: [
+              if (isTreasurer)
+                QuickAction(
+                  icon: Icons.add_circle_outline,
+                  label: AppLocalizations.t('record_contributions'),
+                  onTap: () => onQuickAction('record_contributions'),
+                ),
+              if (isTreasurer) ...[
+                QuickAction(
+                  icon: Icons.account_balance_outlined,
+                  label: AppLocalizations.t('manage_loans'),
+                  onTap: () => onQuickAction('loans'),
+                ),
+              ],
               QuickAction(
                 icon: Icons.receipt_long_outlined,
                 label: AppLocalizations.t('my_contributions'),
-                onTap: () => onQuickAction('contributions'),
+                onTap: () => onQuickAction('my_contributions'),
               ),
               QuickAction(
                 icon: Icons.request_quote_outlined,
                 label: AppLocalizations.t('request_loan'),
                 onTap: () => onQuickAction('request_loan'),
               ),
-              QuickAction(
-                icon: Icons.people_outline,
-                label: AppLocalizations.t('cycle_rules_title'),
-                onTap: () => onQuickAction('rules'),
-              ),
+              if (!isTreasurer)
+                QuickAction(
+                  icon: Icons.people_outline,
+                  label: AppLocalizations.t('cycle_rules_title'),
+                  onTap: () => onQuickAction('rules'),
+                ),
               QuickAction(
                 icon: Icons.insert_chart_outlined,
                 label: AppLocalizations.t('reports_label'),
@@ -99,6 +118,12 @@ class MemberDashboardPage extends StatelessWidget {
           ),
           SizedBox(height: AppDimensions.spaceLg.h),
           MemberCycleCard(info: cycle),
+          if (isTreasurer) ...[
+            SizedBox(height: AppDimensions.spaceLg.h),
+            _SectionTitle(AppLocalizations.t('loans_management')),
+            SizedBox(height: AppDimensions.spaceSm.h),
+            LoansManagementCard(stats: loans),
+          ],
           SizedBox(height: AppDimensions.spaceLg.h),
           MembersOverviewCard(
             stats: memberStatus,

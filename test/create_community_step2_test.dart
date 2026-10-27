@@ -40,6 +40,8 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
 
+    await tester.tap(find.text(AppLocalizations.t('freq_weekly_title')));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('jj/mm/aaaa'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('15').last);
@@ -48,11 +50,17 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('jj/mm/aaaa'), findsNothing);
     expect(find.textContaining(RegExp(r'^15/\d{2}/\d{4}$')), findsOneWidget);
+    expect(
+      find.text(AppLocalizations.t('due_day_label').toUpperCase()),
+      findsOneWidget,
+    );
+    expect(find.text(AppLocalizations.t('due_day_sunday')), findsOneWidget);
 
-    await tester.tap(find.text('Chaque lundi'));
+    await tester.tap(find.text(AppLocalizations.t('due_day_sunday')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Chaque mercredi').last);
+    await tester.tap(find.text(AppLocalizations.t('due_day_wednesday')).last);
     await tester.pumpAndSettle();
-    expect(find.text('Chaque mercredi'), findsOneWidget);
+    expect(find.text(AppLocalizations.t('due_day_wednesday')), findsOneWidget);
   });
+
 }

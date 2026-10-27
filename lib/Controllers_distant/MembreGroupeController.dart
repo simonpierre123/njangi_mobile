@@ -7,6 +7,60 @@ import 'package:njangi/utils/app_constants.dart';
 import 'package:njangi/utils/management/storage_manager.dart';
 
 class MembreGroupeController {
+  static Future<Map<String, dynamic>> updateRole({
+    required String groupeId,
+    required String utilisateurId,
+    required String role,
+  }) async {
+    try {
+      final endpoint =
+          '${AppConstants.groupes}/$groupeId/membres/$utilisateurId/role';
+      final response = await ApiService.dio.post(
+        endpoint,
+        data: {'role': role},
+      );
+      final body = response.data;
+      final data = body is Map ? body['data'] : null;
+      final updatedRole =
+          data is Map ? data['role']?.toString().toUpperCase() : null;
+      if (body is Map && body['success'] == true && updatedRole == role) {
+        return {'success': true, 'role': updatedRole};
+      }
+
+      debugPrint('[API] Group role update returned an unexpected response: $body');
+      return {
+        'success': false,
+        'message': body is Map
+            ? body['message']?.toString() ??
+                AppLocalizations.t('member_role_update_error')
+            : AppLocalizations.t('member_role_update_error'),
+      };
+    } on DioException catch (error) {
+      ApiService.logServerError(error);
+      final responseData = error.response?.data;
+      return {
+        'success': false,
+        'message': responseData is Map
+            ? responseData['message']?.toString() ??
+                ApiService.localizedErrorMessage(
+                  error,
+                  fallbackKey: 'member_role_update_error',
+                )
+            : ApiService.localizedErrorMessage(
+                error,
+                fallbackKey: 'member_role_update_error',
+              ),
+      };
+    } catch (error, stackTrace) {
+      debugPrint('[API] Updating group member role failed unexpectedly: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      return {
+        'success': false,
+        'message': AppLocalizations.t('member_role_update_error'),
+      };
+    }
+  }
+
   static Future<Map<String, dynamic>> acceptInvite({
     required String groupeId,
     required String utilisateurId,

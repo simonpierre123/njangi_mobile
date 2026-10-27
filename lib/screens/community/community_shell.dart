@@ -82,7 +82,6 @@ class CommunityShell extends StatefulWidget {
     required this.growth,
     required this.trustScore,
     required this.onInviteMember,
-    required this.onMemberMenuTap,
     required this.onMemberUrgentAction,
     required this.onAdminMemberTap,
     required this.onMemberTap,
@@ -145,7 +144,6 @@ class CommunityShell extends StatefulWidget {
   final GrowthStats growth;
   final TrustScore trustScore;
   final VoidCallback onInviteMember;
-  final ValueChanged<AdminMemberEntry> onMemberMenuTap;
   final ValueChanged<AdminMemberEntry> onMemberUrgentAction;
   final ValueChanged<AdminMemberEntry> onAdminMemberTap;
   final ValueChanged<MemberDirectoryEntry> onMemberTap;
@@ -266,7 +264,9 @@ class _CommunityShellState extends State<CommunityShell> {
     await _loadProfileUser();
   }
 
-  bool get _isAdmin => widget.community.role == 'ADMIN';
+  bool get _isAdmin =>
+      ['ADMIN', 'CO_ADMIN'].contains(widget.community.role?.toUpperCase());
+  bool get _isTreasurer => widget.community.role?.toUpperCase() == 'TRESORIER';
 
   GroupHealthStats get _healthWithCommunityCount {
     final total = widget.community.memberCount;
@@ -391,7 +391,9 @@ class _CommunityShellState extends State<CommunityShell> {
                   onSeeAllActivity: widget.onSeeAllActivity,
                 )
                 : MemberDashboardPage(
+                  isTreasurer: _isTreasurer,
                   health: _healthWithCommunityCount,
+                  loans: widget.loans,
                   requiredActions: widget.memberRequiredActions,
                   cycle: _memberCycleForCommunity,
                   memberStatus: _memberStatusWithCommunityCount(
@@ -406,6 +408,7 @@ class _CommunityShellState extends State<CommunityShell> {
                 ),
             TreasuryPage(
               isAdmin: _isAdmin,
+              isTreasurer: _isTreasurer,
               financialPosition: widget.financialPosition,
               receipt: widget.receipt,
               history: widget.history,
@@ -436,10 +439,11 @@ class _CommunityShellState extends State<CommunityShell> {
             _isAdmin
                 ? AdminMembersPage(
                   summary: widget.adminSummary,
+                  groupId: widget.community.id,
+                  currentUserRole: widget.community.role ?? '',
                   directory: widget.adminDirectory,
                   growth: widget.growth,
                   onInviteMember: widget.onInviteMember,
-                  onMemberMenuTap: widget.onMemberMenuTap,
                   onMemberUrgentAction: widget.onMemberUrgentAction,
                   onMemberTap: widget.onAdminMemberTap,
                 )

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -52,9 +53,11 @@ import '../screens/community/rapport/detailed_report_page.dart';
 import '../screens/community/regles/cycle_rules_page.dart';
 import '../screens/community/rapport/financial_summary_page.dart';
 import '../screens/community/tresorerie/contribution_detail_page.dart';
+import '../screens/community/tresorerie/cycle_contribution_page.dart';
 import '../screens/community/tresorerie/cycle_completed_page.dart';
 import '../screens/community/tresorerie/disburse_funds_sheet.dart';
-import '../screens/community/tresorerie/record_contribution_sheet.dart';
+import '../screens/community/tresorerie/tontine_history_page.dart';
+import '../screens/community/tresorerie/tontine_management_page.dart';
 import '../screens/home/home_shell.dart';
 import '../screens/home/invitation_detail_page.dart';
 import '../screens/kyc/kyc_capture_page.dart';
@@ -277,51 +280,6 @@ class AppRouter {
     _push(AppRoutes.communityShell, arguments: community);
   }
 
-  static void _showRecordContributionSheet() {
-    showModalBottomSheet(
-      context: navigatorKey.currentState!.context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      // Léger assombrissement — l'essentiel de la séparation visuelle
-      // vient du flou (BackdropFilter) ci-dessous, pas d'un voile sombre.
-      barrierColor: Colors.black.withValues(alpha: 0.08),
-      builder:
-          (sheetContext) => Stack(
-            children: [
-              // Flou plein écran qui laisse deviner la page derrière (nom
-              // de la communauté visible en haut, comme sur la maquette).
-              Positioned.fill(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                  child: const SizedBox.expand(),
-                ),
-              ),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxHeight: MediaQuery.of(sheetContext).size.height * 0.9,
-                  ),
-                  child: RecordContributionSheet(
-                    // TODO (Njoya) : nom de communauté figé pour l'instant — le
-                    // callback onQuickAction ne transporte que la clé de l'action,
-                    // pas le contexte de la communauté active. À relier une fois
-                    // l'API branchée.
-                    communityName: 'Famille Bamiléké',
-                    member: ContributionMockDatasource.memberDue,
-                    onCancel: () => Navigator.of(sheetContext).pop(),
-                    onSave: () {
-                      Navigator.of(sheetContext).pop();
-                      _push(AppRoutes.contributionDetail);
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-    );
-  }
-
   static void _showDisburseFundsSheet(CommunityModel community) {
     showModalBottomSheet(
       context: navigatorKey.currentState!.context,
@@ -425,8 +383,9 @@ class AppRouter {
   }
 
   static List<MemberDirectoryEntry> _memberDirectory(CommunityModel community) {
-    if (!community.membersLoaded)
+    if (!community.membersLoaded) {
       return CommunityMembersMockDatasource.directory;
+    }
     return List.generate(community.members.length, (index) {
       final member = community.members[index];
       final fallback =
@@ -793,7 +752,8 @@ class AppRouter {
       case AppRoutes.communityShell:
         final community = settings.arguments as CommunityModel?;
         if (community == null) return page(const _MissingCommunityRedirect());
-        final isAdmin = community.role == 'ADMIN';
+        final isAdmin =
+            ['ADMIN', 'CO_ADMIN'].contains(community.role?.toUpperCase());
         final adminSummary = _communityMemberSummary(community, admin: true);
         final memberSummary = _communityMemberSummary(community, admin: false);
         final adminDirectory = _adminMemberDirectory(community);
@@ -818,8 +778,12 @@ class AppRouter {
                     ? CommunityAdminMockDatasource.activity
                     : CommunityMemberMockDatasource.activity,
             onQuickAction: (action) {
-              if (action == 'contributions') {
-                _showRecordContributionSheet();
+              if (action == 'record_contributions') {
+                _push(AppRoutes.tontineManagement, arguments: community);
+                return;
+              }
+              if (action == 'my_contributions') {
+                _push(AppRoutes.cycleContribution, arguments: community);
                 return;
               }
               if (action == 'reports') {
@@ -896,8 +860,6 @@ class AppRouter {
             trustScore: CommunityMembersMockDatasource.trustScore,
             onInviteMember:
                 () => _push(AppRoutes.inviteMembers, arguments: community),
-            onMemberMenuTap:
-                (m) => _push(AppRoutes.comingSoon, arguments: m.name),
             onMemberUrgentAction:
                 (m) => _push(
                   AppRoutes.comingSoon,
@@ -1225,6 +1187,28 @@ class AppRouter {
             onCancelRecording: _pop,
           ),
         );
+
+      case AppRoutes.cycleContribution:
+        final community = settings.arguments as CommunityModel?;
+        if (community == null) return page(const _MissingCommunityRedirect());
+        return page(CycleContributionPage(community: community, onBack: _pop));
+
+      case AppRoutes.tontineManagement:
+        final community = settings.arguments as CommunityModel?;
+        if (community == null) return page(const _MissingCommunityRedirect());
+        return page(
+          TontineManagementPage(
+            community: community,
+            onBack: _pop,
+            onOpenHistory:
+                () => _push(AppRoutes.tontineHistory, arguments: community),
+          ),
+        );
+
+      case AppRoutes.tontineHistory:
+        final community = settings.arguments as CommunityModel?;
+        if (community == null) return page(const _MissingCommunityRedirect());
+        return page(TontineHistoryPage(community: community, onBack: _pop));
 
       case AppRoutes.financialSummary:
         final community = settings.arguments as CommunityModel?;

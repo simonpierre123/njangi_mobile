@@ -19,19 +19,24 @@ class NotificationFeedCard extends StatelessWidget {
   final VoidCallback onOpenInvitation;
   final VoidCallback onMarkAsRead;
 
-  IconData get _icon => switch (item.eventType) {
-    'COTISATION' => Icons.account_balance_wallet_outlined,
-    'MEMBRE_REJOINT' => Icons.person_add_alt_outlined,
-    'PRET' => Icons.savings_outlined,
-    'REUNION_ALERTE' => Icons.event_outlined,
-    'INVITATION_GROUPE' ||
-    'INVITATION_PROCHAINS_CYCLES' => Icons.group_add_outlined,
-    _ => switch (item.scope) {
-      'CYCLE' => Icons.autorenew_outlined,
-      'GROUPE' => Icons.groups_outlined,
-      _ => Icons.notifications_none_outlined,
-    },
-  };
+  IconData get _icon {
+    if (item.payload?['action'] == 'ROLE_CHANGED') {
+      return Icons.manage_accounts_outlined;
+    }
+    return switch (item.eventType) {
+      'COTISATION' => Icons.account_balance_wallet_outlined,
+      'MEMBRE_REJOINT' => Icons.person_add_alt_outlined,
+      'PRET' => Icons.savings_outlined,
+      'REUNION_ALERTE' => Icons.event_outlined,
+      'INVITATION_GROUPE' ||
+      'INVITATION_PROCHAINS_CYCLES' => Icons.group_add_outlined,
+      _ => switch (item.scope) {
+        'CYCLE' => Icons.autorenew_outlined,
+        'GROUPE' => Icons.groups_outlined,
+        _ => Icons.notifications_none_outlined,
+      },
+    };
+  }
 
   String get _scopeLabel => switch (item.scope) {
     'GROUPE' => AppLocalizations.t('notification_scope_group'),
@@ -39,17 +44,22 @@ class NotificationFeedCard extends StatelessWidget {
     _ => AppLocalizations.t('notification_scope_user'),
   };
 
-  String get _typeLabel => switch (item.eventType) {
-    'COTISATION' => AppLocalizations.t('notification_type_contribution'),
-    'MEMBRE_REJOINT' => AppLocalizations.t('notification_type_member'),
-    'PRET' => AppLocalizations.t('notification_type_loan'),
-    'REUNION_ALERTE' => AppLocalizations.t('notification_type_meeting'),
-    'INVITATION_GROUPE' => AppLocalizations.t('notification_type_invitation'),
-    'INVITATION_PROCHAINS_CYCLES' => AppLocalizations.t(
-      'notification_type_next_cycle_invitation',
-    ),
-    _ => item.eventType,
-  };
+  String get _typeLabel {
+    if (item.payload?['action'] == 'ROLE_CHANGED') {
+      return AppLocalizations.t('notification_type_role_change');
+    }
+    return switch (item.eventType) {
+      'COTISATION' => AppLocalizations.t('notification_type_contribution'),
+      'MEMBRE_REJOINT' => AppLocalizations.t('notification_type_member'),
+      'PRET' => AppLocalizations.t('notification_type_loan'),
+      'REUNION_ALERTE' => AppLocalizations.t('notification_type_meeting'),
+      'INVITATION_GROUPE' => AppLocalizations.t('notification_type_invitation'),
+      'INVITATION_PROCHAINS_CYCLES' => AppLocalizations.t(
+        'notification_type_next_cycle_invitation',
+      ),
+      _ => item.eventType,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {

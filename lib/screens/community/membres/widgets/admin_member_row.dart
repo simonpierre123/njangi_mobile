@@ -137,6 +137,8 @@ class AdminMemberRow extends StatelessWidget {
 String _localizedRole(String role) => switch (role.toUpperCase()) {
   'ADMIN' => AppLocalizations.t('role_admin'),
   'CO_ADMIN' => AppLocalizations.t('role_co_admin'),
+  'TRESORIER' => AppLocalizations.t('role_treasurer'),
+  'SECRETARIAT' => AppLocalizations.t('role_secretary'),
   'MEMBRE' => AppLocalizations.t('role_member'),
   'INVITE' => AppLocalizations.t('role_invite'),
   _ => role,

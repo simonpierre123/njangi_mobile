@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../Controllers_distant/MembreGroupeController.dart';
 import '../../../ModeView/community_members_model.dart';
 import '../../../common/basewidget/app_search_field.dart';
 import '../../../common/basewidget/member_filter_chips.dart';
@@ -22,19 +23,21 @@ class AdminMembersPage extends StatefulWidget {
   const AdminMembersPage({
     super.key,
     required this.summary,
+    required this.groupId,
+    required this.currentUserRole,
     required this.directory,
     required this.growth,
     required this.onInviteMember,
-    required this.onMemberMenuTap,
     required this.onMemberUrgentAction,
     this.onMemberTap,
   });
 
   final CommunitySummary summary;
+  final String groupId;
+  final String currentUserRole;
   final List<AdminMemberEntry> directory;
   final GrowthStats growth;
   final VoidCallback onInviteMember;
-  final ValueChanged<AdminMemberEntry> onMemberMenuTap;
   final ValueChanged<AdminMemberEntry> onMemberUrgentAction;
   final ValueChanged<AdminMemberEntry>? onMemberTap;
 
@@ -45,6 +48,153 @@ class AdminMembersPage extends StatefulWidget {
 class _AdminMembersPageState extends State<AdminMembersPage> {
   int _filterIndex = 0;
   String _query = '';
+  late List<AdminMemberEntry> _directory;
+  late CommunitySummary _summary;
+  final Set<String> _updatingMembers = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _directory = List.of(widget.directory);
+    _summary = widget.summary;
+  }
+
+  @override
+  void didUpdateWidget(covariant AdminMembersPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.directory != widget.directory) {
+      _directory = List.of(widget.directory);
+    }
+    if (oldWidget.summary != widget.summary) {
+      _summary = widget.summary;
+    }
+  }
+
+  Future<void> _showMemberRoleMenu(AdminMemberEntry member) async {
+    final userId = member.details.userId;
+    if (userId == null || userId.isEmpty || _updatingMembers.contains(userId)) {
+      return;
+    }
+
+    final currentRole =
+        (member.details.role ?? member.role ?? 'MEMBRE').toUpperCase();
+    final isCoAdmin = widget.currentUserRole.toUpperCase() == 'CO_ADMIN';
+    if (isCoAdmin && currentRole == 'ADMIN') return;
+
+    final availableRoles = <String>[
+      if (!isCoAdmin) 'ADMIN',
+      'CO_ADMIN',
+      'TRESORIER',
+      'SECRETARIAT',
+      'MEMBRE',
+    ];
+    final selectedRole = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder:
+          (context) => SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    AppDimensions.spaceLg.w,
+                    AppDimensions.spaceSm.h,
+                    AppDimensions.spaceLg.w,
+                    AppDimensions.spaceSm.h,
+                  ),
+                  child: Text(
+                    AppLocalizations.t('member_role_menu_title'),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                for (final role in availableRoles)
+                  ListTile(
+                    title: Text(_roleLabel(role)),
+                    trailing:
+                        currentRole == role
+                            ? const Icon(
+                              Icons.check_circle,
+                              color: AppColors.primaryDark,
+                            )
+                            : null,
+                    onTap: () => Navigator.of(context).pop(role),
+                  ),
+                SizedBox(height: AppDimensions.spaceSm.h),
+                ],
+              ),
+            ),
+          ),
+    );
+
+    if (selectedRole == null || !mounted) {
+      return;
+    }
+
+    setState(() => _updatingMembers.add(userId));
+    final result = await MembreGroupeController.updateRole(
+      groupeId: widget.groupId,
+      utilisateurId: userId,
+      role: selectedRole,
+    );
+    if (!mounted) return;
+    setState(() => _updatingMembers.remove(userId));
+
+    if (result['success'] != true) {
+      _showMessage(
+        result['message']?.toString() ??
+            AppLocalizations.t('member_role_update_error'),
+      );
+      return;
+    }
+
+    final updatedMember = member.copyWith(
+      role: selectedRole == 'MEMBRE' ? null : selectedRole,
+      details: member.details.copyWith(role: selectedRole),
+    );
+    setState(() {
+      _directory = _directory
+          .map(
+            (entry) => entry.details.userId == userId ? updatedMember : entry,
+          )
+          .toList(growable: false);
+      _summary = CommunitySummary(
+        totalMembers: _summary.totalMembers,
+        adminCount:
+            _directory
+                .where(
+                  (entry) => [
+                    'ADMIN',
+                    'CO_ADMIN',
+                  ].contains((entry.details.role ?? entry.role)?.toUpperCase()),
+                )
+                .length,
+        activeCount: _summary.activeCount,
+        cycleLabel: _summary.cycleLabel,
+        lateCount: _summary.lateCount,
+      );
+    });
+    _showMessage(AppLocalizations.t('member_role_update_success'));
+  }
+
+  String _roleLabel(String role) => switch (role) {
+    'ADMIN' => AppLocalizations.t('role_admin'),
+    'CO_ADMIN' => AppLocalizations.t('role_co_admin'),
+    'TRESORIER' => AppLocalizations.t('role_treasurer'),
+    'SECRETARIAT' => AppLocalizations.t('role_secretary'),
+    _ => AppLocalizations.t('role_member'),
+  };
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +206,7 @@ class _AdminMembersPageState extends State<AdminMembersPage> {
     ];
 
     final filtered =
-        widget.directory.where((m) {
+        _directory.where((m) {
           final matchesFilter = switch (_filterIndex) {
             1 => m.role == 'ADMIN' || m.role == 'CO_ADMIN',
             2 => m.role == null,
@@ -77,7 +227,7 @@ class _AdminMembersPageState extends State<AdminMembersPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CommunitySummaryCard(summary: widget.summary),
+          CommunitySummaryCard(summary: _summary),
           SizedBox(height: AppDimensions.spaceLg.h),
           GrowthStatsCard(growth: widget.growth),
           SizedBox(height: AppDimensions.spaceLg.h),
@@ -99,7 +249,17 @@ class _AdminMembersPageState extends State<AdminMembersPage> {
               onTap: () => widget.onMemberTap?.call(filtered[i]),
               child: AdminMemberRow(
                 entry: filtered[i],
-                onMenuTap: () => widget.onMemberMenuTap(filtered[i]),
+                onMenuTap:
+                    filtered[i].details.userId == null ||
+                            (widget.currentUserRole.toUpperCase() ==
+                                    'CO_ADMIN' &&
+                                (filtered[i].details.role ??
+                                            filtered[i].role ??
+                                            '')
+                                        .toUpperCase() ==
+                                    'ADMIN')
+                        ? null
+                        : () => _showMemberRoleMenu(filtered[i]),
                 onUrgentAction: () => widget.onMemberUrgentAction(filtered[i]),
               ),
             ),

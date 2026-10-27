@@ -2,10 +2,17 @@ import 'package:flutter/material.dart';
 import '../../../Controllers_distant/CycleController.dart';
 import '../../../Controllers_distant/CycleRulesController.dart';
 import '../../../Models/Cycle.dart';
+import '../../../ModeView/create_community_model.dart';
 import '../../../ModeView/community_model.dart';
+import '../../../common/basewidget/app_text_field.dart';
+import '../../../common/basewidget/labeled_date_field.dart';
 import '../../../localization/app_localizations.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/app_dimensions.dart';
+import '../creation/widgets/frequency_option_grid.dart';
+import '../creation/widgets/number_stepper_field.dart';
+import '../creation/widgets/trust_security_banner.dart';
+import '../creation/widgets/toggle_setting_row.dart';
 
 class CycleRulesRouteArgs {
   const CycleRulesRouteArgs({
@@ -32,8 +39,6 @@ class CycleRulesPage extends StatefulWidget {
 
 class _CycleRulesPageState extends State<CycleRulesPage> {
   static const _textFields = [
-    'nombre_membres',
-    'nombre_admin',
     'montant_cotisation',
     'devise',
     'montant_max_pret',
@@ -44,21 +49,13 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
     'epargne_montant_max',
   ];
 
-  static const _booleanFields = [
-    'module_pret_actif',
-    'validation_pret_colectif',
-    'appliquer_penalites',
-    'epargne_active',
-    'caisse_secours_active',
-    'secours_inclure_beneficiaire',
-    'tontine_active',
-    'tontine_prochain_visible',
-  ];
-
   final Map<String, TextEditingController> _controllers = {
     for (final field in _textFields) field: TextEditingController(),
   };
-  final TextEditingController _dueDayController = TextEditingController();
+  final TextEditingController _expectedMembersController =
+      TextEditingController();
+  final TextEditingController _savingsDueDayController =
+      TextEditingController();
   final Map<String, bool> _toggles = {};
 
   Cycle? _cycle;
@@ -69,13 +66,17 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
   bool _isLoading = true;
   bool _isEditing = false;
   bool _isBusy = false;
-  String? _frequency;
-  String? _savingsMode;
+  ContributionFrequency? _frequency;
+  String _savingsMode = 'LIBRE';
   String? _savingsCalendarMode;
   String? _savingsFrequency;
+  String _tontineCalendarMode = 'DATE_MOIS';
+  int _tontineWeekOrdinal = 2;
+  int _tontineWeekday = 7;
+  int _maxAdmins = 1;
   DateTime? _startDate;
   DateTime? _endDate;
-  String? _dueDay;
+  String? _savingsDueDay;
 
   @override
   void initState() {
@@ -89,7 +90,8 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
     for (final controller in _controllers.values) {
       controller.dispose();
     }
-    _dueDayController.dispose();
+    _expectedMembersController.dispose();
+    _savingsDueDayController.dispose();
     super.dispose();
   }
 
@@ -151,8 +153,6 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
 
   void _populateForm(Cycle cycle) {
     final values = {
-      'nombre_membres': cycle.memberCount,
-      'nombre_admin': cycle.adminCount,
       'montant_cotisation': cycle.contributionAmount,
       'devise': cycle.currency,
       'montant_max_pret': cycle.maxLoanAmount,
@@ -175,14 +175,94 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
       ..['secours_inclure_beneficiaire'] = cycle.emergencyIncludeBeneficiary
       ..['tontine_active'] = cycle.tontineActive
       ..['tontine_prochain_visible'] = cycle.tontineNextVisible;
-    _frequency = cycle.frequency;
-    _savingsMode = cycle.savingsMode;
+    _expectedMembersController.text = cycle.memberCount?.toString() ?? '';
+    _maxAdmins = (cycle.adminCount ?? 1).clamp(1, 10).toInt();
+    _frequency = _frequencyFromApi(cycle.frequency);
+    _savingsMode = cycle.savingsMode ?? 'LIBRE';
     _savingsCalendarMode = cycle.savingsCalendarMode;
     _savingsFrequency = cycle.savingsFrequency;
+    _tontineCalendarMode = cycle.tontineCalendarMode;
+    _tontineWeekOrdinal = cycle.tontineWeekOrdinal ?? 2;
+    _tontineWeekday =
+        cycle.tontineWeekday ?? _weekdayFromLabel(cycle.dueDay) ?? 7;
     _startDate = cycle.startDate;
     _endDate = cycle.endDate;
-    _dueDay = cycle.dueDay;
-    _dueDayController.text = cycle.dueDay ?? '';
+    _savingsDueDay = cycle.savingsDueDay;
+    _savingsDueDayController.text = cycle.savingsDueDay ?? '';
+  }
+
+  ContributionFrequency? _frequencyFromApi(String? value) => switch (value) {
+    'HEBDO' => ContributionFrequency.hebdomadaire,
+    'BIHEBDO' => ContributionFrequency.bimensuelle,
+    'MENSUEL' => ContributionFrequency.mensuelle,
+    'AUTRE' => ContributionFrequency.personnalisee,
+    _ => null,
+  };
+
+  String? _frequencyToApi(ContributionFrequency? value) => switch (value) {
+    ContributionFrequency.hebdomadaire => 'HEBDO',
+    ContributionFrequency.bimensuelle => 'BIHEBDO',
+    ContributionFrequency.mensuelle => 'MENSUEL',
+    ContributionFrequency.personnalisee => 'AUTRE',
+    null => null,
+  };
+
+  List<String> get _weekdayOptions => [
+    AppLocalizations.t('due_day_monday'),
+    AppLocalizations.t('due_day_tuesday'),
+    AppLocalizations.t('due_day_wednesday'),
+    AppLocalizations.t('due_day_thursday'),
+    AppLocalizations.t('due_day_friday'),
+    AppLocalizations.t('due_day_saturday'),
+    AppLocalizations.t('due_day_sunday'),
+  ];
+
+  int? _weekdayFromLabel(String? label) {
+    if (label == null) return null;
+    final index = _weekdayOptions.indexOf(label);
+    return index < 0 ? null : index + 1;
+  }
+
+  bool get _usesWeekdaySchedule =>
+      _frequency == ContributionFrequency.hebdomadaire ||
+      _frequency == ContributionFrequency.bimensuelle ||
+      (_frequency == ContributionFrequency.mensuelle &&
+          _tontineCalendarMode == 'NIEME_JOUR_SEMAINE');
+
+  bool _startDateMatchesSchedule() {
+    final date = _startDate;
+    if (date == null || date.weekday != _tontineWeekday) return false;
+    return _frequency != ContributionFrequency.mensuelle ||
+        _tontineCalendarMode != 'NIEME_JOUR_SEMAINE' ||
+        ((date.day - 1) ~/ 7) + 1 == _tontineWeekOrdinal;
+  }
+
+  String? _editValidationMessage() {
+    if (_toggles['tontine_active'] == true) {
+      final amount = int.tryParse(_controllers['montant_cotisation']!.text);
+      if (amount == null || amount <= 0) {
+        return AppLocalizations.t('cycle_amount_required');
+      }
+      if (_frequency == null) {
+        return AppLocalizations.t('cycle_frequency_required');
+      }
+      if (_startDate == null) {
+        return AppLocalizations.t('cycle_start_date_required');
+      }
+      if (_frequency == ContributionFrequency.personnalisee &&
+          (int.tryParse(_expectedMembersController.text.trim()) ?? 0) < 1) {
+        return AppLocalizations.t('cycle_custom_member_count_required');
+      }
+      if (_usesWeekdaySchedule && !_startDateMatchesSchedule()) {
+        return AppLocalizations.t('tontine_start_date_rule_mismatch');
+      }
+    }
+    if (_toggles['epargne_active'] == true &&
+        _savingsMode == 'FIXE' &&
+        (int.tryParse(_controllers['epargne_montant_fixe']!.text) ?? 0) <= 0) {
+      return AppLocalizations.t('cycle_amount_required');
+    }
+    return null;
   }
 
   Future<void> _pickDate({required bool isStart}) async {
@@ -228,6 +308,13 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
     ),
     MapEntry('frequence_cycle', _frequencyLabel(cycle.frequency)),
     MapEntry('jour_echeance', cycle.dueDay ?? '—'),
+    MapEntry(
+      'tontine_calendrier_mode',
+      cycle.tontineCalendarMode == 'NIEME_JOUR_SEMAINE'
+          ? '${AppLocalizations.t('tontine_week_ordinal_${cycle.tontineWeekOrdinal ?? 2}')} '
+              '${AppLocalizations.t('weekday_name_${cycle.tontineWeekday ?? 7}')}'
+          : AppLocalizations.t('tontine_calendar_fixed_date'),
+    ),
     MapEntry('date_debut', _formatDate(cycle.startDate)),
     MapEntry('date_fin', _formatDate(cycle.endDate)),
     MapEntry('module_pret_actif', _booleanLabel(cycle.loanModuleActive == '1')),
@@ -284,40 +371,66 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
 
   Map<String, dynamic> _buildChanges() {
     final cycle = _cycle!;
+    final loansActive = _toggles['module_pret_actif'] == true;
+    final savingsActive = _toggles['epargne_active'] == true;
+    final savingsIndependent =
+        savingsActive && _savingsCalendarMode == 'INDEPENDANT';
+    final weekdayLabel =
+        _usesWeekdaySchedule ? _weekdayOptions[_tontineWeekday - 1] : null;
+    final usesMonthlyWeekday =
+        _frequency == ContributionFrequency.mensuelle &&
+        _tontineCalendarMode == 'NIEME_JOUR_SEMAINE';
     final values = <String, dynamic>{
-      'nombre_membres': int.tryParse(_controllers['nombre_membres']!.text),
-      'nombre_admin': int.tryParse(_controllers['nombre_admin']!.text),
+      'nombre_membres': int.tryParse(_expectedMembersController.text.trim()),
+      'nombre_admin': _maxAdmins,
       'montant_cotisation': int.tryParse(
         _controllers['montant_cotisation']!.text,
       ),
       'devise': _controllers['devise']!.text.trim(),
-      'montant_max_pret': int.tryParse(_controllers['montant_max_pret']!.text),
-      'duree_max_pret': int.tryParse(_controllers['duree_max_pret']!.text),
-      'nombre_max_pret_simultane': int.tryParse(
-        _controllers['nombre_max_pret_simultane']!.text,
-      ),
-      'frequence_cycle': _frequency,
-      'jour_echeance': _dueDay,
+      'montant_max_pret':
+          loansActive
+              ? int.tryParse(_controllers['montant_max_pret']!.text)
+              : null,
+      'duree_max_pret':
+          loansActive
+              ? int.tryParse(_controllers['duree_max_pret']!.text)
+              : null,
+      'nombre_max_pret_simultane':
+          loansActive
+              ? int.tryParse(_controllers['nombre_max_pret_simultane']!.text)
+              : null,
+      'frequence_cycle': _frequencyToApi(_frequency),
+      'jour_echeance': weekdayLabel,
+      'tontine_calendrier_mode':
+          _frequency == ContributionFrequency.mensuelle
+              ? _tontineCalendarMode
+              : 'DATE_MOIS',
+      'tontine_ordinal_semaine':
+          usesMonthlyWeekday ? _tontineWeekOrdinal : null,
+      'tontine_jour_semaine': _usesWeekdaySchedule ? _tontineWeekday : null,
       'date_debut': _startDate == null ? null : _dateForPayload(_startDate),
       'date_fin': _endDate == null ? null : _dateForPayload(_endDate),
       'module_pret_actif': _toggles['module_pret_actif']! ? '1' : '0',
       'validation_pret_colectif':
           _toggles['validation_pret_colectif']! ? '1' : '0',
       'appliquer_penalites': _toggles['appliquer_penalites']! ? '1' : '0',
-      'epargne_active': _toggles['epargne_active'],
-      'epargne_mode': _savingsMode,
-      'epargne_montant_fixe': int.tryParse(
-        _controllers['epargne_montant_fixe']!.text,
-      ),
-      'epargne_montant_min': int.tryParse(
-        _controllers['epargne_montant_min']!.text,
-      ),
-      'epargne_montant_max': int.tryParse(
-        _controllers['epargne_montant_max']!.text,
-      ),
-      'epargne_calendrier_mode': _savingsCalendarMode,
-      'epargne_frequence': _savingsFrequency,
-      'epargne_jour_echeance': _dueDay,
+      'epargne_active': savingsActive,
+      'epargne_mode': savingsActive ? _savingsMode : null,
+      'epargne_montant_fixe':
+          savingsActive && _savingsMode == 'FIXE'
+              ? int.tryParse(_controllers['epargne_montant_fixe']!.text)
+              : null,
+      'epargne_montant_min':
+          savingsActive && _savingsMode == 'LIBRE'
+              ? int.tryParse(_controllers['epargne_montant_min']!.text)
+              : null,
+      'epargne_montant_max':
+          savingsActive && _savingsMode == 'LIBRE'
+              ? int.tryParse(_controllers['epargne_montant_max']!.text)
+              : null,
+      'epargne_calendrier_mode': savingsActive ? _savingsCalendarMode : null,
+      'epargne_frequence': savingsIndependent ? _savingsFrequency : null,
+      'epargne_jour_echeance': savingsIndependent ? _savingsDueDay : null,
       'caisse_secours_active': _toggles['caisse_secours_active'],
       'secours_inclure_beneficiaire': _toggles['secours_inclure_beneficiaire'],
       'tontine_active': _toggles['tontine_active'],
@@ -333,6 +446,9 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
       'nombre_max_pret_simultane': cycle.maxSimultaneousLoans,
       'frequence_cycle': cycle.frequency,
       'jour_echeance': cycle.dueDay,
+      'tontine_calendrier_mode': cycle.tontineCalendarMode,
+      'tontine_ordinal_semaine': cycle.tontineWeekOrdinal,
+      'tontine_jour_semaine': cycle.tontineWeekday,
       'date_debut':
           cycle.startDate == null ? null : _dateForPayload(cycle.startDate),
       'date_fin': cycle.endDate == null ? null : _dateForPayload(cycle.endDate),
@@ -371,6 +487,11 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
   }
 
   Future<void> _submitProposal() async {
+    final validationMessage = _editValidationMessage();
+    if (validationMessage != null) {
+      _showMessage(validationMessage);
+      return;
+    }
     final changes = _buildChanges();
     if (changes.isEmpty) {
       _showMessage(AppLocalizations.t('cycle_rules_no_changes'));
@@ -588,161 +709,497 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
     );
   }
 
-  Widget _buildEditForm() => Container(
-    padding: EdgeInsets.all(AppDimensions.spaceMd.w),
-    decoration: BoxDecoration(
-      color: AppColors.white,
-      border: Border.all(color: AppColors.inputBorder),
-      borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          AppLocalizations.t('cycle_rules_edit'),
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-        ),
-        SizedBox(height: AppDimensions.spaceMd.h),
-        for (final field in _textFields) ...[
-          TextField(
-            controller: _controllers[field],
-            keyboardType:
-                field == 'devise' ? TextInputType.text : TextInputType.number,
-            decoration: InputDecoration(
-              labelText: _ruleLabel(field),
-              border: const OutlineInputBorder(),
-              isDense: true,
+  Widget _buildEditForm() => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        AppLocalizations.t('cycle_rules_edit'),
+        style: Theme.of(context).textTheme.headlineSmall,
+      ),
+      SizedBox(height: AppDimensions.spaceMd.h),
+      _editSection(
+        AppLocalizations.t('contribution_section'),
+        Icons.payments_outlined,
+        [
+          AppTextField(
+            label:
+                AppLocalizations.t('contribution_amount_label').toUpperCase(),
+            hint: '0',
+            controller: _controllers['montant_cotisation'],
+            keyboardType: TextInputType.number,
+            suffixText:
+                _controllers['devise']!.text.isEmpty
+                    ? 'FCFA'
+                    : _controllers['devise']!.text,
+          ),
+          SizedBox(height: AppDimensions.spaceMd.h),
+          AppTextField(
+            label: _ruleLabel('devise').toUpperCase(),
+            hint: 'XAF',
+            controller: _controllers['devise'],
+          ),
+          SizedBox(height: AppDimensions.spaceMd.h),
+          Text(
+            AppLocalizations.t('frequency_label').toUpperCase(),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
             ),
           ),
           SizedBox(height: AppDimensions.spaceSm.h),
-        ],
-        DropdownButtonFormField<String>(
-          value: _frequency,
-          decoration: InputDecoration(
-            labelText: _ruleLabel('frequence_cycle'),
-            border: const OutlineInputBorder(),
+          FrequencyOptionGrid(
+            selected: _frequency,
+            onSelect: (frequency) {
+              setState(() {
+                _frequency = frequency;
+                if (frequency != ContributionFrequency.mensuelle) {
+                  _tontineCalendarMode = 'DATE_MOIS';
+                }
+              });
+            },
           ),
-          items: [
-            for (final value in ['HEBDO', 'BIHEBDO', 'MENSUEL', 'AUTRE'])
-              DropdownMenuItem(
-                value: value,
-                child: Text(_frequencyLabel(value)),
-              ),
-          ],
-          onChanged: (value) => setState(() => _frequency = value),
-        ),
-        SizedBox(height: AppDimensions.spaceSm.h),
-        TextField(
-          controller: _dueDayController,
-          decoration: InputDecoration(
-            labelText: _ruleLabel('jour_echeance'),
-            border: const OutlineInputBorder(),
-            isDense: true,
+          SizedBox(height: AppDimensions.spaceMd.h),
+          AppTextField(
+            label:
+                AppLocalizations.t(
+                  _frequency == ContributionFrequency.personnalisee
+                      ? 'expected_members_required_label'
+                      : 'expected_members_label',
+                ).toUpperCase(),
+            hint: AppLocalizations.t('expected_members_hint'),
+            controller: _expectedMembersController,
+            keyboardType: TextInputType.number,
           ),
-          onChanged: (value) => _dueDay = value,
-        ),
-        SizedBox(height: AppDimensions.spaceSm.h),
-        _datePickerTile('date_debut', _startDate, isStart: true),
-        _datePickerTile('date_fin', _endDate, isStart: false),
-        DropdownButtonFormField<String>(
-          isExpanded: true,
-          value: _savingsMode,
-          decoration: InputDecoration(
-            labelText: _ruleLabel('epargne_mode'),
-            border: const OutlineInputBorder(),
+          SizedBox(height: AppDimensions.spaceMd.h),
+          LabeledDateField(
+            label: AppLocalizations.t('start_date_label').toUpperCase(),
+            value: _startDate,
+            onChanged: (date) => setState(() => _startDate = date),
           ),
-          items: const [
-            DropdownMenuItem(value: 'FIXE', child: Text('FIXE')),
-            DropdownMenuItem(value: 'LIBRE', child: Text('LIBRE')),
-          ],
-          onChanged: (value) => setState(() => _savingsMode = value),
-        ),
-        SizedBox(height: AppDimensions.spaceSm.h),
-        DropdownButtonFormField<String>(
-          isExpanded: true,
-          value: _savingsCalendarMode,
-          decoration: InputDecoration(
-            labelText: _ruleLabel('epargne_calendrier_mode'),
-            border: const OutlineInputBorder(),
-          ),
-          items: [
-            DropdownMenuItem(
-              value: 'MEME_QUE_TONTINE',
-              child: Text(
-                AppLocalizations.t('cycle_rule_same_schedule'),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+          if (_frequency == ContributionFrequency.hebdomadaire ||
+              _frequency == ContributionFrequency.bimensuelle) ...[
+            SizedBox(height: AppDimensions.spaceMd.h),
+            _weekdayDropdown(
+              label: AppLocalizations.t('due_day_label').toUpperCase(),
             ),
-            DropdownMenuItem(
-              value: 'INDEPENDANT',
-              child: Text(
-                AppLocalizations.t('cycle_rule_independent'),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            SizedBox(height: AppDimensions.spaceXs.h),
+            Text(
+              AppLocalizations.t('due_day_helper'),
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppColors.textSecondary,
               ),
             ),
           ],
-          onChanged: (value) => setState(() => _savingsCalendarMode = value),
-        ),
-        SizedBox(height: AppDimensions.spaceSm.h),
-        DropdownButtonFormField<String>(
-          isExpanded: true,
-          value: _savingsFrequency,
-          decoration: InputDecoration(
-            labelText: _ruleLabel('epargne_frequence'),
-            border: const OutlineInputBorder(),
-          ),
-          items: [
-            for (final value in ['HEBDO', 'BIHEBDO', 'MENSUEL', 'AUTRE'])
-              DropdownMenuItem(
-                value: value,
-                child: Text(
-                  _frequencyLabel(value),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+          if (_frequency == ContributionFrequency.mensuelle) ...[
+            SizedBox(height: AppDimensions.spaceMd.h),
+            DropdownButtonFormField<String>(
+              isExpanded: true,
+              value: _tontineCalendarMode,
+              decoration: InputDecoration(
+                labelText: AppLocalizations.t('tontine_calendar_rule_label'),
+                border: const OutlineInputBorder(),
+              ),
+              items: [
+                DropdownMenuItem(
+                  value: 'DATE_MOIS',
+                  child: Text(
+                    AppLocalizations.t('tontine_calendar_fixed_date'),
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 'NIEME_JOUR_SEMAINE',
+                  child: Text(
+                    AppLocalizations.t('tontine_calendar_nth_weekday'),
+                  ),
+                ),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => _tontineCalendarMode = value);
+                }
+              },
+            ),
+            if (_tontineCalendarMode == 'NIEME_JOUR_SEMAINE') ...[
+              SizedBox(height: AppDimensions.spaceSm.h),
+              DropdownButtonFormField<int>(
+                isExpanded: true,
+                value: _tontineWeekOrdinal,
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.t('tontine_week_ordinal_label'),
+                ),
+                items: [
+                  for (var ordinal = 1; ordinal <= 4; ordinal++)
+                    DropdownMenuItem(
+                      value: ordinal,
+                      child: Text(
+                        AppLocalizations.t('tontine_week_ordinal_$ordinal'),
+                      ),
+                    ),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _tontineWeekOrdinal = value);
+                  }
+                },
+              ),
+              SizedBox(height: AppDimensions.spaceSm.h),
+              _weekdayDropdown(
+                label: AppLocalizations.t('due_day_label').toUpperCase(),
+              ),
+              SizedBox(height: AppDimensions.spaceXs.h),
+              Text(
+                AppLocalizations.t(
+                  _startDateMatchesSchedule()
+                      ? 'tontine_contribution_window_helper'
+                      : 'tontine_start_date_rule_mismatch',
+                ),
+                style: TextStyle(
+                  fontSize: 11,
+                  color:
+                      _startDateMatchesSchedule()
+                          ? AppColors.textSecondary
+                          : AppColors.error,
                 ),
               ),
+            ],
           ],
-          onChanged: (value) => setState(() => _savingsFrequency = value),
-        ),
-        SizedBox(height: AppDimensions.spaceMd.h),
-        for (final field in _booleanFields)
-          SwitchListTile.adaptive(
-            contentPadding: EdgeInsets.zero,
-            title: Text(_ruleLabel(field)),
-            value: _toggles[field] ?? false,
-            onChanged: (value) => setState(() => _toggles[field] = value),
+          SizedBox(height: AppDimensions.spaceMd.h),
+          _datePickerTile('date_fin', _endDate, isStart: false),
+          SizedBox(height: AppDimensions.spaceXs.h),
+          Text(
+            AppLocalizations.t(
+              _frequency == ContributionFrequency.personnalisee
+                  ? 'expected_members_custom_helper'
+                  : 'expected_members_helper',
+            ),
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
           ),
-        SizedBox(height: AppDimensions.spaceMd.h),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed:
-                    _isBusy ? null : () => setState(() => _isEditing = false),
-                child: Text(AppLocalizations.t('cancel')),
-              ),
+          SizedBox(height: AppDimensions.spaceLg.h),
+          const TrustSecurityBanner(),
+        ],
+      ),
+      _editSection(
+        AppLocalizations.t('allow_loans_title'),
+        Icons.account_balance_outlined,
+        [
+          ToggleSettingRow(
+            bordered: false,
+            title: AppLocalizations.t('allow_loans_title'),
+            value: _toggles['module_pret_actif'] ?? false,
+            onChanged:
+                (value) =>
+                    setState(() => _toggles['module_pret_actif'] = value),
+          ),
+          if (_toggles['module_pret_actif'] == true) ...[
+            SizedBox(height: AppDimensions.spaceMd.h),
+            AppTextField(
+              label: AppLocalizations.t('max_loan_amount_label').toUpperCase(),
+              hint: '0',
+              controller: _controllers['montant_max_pret'],
+              keyboardType: TextInputType.number,
+              suffixText: 'FCFA',
             ),
-            SizedBox(width: AppDimensions.spaceSm.w),
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: _isBusy ? null : _submitProposal,
-                icon:
-                    _isBusy
-                        ? const SizedBox.square(
-                          dimension: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                        : const Icon(Icons.send_outlined),
-                label: Text(AppLocalizations.t('cycle_rules_submit')),
-              ),
+            SizedBox(height: AppDimensions.spaceMd.h),
+            AppTextField(
+              label:
+                  AppLocalizations.t('max_loan_duration_label').toUpperCase(),
+              hint: '6',
+              controller: _controllers['duree_max_pret'],
+              keyboardType: TextInputType.number,
+              suffixText: AppLocalizations.t('duration_suffix_months'),
+            ),
+            SizedBox(height: AppDimensions.spaceMd.h),
+            AppTextField(
+              label:
+                  AppLocalizations.t(
+                    'max_simultaneous_loans_label',
+                  ).toUpperCase(),
+              hint: '1',
+              controller: _controllers['nombre_max_pret_simultane'],
+              keyboardType: TextInputType.number,
+            ),
+            SizedBox(height: AppDimensions.spaceMd.h),
+            ToggleSettingRow(
+              bordered: false,
+              title: AppLocalizations.t('admin_validation_title'),
+              subtitle: AppLocalizations.t('admin_validation_subtitle'),
+              value: _toggles['validation_pret_colectif'] ?? false,
+              onChanged:
+                  (value) => setState(
+                    () => _toggles['validation_pret_colectif'] = value,
+                  ),
+            ),
+            SizedBox(height: AppDimensions.spaceMd.h),
+            ToggleSettingRow(
+              bordered: false,
+              title: AppLocalizations.t('apply_penalties_title'),
+              subtitle: AppLocalizations.t('apply_penalties_subtitle'),
+              value: _toggles['appliquer_penalites'] ?? false,
+              onChanged:
+                  (value) =>
+                      setState(() => _toggles['appliquer_penalites'] = value),
             ),
           ],
+        ],
+      ),
+      _editSection(AppLocalizations.t('cycle_modules_section'), Icons.tune, [
+        ToggleSettingRow(
+          bordered: false,
+          leading: const CircledSettingIcon(icon: Icons.savings_outlined),
+          title: AppLocalizations.t('savings_active_title'),
+          value: _toggles['epargne_active'] ?? false,
+          onChanged:
+              (value) => setState(() => _toggles['epargne_active'] = value),
         ),
-      ],
-    ),
+        if (_toggles['epargne_active'] == true) ...[
+          SizedBox(height: AppDimensions.spaceSm.h),
+          SegmentedButton<String>(
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment(
+                value: 'LIBRE',
+                label: Text(AppLocalizations.t('savings_mode_free')),
+              ),
+              ButtonSegment(
+                value: 'FIXE',
+                label: Text(AppLocalizations.t('savings_mode_fixed')),
+              ),
+            ],
+            selected: {_savingsMode},
+            onSelectionChanged:
+                (values) => setState(() => _savingsMode = values.first),
+          ),
+          SizedBox(height: AppDimensions.spaceSm.h),
+          if (_savingsMode == 'FIXE')
+            AppTextField(
+              label: AppLocalizations.t('savings_fixed_amount_label'),
+              hint: '10000',
+              controller: _controllers['epargne_montant_fixe'],
+              keyboardType: TextInputType.number,
+            )
+          else ...[
+            AppTextField(
+              label: AppLocalizations.t('savings_min_amount_label'),
+              hint: '1000',
+              controller: _controllers['epargne_montant_min'],
+              keyboardType: TextInputType.number,
+            ),
+            SizedBox(height: AppDimensions.spaceSm.h),
+            AppTextField(
+              label: AppLocalizations.t('savings_max_amount_label'),
+              hint: '50000',
+              controller: _controllers['epargne_montant_max'],
+              keyboardType: TextInputType.number,
+            ),
+          ],
+          SizedBox(height: AppDimensions.spaceSm.h),
+          DropdownButtonFormField<String>(
+            isExpanded: true,
+            value: _savingsCalendarMode ?? 'MEME_QUE_TONTINE',
+            decoration: InputDecoration(
+              labelText: AppLocalizations.t('savings_calendar_label'),
+            ),
+            items: [
+              DropdownMenuItem(
+                value: 'MEME_QUE_TONTINE',
+                child: Text(AppLocalizations.t('savings_calendar_same')),
+              ),
+              DropdownMenuItem(
+                value: 'INDEPENDANT',
+                child: Text(AppLocalizations.t('savings_calendar_independent')),
+              ),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                setState(() => _savingsCalendarMode = value);
+              }
+            },
+          ),
+          if (_savingsCalendarMode == 'INDEPENDANT') ...[
+            SizedBox(height: AppDimensions.spaceSm.h),
+            DropdownButtonFormField<String>(
+              isExpanded: true,
+              value: _savingsFrequency,
+              decoration: InputDecoration(
+                labelText: _ruleLabel('epargne_frequence'),
+              ),
+              items: [
+                for (final frequency in [
+                  'HEBDO',
+                  'BIHEBDO',
+                  'MENSUEL',
+                  'AUTRE',
+                ])
+                  DropdownMenuItem(
+                    value: frequency,
+                    child: Text(_frequencyLabel(frequency)),
+                  ),
+              ],
+              onChanged: (value) => setState(() => _savingsFrequency = value),
+            ),
+            SizedBox(height: AppDimensions.spaceSm.h),
+            AppTextField(
+              label: _ruleLabel('epargne_jour_echeance').toUpperCase(),
+              hint: AppLocalizations.t('due_day_label'),
+              controller: _savingsDueDayController,
+              onChanged: (value) => _savingsDueDay = value,
+            ),
+          ],
+        ],
+        SizedBox(height: AppDimensions.spaceMd.h),
+        ToggleSettingRow(
+          bordered: false,
+          leading: const Icon(
+            Icons.health_and_safety_outlined,
+            size: 20,
+            color: AppColors.textSecondary,
+          ),
+          title: AppLocalizations.t('emergency_fund_active_title'),
+          value: _toggles['caisse_secours_active'] ?? false,
+          onChanged:
+              (value) =>
+                  setState(() => _toggles['caisse_secours_active'] = value),
+        ),
+        if (_toggles['caisse_secours_active'] == true) ...[
+          SizedBox(height: AppDimensions.spaceSm.h),
+          ToggleSettingRow(
+            bordered: false,
+            title: AppLocalizations.t('emergency_include_beneficiary_title'),
+            value: _toggles['secours_inclure_beneficiaire'] ?? false,
+            onChanged:
+                (value) => setState(
+                  () => _toggles['secours_inclure_beneficiaire'] = value,
+                ),
+          ),
+        ],
+        SizedBox(height: AppDimensions.spaceMd.h),
+        ToggleSettingRow(
+          bordered: false,
+          leading: const Icon(
+            Icons.autorenew,
+            size: 20,
+            color: AppColors.textSecondary,
+          ),
+          title: AppLocalizations.t('tontine_active_title'),
+          value: _toggles['tontine_active'] ?? false,
+          onChanged:
+              (value) => setState(() => _toggles['tontine_active'] = value),
+        ),
+        if (_toggles['tontine_active'] == true) ...[
+          SizedBox(height: AppDimensions.spaceSm.h),
+          ToggleSettingRow(
+            bordered: false,
+            title: AppLocalizations.t('tontine_next_visible_title'),
+            value: _toggles['tontine_prochain_visible'] ?? false,
+            onChanged:
+                (value) => setState(
+                  () => _toggles['tontine_prochain_visible'] = value,
+                ),
+          ),
+        ],
+      ]),
+      _editSection(
+        AppLocalizations.t('governance_section'),
+        Icons.admin_panel_settings_outlined,
+        [
+          NumberStepperField(
+            label: AppLocalizations.t('max_admins_label').toUpperCase(),
+            value: _maxAdmins,
+            min: 1,
+            max: 10,
+            onChanged: (value) => setState(() => _maxAdmins = value),
+          ),
+        ],
+      ),
+      SizedBox(height: AppDimensions.spaceMd.h),
+      Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed:
+                  _isBusy ? null : () => setState(() => _isEditing = false),
+              child: Text(AppLocalizations.t('cancel')),
+            ),
+          ),
+          SizedBox(width: AppDimensions.spaceSm.w),
+          Expanded(
+            child: FilledButton.icon(
+              onPressed: _isBusy ? null : _submitProposal,
+              icon:
+                  _isBusy
+                      ? const SizedBox.square(
+                        dimension: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                      : const Icon(Icons.send_outlined),
+              label: Text(AppLocalizations.t('cycle_rules_submit')),
+            ),
+          ),
+        ],
+      ),
+    ],
   );
+
+  Widget _editSection(String title, IconData icon, List<Widget> children) =>
+      Padding(
+        padding: EdgeInsets.only(bottom: AppDimensions.spaceMd.h),
+        child: Container(
+          padding: EdgeInsets.all(AppDimensions.spaceMd.w),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            border: Border.all(color: AppColors.inputBorder),
+            borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  CircledSettingIcon(icon: icon, size: 28),
+                  SizedBox(width: AppDimensions.spaceXs.w),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: AppDimensions.spaceMd.h),
+              ...children,
+            ],
+          ),
+        ),
+      );
+
+  Widget _weekdayDropdown({required String label}) =>
+      DropdownButtonFormField<int>(
+        isExpanded: true,
+        value: _tontineWeekday,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+        ),
+        items: [
+          for (var weekday = 1; weekday <= 7; weekday++)
+            DropdownMenuItem(
+              value: weekday,
+              child: Text(_weekdayOptions[weekday - 1]),
+            ),
+        ],
+        onChanged: (value) {
+          if (value != null) setState(() => _tontineWeekday = value);
+        },
+      );
 
   Widget _datePickerTile(
     String key,

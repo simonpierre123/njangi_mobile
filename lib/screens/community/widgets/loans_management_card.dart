@@ -4,7 +4,7 @@ import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
 
-/// Carte "Gestion des prêts" — vue synthétique pour l'admin.
+/// Carte "Gestion des prêts" — vue synthétique pour le trésorier.
 class LoansManagementCard extends StatelessWidget {
   const LoansManagementCard({super.key, required this.stats});
 

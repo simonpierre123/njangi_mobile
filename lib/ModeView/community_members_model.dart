@@ -44,6 +44,25 @@ class MemberPersonalDetails {
   final String? cniBack;
   final String? passport;
   final String? drivingLicense;
+
+  MemberPersonalDetails copyWith({String? role}) => MemberPersonalDetails(
+    userId: userId,
+    role: role ?? this.role,
+    status: status,
+    memberSince: memberSince,
+    phone: phone,
+    email: email,
+    gender: gender,
+    photoUrl: photoUrl,
+    address: address,
+    city: city,
+    country: country,
+    createdAt: createdAt,
+    cniFront: cniFront,
+    cniBack: cniBack,
+    passport: passport,
+    drivingLicense: drivingLicense,
+  );
 }
 
 /// Une ligne de l'annuaire des membres — vue non-admin.
@@ -87,6 +106,18 @@ class AdminMemberEntry {
   final bool isHighlighted;
   final bool hasUrgentAction; // affiche l'icône enveloppe au lieu du menu "..."
   final MemberPersonalDetails details;
+
+  AdminMemberEntry copyWith({String? role, MemberPersonalDetails? details}) =>
+      AdminMemberEntry(
+        name: name,
+        role: role,
+        statusLine: statusLine,
+        statusIcon: statusIcon,
+        statusColor: statusColor,
+        isHighlighted: isHighlighted,
+        hasUrgentAction: hasUrgentAction,
+        details: details ?? this.details,
+      );
 }
 
 /// Synthèse de la communauté affichée dans la carte verte "La communauté".

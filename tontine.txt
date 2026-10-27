@@ -1,0 +1,602 @@
+PROCESSUS TECHNIQUE DES COTISATIONS TONTINE ET EPARGNE
+=====================================================
+
+Document de référence — application Njangi
+Périmètre : parcours « Mes cotisations » et gestion des cotisations Tontine
+dans l’application Flutter et l’API Laravel.
+État décrit : comportement observé dans le code au moment de la rédaction.
+
+
+1. OBJECTIF ET PERIMETRE
+------------------------
+
+Ce document décrit les dépôts Tontine et Épargne effectués depuis « Mes
+cotisations », leur enregistrement dans la base de données, leur suivi et la
+procédure de validation ou de rejet d’une cotisation Tontine.
+
+Les paiements Mobile Money par fournisseur ne sont pas intégrés. Le parcours
+« Paiement de test dans l’application » écrit une opération en base, mais ne
+débite aucun compte et ne contacte aucun opérateur.
+
+Les retraits d’épargne, la clôture du cycle et les autres opérations financières
+ne font pas partie des parcours de dépôt documentés ici.
+
+
+2. ACTEURS ET RESPONSABILITES
+-----------------------------
+
+Membre du cycle
+  - Consulte les règles, les périodes, le bénéficiaire lorsqu’il est visible,
+    le solde d’épargne et son historique.
+  - Soumet une cotisation Tontine ou un dépôt Épargne.
+  - Choisit un paiement Mobile Money déclaré, un paiement en espèces avec reçu,
+    ou, si elle est activée, un paiement de test dans l’application.
+  - Consulte l’état EN_ATTENTE, VALIDE ou REJETE de ses opérations.
+
+Trésorier
+  - Accède depuis le tableau de bord Flutter à l’action « Enregistrer les
+    cotisations », qui ouvre l’écran de gestion Tontine.
+  - Consulte les cotisations en attente, examine les détails et le justificatif
+    éventuel, puis valide ou rejette la cotisation.
+  - Dans l’implémentation actuelle, il peut aussi valider sa propre cotisation.
+
+Autre membre du cycle
+  - N’obtient pas l’action de gestion depuis le tableau de bord Flutter.
+  - L’API vérifie l’adhésion active au cycle, mais n’impose pas le rôle
+    TRESORIER pour consulter ou traiter les cotisations Tontine. Le contrôle
+    d’affichage de l’action est réalisé dans Flutter; il ne constitue donc pas
+    une restriction d’autorisation côté serveur.
+
+Application Flutter
+  - Présente les règles et les valeurs reçues de l’API.
+  - Valide certains champs pour l’expérience utilisateur.
+  - Ne constitue pas l’autorité métier : le backend revérifie les règles avant
+    chaque création d’opération.
+
+API Laravel
+  - Authentifie les appels par Sanctum.
+  - Vérifie l’accès au cycle, l’adhésion, l’état du cycle, les règles de montant,
+    de période et de calendrier.
+  - Enregistre les justificatifs et les opérations financières.
+  - Calcule le solde d’épargne à partir des opérations validées et non
+    simulées. Les cotisations Tontine validées, y compris les paiements de
+    test, sont prises en compte dans les totaux de gestion de la tontine.
+
+
+3. MODELE DE DONNEES
+--------------------
+
+cycle_operations est le registre commun des dépôts et autres mouvements
+financiers du cycle. Une cotisation Tontine ou Épargne y est notamment décrite
+par les champs suivants :
+
+  id                         Identifiant UUID de l’opération.
+  cycle_id                   Cycle auquel l’opération appartient.
+  membre_groupe_cycle_id     Membre qui cotise dans le cycle.
+  type                       TONTINE ou EPARGNE.
+  montant                    Montant enregistré, en unité monétaire entière.
+  periode                    TOUR-n pour la Tontine; période calculée pour
+                             l’Épargne (par exemple AAAA-MM).
+  date_operation             Date d’enregistrement.
+  statut                     EN_ATTENTE, VALIDE ou REJETE.
+  mode_paiement              MOBILE_MONEY ou ESPECES.
+  operateur                  MTN, ORANGE, SIMULATION, ou valeur déclarée.
+  reference_paiement          Référence fournie par l’utilisateur ou référence
+                             synthétique SIM-... pour une simulation.
+  verification_mobile_money_statut
+                             EN_ATTENTE, VERIFIEE ou ECHEC, selon le parcours.
+  preuve_paiement             Chemin du reçu téléversé, s’il y en a un.
+  tontine_tour_id             Tour concerné pour une opération TONTINE.
+  is_simulation               Distingue une simulation d’un dépôt réel déclaré.
+  soumis_par                  Utilisateur ayant envoyé l’opération.
+  valide_par, valide_le        Auteur et date du traitement.
+  motif_rejet                 Explication associée à un rejet.
+
+cycle_tontine_tours conserve le bénéficiaire et l’ordre de chaque tour du cycle.
+La date_echeance du tour sert de référence au calendrier Tontine. Le scheduler
+crée et synchronise les tours à partir de la date de départ et de la fréquence
+configurée sur le cycle.
+
+Les colonnes reference_type et reference_id sont des références internes aux
+entités métiers; elles ne remplacent pas reference_paiement, qui conserve la
+référence Mobile Money déclarée.
+
+
+4. ENTREE DANS « MES COTISATIONS »
+---------------------------------
+
+L’écran Flutter CycleContributionPage propose deux parcours :
+
+  - Tontine
+  - Épargne
+
+Le cycle est pris d’abord depuis le contexte de la communauté lorsque son
+identifiant est disponible. Sinon, l’application récupère les cycles du groupe
+et choisit un cycle EN_COURS, ou à défaut le premier cycle disponible. Le
+backend vérifie ensuite que l’utilisateur est membre autorisé de ce cycle.
+
+Le parcours commence par le chargement d’un contexte auprès du backend. Les
+montants, dates, limites, périodes, solde et coordonnées du trésorier affichés
+par l’interface sont des données de ce contexte : le client ne doit pas les
+considérer comme des valeurs librement modifiables.
+
+La fonctionnalité financière correspondante doit être activée pour accepter
+un dépôt. Un cycle EN_COURS conserve le fonctionnement habituel. Pour un cycle
+EN_ATTENTE avec une Tontine et un prochain tour configurés, les dépôts
+Tontine et Épargne s’ouvrent automatiquement pendant la fenêtre de cotisation
+du prochain tour, sans démarrage manuel du cycle. En dehors de cette fenêtre,
+les dépôts et les paiements de test restent indisponibles. Les autres opérations
+qui exigent un cycle EN_COURS ne sont pas concernées.
+
+
+5. PROCESSUS D’UNE COTISATION TONTINE
+-------------------------------------
+
+5.1 Calendrier et contexte
+
+Le backend recherche le tour A_VENIR de plus petit ordre. Le contexte renvoie,
+si disponible :
+
+  - le groupe et le cycle;
+  - le montant de cotisation configuré sur le cycle et sa devise;
+  - la période TOUR-n et la date_echeance du tour courant;
+  - la date d’ouverture et la date de fermeture de la cotisation;
+  - l’état de la fenêtre : AVANT_OUVERTURE, OUVERTE, FENETRE_FERMEE ou
+    AUCUN_TOUR;
+  - le téléphone du trésorier;
+  - l’opération de la période courante et les dix opérations récentes;
+  - le bénéficiaire prévu, sous réserve de la règle de visibilité.
+
+La période de cotisation s’ouvre cinq jours calendaires avant la date_echeance
+et reste ouverte jusqu’à cette date incluse. La même règle est contrôlée par le
+backend à la soumission; contourner l’interface ne permet donc pas de cotiser
+hors fenêtre.
+
+La date du premier tour provient de la configuration du cycle. Les tours et
+leurs dates d’échéance sont calculés côté backend. Pour un calendrier mensuel
+« n-ième jour de semaine », la date est calculée à partir de l’occurrence
+configurée du jour dans le mois.
+
+Le bénéficiaire peut être masqué aux membres lorsque la visibilité du prochain
+tour est désactivée. Les rôles ADMIN et TRESORIER ainsi que le créateur du
+groupe peuvent voir ce bénéficiaire.
+
+5.2 Saisie et contrôle
+
+L’utilisateur choisit le mode de paiement et fournit les éléments requis :
+
+  MOBILE_MONEY
+    - opérateur (l’interface propose MTN ou ORANGE);
+    - référence de transaction obligatoire;
+    - aucune vérification automatique auprès de l’opérateur n’est faite.
+
+  ESPECES
+    - image du reçu signé obligatoire;
+    - formats acceptés : JPG, JPEG, PNG et WEBP;
+    - taille maximale : 10 Mo;
+    - le fichier est placé sur le disque public Laravel dans le répertoire
+      cycle-contributions/<cycle-id>; son chemin est conservé dans
+      preuve_paiement.
+
+Avant l’écriture, le backend confirme notamment que :
+
+  - la Tontine est activée et le cycle accepte les dépôts (EN_COURS, ou
+    EN_ATTENTE pendant la fenêtre de cotisation prévue);
+  - le demandeur est membre autorisé du cycle;
+  - le montant correspond exactement au montant Tontine configuré;
+  - la période envoyée correspond toujours au tour A_VENIR de plus petit ordre;
+  - la fenêtre de cotisation est ouverte;
+  - le membre n’a pas déjà une opération réelle EN_ATTENTE ou VALIDE pour cette
+    période.
+
+Le membre et le tour sont verrouillés pendant la transaction de création afin
+de limiter les soumissions concurrentes.
+
+5.3 Résultat
+
+Une cotisation réelle crée une ligne cycle_operations avec :
+
+  type = TONTINE
+  statut = EN_ATTENTE
+  is_simulation = false
+  periode = TOUR-n
+  tontine_tour_id = identifiant du tour
+
+En Mobile Money, la référence et l’opérateur sont enregistrés et le statut de
+vérification Mobile Money est initialisé à EN_ATTENTE. Cela indique une
+vérification manuelle à réaliser; cela ne prouve pas que le paiement a été
+exécuté.
+
+Le contexte réaffiché permet à l’utilisateur de suivre l’opération et son
+statut. Une opération réelle EN_ATTENTE ou VALIDE empêche une nouvelle
+soumission pour la même période. Une opération REJETE n’est pas couverte par
+cette interdiction et peut donc être resoumise après correction.
+
+
+6. PROCESSUS D’UN DEPOT EPARGNE
+-------------------------------
+
+6.1 Contexte et règles
+
+Le backend renvoie :
+
+  - le groupe, le cycle et la devise;
+  - le mode d’épargne FIXE ou LIBRE;
+  - le montant fixe ou les limites minimale et maximale;
+  - le mode de calendrier et sa fréquence;
+  - les périodes disponibles;
+  - le solde disponible du membre;
+  - le téléphone du trésorier;
+  - l’activation des paiements de test et l’historique récent;
+  - pour un cycle EN_ATTENTE, la fenêtre de cotisation qui ouvre
+    automatiquement les dépôts Épargne.
+
+En calendrier partagé, l’Épargne reprend la fréquence du cycle et, pour le
+calendrier mensuel configuré à une occurrence donnée du jour de semaine, cette
+règle. En calendrier INDEPENDANT, elle utilise la fréquence d’épargne du cycle.
+
+Les périodes proposées vont jusqu’à la période courante et sont limitées aux
+douze périodes les plus récentes calculées. Exception : pour un cycle
+EN_ATTENTE, si la fenêtre du prochain tour Tontine est ouverte, la première
+période d’Épargne à venir est également proposée. Cela permet d’enregistrer le
+premier dépôt avant le démarrage du cycle, sans ouvrir les périodes futures en
+dehors de cette fenêtre.
+
+Le solde est calculé côté serveur pour le membre et le cycle :
+
+  solde = dépôts EPARGNE VALIDE non simulés
+          moins retraits RETRAIT_EPARGNE VALIDE non simulés
+
+Le résultat exposé est plafonné à zéro. Les opérations EN_ATTENTE, REJETE et
+simulées n’augmentent pas ce solde.
+
+6.2 Règles de montant
+
+  Mode FIXE
+    Le montant est celui configuré pour le cycle. L’interface l’affiche comme
+    une valeur fixe; le backend exige que le montant soumis soit égal à cette
+    valeur.
+
+  Mode LIBRE
+    Le membre saisit le montant. Le backend vérifie qu’il respecte la limite
+    minimale et, si elle est définie, la limite maximale.
+
+Le montant minimum peut être absent; le montant maximum peut également être
+absent et signifie alors qu’aucun maximum n’est configuré. Toutes les valeurs
+monétaires attendues par l’API sont des entiers positifs.
+
+6.3 Paiement et création de l’opération
+
+Le membre choisit une période disponible, un montant autorisé et un mode de
+paiement :
+
+  MOBILE_MONEY
+    - opérateur et référence de transaction;
+    - la référence est conservée pour vérification manuelle;
+    - aucun débit ou contrôle d’opérateur automatique.
+
+  ESPECES
+    - reçu image obligatoire, JPG/JPEG/PNG/WEBP jusqu’à 10 Mo;
+    - le reçu est stocké sous cycle-savings/<cycle-id>.
+
+Le backend revérifie la période, le mode FIXE/LIBRE, le montant, l’activation
+de l’Épargne, l’adhésion et l’autorisation du cycle. Un cycle EN_ATTENTE
+autorise ce dépôt uniquement pendant la fenêtre ouverte du prochain tour de
+Tontine; un cycle EN_COURS conserve le fonctionnement habituel. Il empêche une
+nouvelle opération réelle EN_ATTENTE ou VALIDE du membre pour le même cycle,
+le type EPARGNE et la période.
+
+L’opération créée porte type = EPARGNE, statut = EN_ATTENTE et
+is_simulation = false. Elle apparaît dans le contexte et l’historique. Elle ne
+modifie le solde disponible qu’après validation.
+
+
+7. PAIEMENT DE TEST DANS L’APPLICATION
+-------------------------------------
+
+Lorsque la configuration serveur cycle_payments.simulation_enabled est active,
+l’interface propose « Paiement de test dans l’application » pour Tontine et
+Épargne. Cette option ne représente pas un paiement Mobile Money réel.
+
+À la demande d’un paiement de test, le backend :
+
+  1. vérifie que les paiements de test sont activés, que le cycle accepte les
+     dépôts (EN_COURS, ou EN_ATTENTE pendant la fenêtre de cotisation de la
+     Tontine) et que l’utilisateur est membre du cycle;
+  2. vérifie le type TONTINE ou EPARGNE, la période et le montant selon les
+     règles correspondantes;
+  3. crée cycle_operations avec statut EN_ATTENTE, is_simulation = true,
+     mode_paiement = MOBILE_MONEY, operateur = SIMULATION,
+     reference_paiement = SIM-<UUID> et verification_mobile_money_statut =
+     EN_ATTENTE;
+  4. renvoie un message précisant qu’aucun paiement réel n’a été effectué.
+
+Le paiement de test ne contacte ni MTN ni Orange ni un prestataire financier,
+ne débite pas le membre et ne constitue pas une preuve de règlement. Un paiement
+de test Tontine en attente peut être validé ou rejeté pour tester le parcours de
+gestion; une fois validé, il est pris en compte dans les totaux Tontine. Un
+paiement de test Épargne ne contribue pas au solde d’Épargne.
+
+Pour la Tontine, l’API refuse un second paiement réel ou de test EN_ATTENTE ou
+VALIDE du même membre pour le même tour. Une opération rejetée peut être
+resoumise après correction. Pour l’Épargne, le contrôle anti-doublon est
+appliqué par type de paiement.
+
+
+8. PROCEDURE DE VALIDATION D’UNE COTISATION TONTINE
+---------------------------------------------------
+
+8.1 Accès à l’écran
+
+  1. Le trésorier ouvre le tableau de bord du cycle dans Flutter.
+  2. Flutter affiche l’action « Enregistrer les cotisations » lorsque le rôle
+     de la communauté est TRESORIER.
+  3. Le trésorier sélectionne cette action. L’application ouvre Gestion des
+     cotisations et charge le cycle correspondant.
+  4. L’écran présente les indicateurs du tour courant, les cotisations en
+     attente et les membres qui n’ont pas encore cotisé.
+
+Le contrôle du rôle pour afficher l’action est réalisé par Flutter. L’API
+vérifie que l’utilisateur est membre actif du cycle, mais ne réserve pas les
+endpoints de gestion ou de validation Tontine au rôle TRESORIER.
+
+8.2 Vérification des éléments
+
+  1. Dans « Cotisations en attente de validation », le trésorier sélectionne
+     une cotisation.
+  2. La fiche de détail affiche le nom du membre, le montant, la période, le
+     mode de paiement et la référence de transaction.
+  3. Si un reçu image a été transmis, l’écran affiche cette image afin qu’elle
+     puisse être examinée.
+  4. Pour un paiement de test, la fiche porte la mention « PAIEMENT DE TEST ».
+     Aucun débit réel ni contrôle auprès de MTN ou Orange n’a eu lieu.
+  5. Après vérification, le trésorier choisit « Valider » ou « Rejeter ».
+
+Pour un paiement Mobile Money, la référence déclarée doit être vérifiée par
+une personne; l’application ne contacte pas automatiquement l’opérateur. Pour
+un paiement en espèces, le reçu transmis sert de justificatif.
+
+8.3 Décision VALIDE
+
+Lorsque le trésorier choisit « Valider », Flutter envoie :
+
+  POST /api/cycles/{cycleId}/tontine/cotisations/{operationId}/review
+  decision = VALIDE
+
+L’API contrôle que l’utilisateur appartient au cycle, que l’opération appartient
+à ce cycle, qu’elle est toujours EN_ATTENTE et, pour une cotisation Tontine,
+que son tour n’est pas archivé. L’opération est verrouillée pendant la
+transaction, puis les champs suivants sont enregistrés :
+
+  statut = VALIDE
+  valide_par = utilisateur ayant pris la décision
+  valide_le = date et heure de validation
+
+La validation Tontine n’est pas réservée par l’API au trésorier. L’auteur peut
+valider sa propre cotisation. Ces mêmes règles s’appliquent aux paiements de
+test Tontine : ils peuvent être validés pour tester le cycle de gestion.
+Après le succès, Flutter actualise les données et le montant validé du tour.
+
+8.4 Décision REJETE
+
+Lorsque le trésorier choisit « Rejeter », Flutter lui demande un motif non vide
+et envoie :
+
+  POST /api/cycles/{cycleId}/tontine/cotisations/{operationId}/review
+  decision = REJETE
+  motif_rejet = explication du rejet
+
+L’API vérifie les mêmes règles d’appartenance au cycle, de statut et de période
+non archivée, puis enregistre :
+
+  statut = REJETE
+  motif_rejet = motif saisi
+  valide_par = utilisateur ayant pris la décision
+  valide_le = date et heure du rejet
+
+Une cotisation rejetée ne compte pas dans le total validé et peut être
+resoumise par le membre après correction. Une cotisation déjà traitée ou
+attachée à un tour archivé ne peut pas être modifiée.
+
+8.5 Erreurs et actualisation
+
+  - HTTP 403 : l’utilisateur n’est pas membre autorisé du cycle.
+  - HTTP 404 : le cycle ou l’opération demandée est introuvable.
+  - HTTP 409 : l’opération n’est plus EN_ATTENTE ou son tour est archivé.
+  - HTTP 422 : décision ou motif de rejet invalide.
+
+Flutter doit afficher le message d’erreur retourné par l’API et recharger
+l’écran après une décision réussie. En cas d’échec, l’opération conserve son
+statut précédent.
+
+Le contrôle du rôle dans Flutter améliore l’expérience utilisateur, mais ne
+remplace pas une autorisation serveur. Puisque l’API autorise tout membre actif
+du cycle à traiter une cotisation Tontine, un appel direct avec un jeton membre
+peut également effectuer cette action.
+
+Pour l’Épargne, seul un dépôt réel validé est ajouté au solde disponible.
+
+
+9. ETATS ET REGLES DE SOUMISSION
+--------------------------------
+
+EN_ATTENTE
+  Soumission enregistrée, en cours de vérification. Ce n’est pas la preuve
+  qu’un paiement a été reçu.
+
+VALIDE
+  Opération vérifiée et acceptée. Un dépôt Épargne réel validé contribue au
+  solde; une cotisation Tontine validée reste enregistrée et associée à son
+  tour.
+
+REJETE
+  Opération refusée. Le motif est renvoyé dans l’historique. Le membre peut
+  corriger sa soumission et réessayer selon les règles du parcours.
+
+Les protections anti-doublon Tontine sont vérifiées dans le backend. Pour un
+même membre et un même tour, une cotisation réelle ou de test EN_ATTENTE ou
+VALIDE bloque une nouvelle cotisation de l’autre catégorie également. Une
+cotisation REJETE ne bloque pas une nouvelle soumission. Les opérations
+d’Épargne ont leurs contrôles de doublon distincts.
+
+
+10. API ET CONTRATS D’ENTREE
+----------------------------
+
+Les routes ci-dessous sont sous le middleware auth:sanctum. Le préfixe commun
+est /api/cycles.
+
+  GET  /{cycleId}/tontine/cotisations
+       Retourne le contexte Tontine du membre, son tour courant, sa fenêtre,
+       son bénéficiaire visible ou non, son téléphone de trésorier et son
+       historique récent.
+
+  POST /{cycleId}/tontine/cotisations
+       Soumet une cotisation Tontine réelle.
+       Champs principaux : periode, montant, mode_paiement, operateur,
+       reference_paiement; preuve_paiement pour ESPECES.
+       Réponse réussie : HTTP 201 et l’opération créée.
+
+  GET  /{cycleId}/tontine/cotisations/review
+       Retourne les cotisations Tontine EN_ATTENTE pour un membre actif du
+       cycle; l’API ne vérifie pas le rôle TRESORIER.
+
+  POST /{cycleId}/tontine/cotisations/{operationId}/review
+       Traite une cotisation Tontine avec decision = VALIDE ou REJETE et, en
+       cas de rejet, motif_rejet. Un membre actif du cycle peut la traiter,
+       y compris s’il l’a lui-même soumise. Un paiement de test peut aussi être
+       validé.
+
+  GET  /{cycleId}/epargne/cotisations
+       Retourne les règles d’Épargne, le solde disponible, les périodes et
+       l’historique du membre.
+
+  POST /{cycleId}/epargne/cotisations
+       Soumet un dépôt Épargne réel.
+       Champs principaux : periode, montant, mode_paiement, operateur,
+       reference_paiement; preuve_paiement pour ESPECES.
+       Réponse réussie : HTTP 201 et l’opération créée.
+
+  POST /{cycleId}/paiements/simuler
+       Enregistre un paiement de test TONTINE ou EPARGNE. Le nom de route et
+       le champ interne is_simulation sont conservés pour compatibilité.
+       Champs : type, periode, montant.
+       Réponse réussie : HTTP 201 et un message indiquant explicitement
+       qu’aucun paiement réel n’a été effectué.
+
+  GET  /{cycleId}/operations
+       Retourne les opérations paginées du cycle. Un membre voit ses propres
+       opérations; ADMIN et TRESORIER voient celles du cycle.
+
+  POST /{cycleId}/operations/{operationId}/decision
+       Route générique pour traiter une opération du cycle avec decision =
+       VALIDE ou REJETE et, en cas de rejet, motif_rejet. L’autorisation exige
+       un trésorier ou un administrateur du cycle pour les opérations autres
+       que TONTINE.
+
+Les réponses de contexte et d’opération utilisent une enveloppe JSON
+success/data. En cas de règle non respectée, l’API renvoie une erreur HTTP et
+un message explicatif; l’application doit rafraîchir le contexte lorsque le
+tour ou la période a changé.
+
+
+11. SEQUENCE SIMPLIFIEE
+-----------------------
+
+Le diagramme ci-dessous représente une soumission réelle et sa revue. Un
+paiement de test suit le même principe, mais passe par l’endpoint dédié et crée
+une opération marquée is_simulation = true.
+
+```mermaid
+sequenceDiagram
+    actor M as Membre
+    participant F as Flutter Mes cotisations
+    participant A as API Laravel
+    participant DB as Base de donnees
+    actor T as Tresorier (action affichee par Flutter)
+
+    M->>F: Choisit Tontine ou Epargne
+    F->>A: GET contexte du cycle
+    A->>DB: Lit cycle, membre, regles, operations et tours
+    DB-->>A: Donnees du cycle
+    A-->>F: Regles, periode, solde ou echeance, historique
+    F-->>M: Affiche la fiche et le formulaire
+
+    M->>F: Soumet montant, periode et justificatif
+    F->>A: POST cotisation ou depot
+    A->>A: Authentifie et valide les regles metier
+    A->>DB: Cree cycle_operations en EN_ATTENTE
+    DB-->>A: Operation enregistree
+    A-->>F: HTTP 201 et operation
+    F-->>M: Confirme l'envoi pour verification
+
+    T->>A: GET cotisations Tontine en attente
+    A->>DB: Lit les operations EN_ATTENTE
+    DB-->>A: Liste des soumissions
+    A-->>T: Liste a verifier
+    T->>A: POST decision VALIDE ou REJETE
+    A->>DB: Verrouille et met a jour l'operation
+    DB-->>A: Statut et motif actualises
+    A-->>T: Operation traitee
+    M->>F: Actualise Mes cotisations
+    F->>A: GET contexte et historique
+    A-->>F: Statut actualise et solde recalcule
+    F-->>M: Affiche le resultat
+```
+
+
+12. LIMITES ACTUELLES ET EVOLUTIONS ULTERIEURES
+-----------------------------------------------
+
+Comportements actuellement implémentés :
+
+  - stockage des dépôts Tontine et Épargne dans cycle_operations;
+  - reçus image pour les dépôts en espèces;
+  - conservation manuelle de la référence Mobile Money;
+  - statut EN_ATTENTE suivi d’une décision VALIDE ou REJETE;
+  - calcul du solde d’Épargne à partir des seules opérations validées et non
+    simulées;
+  - paiements de test sans débit réel ni appel opérateur; validation possible
+    des paiements de test Tontine;
+  - vérification backend des montants, périodes, droits et doublons.
+
+Non implémenté ou à faire évoluer :
+
+  - API MTN/Orange, débit réel, notification de paiement et confirmation
+    automatique de transaction;
+  - interface d’administration de revue Épargne dédiée; le backend expose
+    toutefois une liste générique d’opérations du cycle et une décision
+    générique permettant au trésorier/admin de traiter une opération
+    EN_ATTENTE, y compris une opération Épargne;
+  - émission de reçus numériques ou notification push après validation;
+  - périodes futures d’Épargne, actuellement absentes de la liste renvoyée;
+
+La mise en place future d’un fournisseur de paiement devrait conserver le
+parcours utilisateur général, mais remplacer la preuve déclarative par une
+création de paiement auprès du fournisseur, un identifiant de transaction
+sécurisé, des notifications serveur vérifiées et une mise à jour idempotente
+du statut. Le simple retour d’une page de paiement ne devra jamais suffire à
+marquer une cotisation VALIDE.
+
+
+13. FICHIERS DE REFERENCE
+-------------------------
+
+Application Flutter :
+  lib/screens/community/tresorerie/cycle_contribution_page.dart
+  lib/Controllers_distant/CycleTontineContributionController.dart
+  lib/Controllers_distant/CycleSavingsContributionController.dart
+  lib/Controllers_distant/CyclePaymentSimulationController.dart
+
+Backend Laravel :
+  routes/api.php
+  app/Http/Controllers/Api/CycleFinanceController.php
+  app/Services/CycleAuthorizationService.php
+  app/Services/CycleTontineTourScheduler.php
+  app/Models/CycleOperation.php
+
+Base de données / configuration :
+  database/migrations/2026_10_13_120207_create_cycle_financial_records_tables.php
+  database/migrations/2026_10_21_155028_add_tontine_payment_details_to_cycle_operations_table.php
+  database/migrations/2026_10_22_150000_add_simulation_flag_to_cycle_operations_table.php
+  config/cycle_payments.php

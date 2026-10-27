@@ -50,7 +50,7 @@ class _MembersPageState extends State<MembersPage> {
     final filtered =
         widget.directory.where((m) {
           final matchesFilter = switch (_filterIndex) {
-            1 => m.role == 'ADMIN',
+            1 => m.role == 'ADMIN' || m.role == 'CO_ADMIN',
             2 => m.role == null,
             3 => m.status == MemberRowStatus.upToDate,
             _ => true,

@@ -40,6 +40,7 @@ class TreasuryPage extends StatefulWidget {
   const TreasuryPage({
     super.key,
     required this.isAdmin,
+    required this.isTreasurer,
     required this.financialPosition,
     required this.receipt,
     required this.history,
@@ -69,8 +70,10 @@ class TreasuryPage extends StatefulWidget {
   });
 
   // Seul l'admin voit le bouton "Décaisser" et peut réorganiser l'ordre
-  // de passage par glisser-déposer.
+  // de passage par glisser-déposer. Le trésorier gère les opérations
+  // financières comme les décaissements.
   final bool isAdmin;
+  final bool isTreasurer;
 
   final FinancialPosition financialPosition;
   final ContributionReceipt receipt;
@@ -179,6 +182,7 @@ class _TreasuryPageState extends State<TreasuryPage> {
       default:
         return _BeneficiairesTab(
           isAdmin: widget.isAdmin,
+          isTreasurer: widget.isTreasurer,
           current: widget.currentBeneficiary,
           stats: widget.beneficiaryStats,
           passageOrder: widget.passageOrder,
@@ -450,6 +454,7 @@ class _LoansTab extends StatelessWidget {
 class _BeneficiairesTab extends StatefulWidget {
   const _BeneficiairesTab({
     required this.isAdmin,
+    required this.isTreasurer,
     required this.current,
     required this.stats,
     required this.passageOrder,
@@ -463,6 +468,7 @@ class _BeneficiairesTab extends StatefulWidget {
   });
 
   final bool isAdmin;
+  final bool isTreasurer;
   final CurrentBeneficiary current;
   final BeneficiaryStats stats;
   final List<PassageOrderEntry> passageOrder;
@@ -556,7 +562,7 @@ class _BeneficiairesTabState extends State<_BeneficiairesTab> {
         children: [
           CurrentBeneficiaryCard(
             beneficiary: currentBeneficiary,
-            onDisburse: widget.isAdmin ? widget.onDisburse : null,
+            onDisburse: widget.isTreasurer ? widget.onDisburse : null,
           ),
           SizedBox(height: AppDimensions.spaceLg.h),
           BeneficiaryStatsGrid(stats: currentStats),

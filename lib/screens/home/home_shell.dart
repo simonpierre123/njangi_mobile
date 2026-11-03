@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../api/firebase_api.dart';
 import '../../Controllers_distant/GroupeNjangiController.dart';
+import '../../Controllers_distant/HomeFinancialSummaryController.dart';
 import '../../Controllers_distant/NotificationController.dart';
+import '../../ModeView/home_financial_summary_model.dart';
 import '../../Models/Notification.dart' as app_notification;
 import '../../ModeView/community_model.dart';
 import '../../ModeView/profile_model.dart';
@@ -78,6 +80,8 @@ class _HomeShellState extends State<HomeShell> with RouteAware {
       widget.profileCommunities;
   late ProfileActivity _profileActivity = widget.profileActivity;
   bool _isLoadingCommunities = true;
+  HomeFinancialSummary? _financialSummary;
+  bool _isLoadingFinancialSummary = true;
   List<app_notification.Notification> _notifications = const [];
   bool _isLoadingNotifications = false;
   String? _notificationError;
@@ -93,6 +97,7 @@ class _HomeShellState extends State<HomeShell> with RouteAware {
     _profileUser = widget.user;
     _loadGreeting();
     _loadCommunities();
+    unawaited(_loadFinancialSummary());
     unawaited(_loadNotifications());
   }
 
@@ -209,10 +214,10 @@ class _HomeShellState extends State<HomeShell> with RouteAware {
         adminCount:
             communities
                 .where(
-                  (community) =>
-                      ['ADMIN', 'CO_ADMIN'].contains(
-                        community.role?.toUpperCase(),
-                      ),
+                  (community) => [
+                    'ADMIN',
+                    'CO_ADMIN',
+                  ].contains(community.role?.toUpperCase()),
                 )
                 .length,
         totalContributions: widget.profileActivity.totalContributions,
@@ -230,7 +235,24 @@ class _HomeShellState extends State<HomeShell> with RouteAware {
   }
 
   Future<void> _refreshHome() async {
-    await Future.wait([_loadCommunities(), _loadNotifications()]);
+    await Future.wait([
+      _loadCommunities(),
+      _loadFinancialSummary(),
+      _loadNotifications(),
+    ]);
+  }
+
+  Future<void> _loadFinancialSummary() async {
+    if (mounted) {
+      setState(() => _isLoadingFinancialSummary = true);
+    }
+
+    final summary = await HomeFinancialSummaryController.fetch();
+    if (!mounted) return;
+    setState(() {
+      _financialSummary = summary;
+      _isLoadingFinancialSummary = false;
+    });
   }
 
   String _localizedRole(String? role) => switch (role?.toUpperCase()) {
@@ -309,6 +331,18 @@ class _HomeShellState extends State<HomeShell> with RouteAware {
               greetingSubtitleKey: _greetingSubtitleKey,
               communities: _communities,
               isLoadingCommunities: _isLoadingCommunities,
+              financialActionCount: _financialSummary?.actionCount ?? 0,
+              debtAmount:
+                  _financialSummary?.formattedDebtAmount(
+                    xafLabel: AppLocalizations.t('currency_xaf'),
+                  ) ??
+                  '0 ${AppLocalizations.t('currency_xaf')}',
+              currentContributionAmount:
+                  _financialSummary?.formattedContributionAmount(
+                    xafLabel: AppLocalizations.t('currency_xaf'),
+                  ) ??
+                  '0 ${AppLocalizations.t('currency_xaf')}',
+              isLoadingFinancialSummary: _isLoadingFinancialSummary,
               isProfileComplete:
                   widget.isProfileComplete || _profileUser.isKycComplete,
               onIdentify: widget.onIdentify,

@@ -49,6 +49,9 @@ class AppButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
           ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppDimensions.spaceSm,
+          ),
         ),
         child:
             isLoading
@@ -67,9 +70,14 @@ class AppButton extends StatelessWidget {
                       Icon(icon, size: 18),
                       const SizedBox(width: AppDimensions.spaceSm),
                     ],
-                    Text(
-                      label,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    Flexible(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     ),
                     if (icon != null && !iconLeading) ...[
                       const SizedBox(width: AppDimensions.spaceSm),

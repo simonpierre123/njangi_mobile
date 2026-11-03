@@ -29,6 +29,10 @@ class HomePage extends StatefulWidget {
     required this.greetingSubtitleKey,
     required this.communities,
     this.isLoadingCommunities = false,
+    this.financialActionCount = 0,
+    this.debtAmount = '0 FCFA',
+    this.currentContributionAmount = '0 FCFA',
+    this.isLoadingFinancialSummary = false,
     required this.isProfileComplete,
     required this.onIdentify,
     required this.onCommunityTap,
@@ -41,6 +45,10 @@ class HomePage extends StatefulWidget {
   final String? greetingSubtitleKey;
   final List<CommunityModel> communities;
   final bool isLoadingCommunities;
+  final int financialActionCount;
+  final String debtAmount;
+  final String currentContributionAmount;
+  final bool isLoadingFinancialSummary;
   final bool isProfileComplete;
   final VoidCallback onIdentify;
   final ValueChanged<CommunityModel> onCommunityTap;
@@ -57,6 +65,18 @@ class _HomePageState extends State<HomePage> {
   bool _bannerDismissed = false;
   bool _showAllCommunities = false;
   String _searchQuery = '';
+
+  int get _displayedFinancialActionCount => widget.financialActionCount;
+
+  String get _displayedDebtAmount {
+    if (widget.isLoadingFinancialSummary) return '…';
+    return widget.debtAmount;
+  }
+
+  String get _displayedCurrentContributionAmount {
+    if (widget.isLoadingFinancialSummary) return '…';
+    return widget.currentContributionAmount;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +178,7 @@ class _HomePageState extends State<HomePage> {
           ),
           StatChip(
             label: AppLocalizations.t('stat_actions'),
-            count: 0,
+            count: _displayedFinancialActionCount,
             tone: StatChipTone.dark,
           ),
           StatChip(
@@ -167,16 +187,16 @@ class _HomePageState extends State<HomePage> {
             tone: StatChipTone.dark,
           ),
         ],
-        pendingAmountLabel: AppLocalizations.t('pending_contributions_label'),
-        pendingAmount: '0 ${AppLocalizations.t('currency_xaf')}',
+        debtAmountLabel: AppLocalizations.t('debts_label'),
+        debtAmount: _displayedDebtAmount,
+        secondaryAmountLabel: AppLocalizations.t('current_contribution_label'),
+        secondaryAmount: _displayedCurrentContributionAmount,
       );
     }
 
-    final totalActions =
-        widget.communities.where((c) => c.actionLabel != null).length;
     return ActivitySummaryCard(
       variant: ActivitySummaryVariant.filled,
-      hasAlert: true,
+      hasAlert: _displayedFinancialActionCount > 0,
       eyebrow: AppLocalizations.t('activity_summary_eyebrow'),
       title: AppLocalizations.t('activity_alert_title'),
       chips: [
@@ -187,7 +207,7 @@ class _HomePageState extends State<HomePage> {
         ),
         StatChip(
           label: AppLocalizations.t('stat_actions'),
-          count: totalActions,
+          count: _displayedFinancialActionCount,
           tone: StatChipTone.dark,
         ),
         StatChip(
@@ -196,10 +216,10 @@ class _HomePageState extends State<HomePage> {
           tone: StatChipTone.dark,
         ),
       ],
-      pendingAmountLabel: AppLocalizations.t('pending_contributions_label'),
-      // TODO (Njoya) : calculer/formater ce montant depuis les vraies
-      // données une fois l'API branchée.
-      pendingAmount: '75 000 FCFA',
+      debtAmountLabel: AppLocalizations.t('debts_label'),
+      debtAmount: _displayedDebtAmount,
+      secondaryAmountLabel: AppLocalizations.t('current_contribution_label'),
+      secondaryAmount: _displayedCurrentContributionAmount,
     );
   }
 }

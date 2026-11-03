@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../ModeView/community_admin_dashboard_model.dart';
+import '../../../common/basewidget/shimmer_loading.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
@@ -80,14 +81,28 @@ class GroupHealthCard extends StatelessWidget {
                     style: TextStyle(color: AppColors.white70, fontSize: 10),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    stats.cashBalance,
-                    style: const TextStyle(
-                      color: AppColors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
+                  if (stats.isCashBalanceLoading)
+                    const Shimmer(
+                      child: SkeletonBox(width: 132, height: 22, radius: 4),
+                    )
+                  else if (stats.cashBalanceError)
+                    Text(
+                      AppLocalizations.t('cash_balance_unavailable'),
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    )
+                  else
+                    Text(
+                      stats.cashBalance,
+                      style: const TextStyle(
+                        color: AppColors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ],

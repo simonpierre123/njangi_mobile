@@ -4,10 +4,12 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:njangi/Controllers_distant/CycleController.dart';
+import 'package:njangi/Controllers_distant/CycleTontineTourController.dart';
 import 'package:njangi/Controllers_distant/MembreGroupeCycleController.dart';
 import 'package:njangi/Models/Cycle.dart';
 import 'package:njangi/Models/GroupeNjangi.dart';
 import 'package:njangi/Models/MembreGroupe.dart';
+import 'package:njangi/Models/MembreGroupeCycle.dart';
 import 'package:njangi/ModeView/community_model.dart';
 import 'package:njangi/datasource/api_service.dart';
 import 'package:njangi/datasource/community_mock_datasource.dart';
@@ -75,18 +77,41 @@ class GroupeNjangiController {
                       CommunityMockDatasource.sample.length];
           final cycle = _selectCycle(cycles ?? const []);
           final cycleId = cycle?.id;
+          List<MembreGroupeCycle>? cycleMembers;
           if (cycleId != null && cycleId.isNotEmpty) {
-            final cycleMembers = await MembreGroupeCycleController.getForCycle(
+            cycleMembers = await MembreGroupeCycleController.getForCycle(
               cycleId,
             );
-            final currentCycleMembership = cycleMembers?.where(
-              (member) => member.utilisateurId == user.id,
-            );
-            if (currentCycleMembership?.any(
-                  (member) => member.role.trim().toUpperCase() == 'INVITE',
+            final isCycleInvite =
+                cycleMembers?.any(
+                  (member) =>
+                      member.utilisateurId == user.id &&
+                      member.role.trim().toUpperCase() == 'INVITE',
                 ) ??
-                false) {
+                false;
+            if (isCycleInvite) {
               return null;
+            }
+          }
+          var progressPercent = 0.0;
+          if (cycleId != null && cycleId.isNotEmpty) {
+            final progressResult =
+                await CycleTontineTourController.getProgressForCycle(cycleId);
+            final paidTours = progressResult['paidTours'];
+            final totalTours = progressResult['totalTours'];
+            if (progressResult['success'] == true &&
+                paidTours is int &&
+                totalTours is int &&
+                totalTours > 0) {
+              progressPercent = (paidTours / totalTours).clamp(0.0, 1.0);
+              debugPrint(
+                '[GROUPES] Progression Tontine cycle $cycleId: '
+                '$paidTours/$totalTours = ${(progressPercent * 100).round()}%.',
+              );
+            } else {
+              debugPrint(
+                '[GROUPES] Progression Tontine indisponible pour le cycle $cycleId.',
+              );
             }
           }
           final type = group['type']?.toString() ?? '';
@@ -146,7 +171,7 @@ class GroupeNjangiController {
                 _localizeDueDay(cycle?.dueDay) ??
                 staticCommunity?.lastUpdateLabel,
             logoUrl: logoUrl,
-            progressPercent: staticCommunity?.progressPercent ?? 0,
+            progressPercent: progressPercent,
             lastUpdateLabel: staticCommunity?.lastUpdateLabel ?? '',
             badgeLabel: staticCommunity?.badgeLabel,
             badgeType: staticCommunity?.badgeType ?? CommunityBadgeType.none,
@@ -186,14 +211,11 @@ class GroupeNjangiController {
 
   static Cycle? _selectCycle(List<Cycle> cycles) {
     for (final cycle in cycles) {
-      final status = cycle.status?.toUpperCase();
+      final status = cycle.status?.trim().toUpperCase();
       if (status == 'EN_COURS' || status == 'ACTIF') return cycle;
     }
     return cycles.isEmpty ? null : cycles.first;
   }
-
-  static int? _toInt(dynamic value) =>
-      value is int ? value : int.tryParse(value?.toString() ?? '');
 
   static String? _localizeDueDay(String? value) {
     if (value == null || value.isEmpty) return null;

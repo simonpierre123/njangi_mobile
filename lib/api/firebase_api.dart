@@ -3,12 +3,8 @@ import 'dart:convert' show jsonDecode, jsonEncode;
 import 'dart:developer';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/services.dart';
-import 'package:googleapis_auth/auth_io.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:njangi/Controllers_distant/UserController.dart';
 import 'package:njangi/utils/management/storage_manager.dart';
 
@@ -199,7 +195,7 @@ class FirebaseApi {
 
   // Application tuée => isolé
   static Future<void> onBackgroundMessage(RemoteMessage message) async {
-    print('🔵 [Background] Message: ${message.notification?.title}');
+    log('🔵 [Background] Message: ${message.notification?.title}');
   }
 
   static Future<void> _showNotification(RemoteMessage message) async {
@@ -220,24 +216,6 @@ class FirebaseApi {
     );
   }
 
-  Future<AccessCredentials> _getAccessToken() async {
-    final serviceAccountPath = dotenv.env['PATH_TO_SECRET'];
-
-    String serviceAccountJson = await rootBundle.loadString(
-      serviceAccountPath!,
-    );
-
-    // log("json: $serviceAccountJson");
-    final serviceAccount = ServiceAccountCredentials.fromJson(
-      serviceAccountJson,
-    );
-
-    final scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
-
-    final client = await clientViaServiceAccount(serviceAccount, scopes);
-    return client.credentials;
-  }
-
   Future<bool> sendPushNotification({
     required String deviceToken,
     required String title,
@@ -245,41 +223,11 @@ class FirebaseApi {
     Map<String, dynamic>? data,
   }) async {
     if (deviceToken.isEmpty) return false;
-
-    final credentials = await _getAccessToken();
-    final accessToken = credentials.accessToken.data;
-    final projectId = dotenv.env['PROJECT_ID'];
-
-    log("accessToken: $dotenv.env['PROJECT_ID']");
-
-    final url = Uri.parse(
-      'https://fcm.googleapis.com/v1/projects/$projectId/messages:send',
+    log(
+      'Direct client-side FCM sending is disabled; push notifications must '
+      'be dispatched by the authenticated backend.',
     );
-
-    final message = {
-      'message': {
-        'token': deviceToken,
-        'notification': {'title': title, 'body': body},
-        'data': data ?? {},
-      },
-    };
-
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-      },
-      body: jsonEncode(message),
-    );
-
-    if (response.statusCode == 200) {
-      print('Notification sent successfully.');
-      return true;
-    } else {
-      print('Failed to send notification: ${response.body}');
-      return false;
-    }
+    return false;
   }
 }
 
@@ -287,5 +235,5 @@ class FirebaseApi {
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  print('💤 [Background Handler] ${message.notification?.title}');
+  log('💤 [Background Handler] ${message.notification?.title}');
 }

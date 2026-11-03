@@ -148,10 +148,17 @@ void main() {
     expect(find.text('Historique des cotisations'), findsOneWidget);
     expect(find.textContaining('TOUR-1'), findsOneWidget);
     expect(find.textContaining('XAF'), findsOneWidget);
+    expect(find.text('Imprimer le rapport PDF'), findsOneWidget);
     await tester.tap(find.textContaining('TOUR-1'));
     await tester.pumpAndSettle();
     expect(find.textContaining('Archive en lecture seule'), findsOneWidget);
     expect(find.text('Awa Njoya'), findsOneWidget);
+    expect(find.text('Moussa Talla'), findsOneWidget);
+    expect(find.text('Date et heure de cotisation'), findsOneWidget);
+    expect(find.text('Validée par'), findsOneWidget);
+    expect(find.text('Date et heure de validation'), findsOneWidget);
+    expect(find.textContaining('/2026'), findsNWidgets(2));
+    expect(find.text('Imprimer le rapport PDF'), findsNWidgets(2));
   });
 }
 
@@ -202,6 +209,7 @@ class _TontineManagementAdapter implements HttpClientAdapter {
         'membres': [
           {
             'id': 'member-1',
+            'utilisateur_id': 'user-1',
             'prenom': 'Awa',
             'nom': 'Njoya',
             'operation': {
@@ -215,6 +223,7 @@ class _TontineManagementAdapter implements HttpClientAdapter {
           },
           {
             'id': 'member-2',
+            'utilisateur_id': 'user-2',
             'prenom': 'Moussa',
             'nom': 'Talla',
             'operation': null,
@@ -225,12 +234,17 @@ class _TontineManagementAdapter implements HttpClientAdapter {
             'id': 'tour-1',
             'ordre': 1,
             'date_cloture': '2026-10-20T10:00:00Z',
-            'statut': 'A_VENIR',
+            'paye_le': '2026-10-20T10:00:00Z',
+            'statut': 'PAYE',
+            'beneficiaire': {'prenom': 'Awa', 'nom': 'Njoya'},
             'cotisations': [
               {
                 'id': 'operation-2',
                 'montant': 100000,
                 'statut': 'VALIDE',
+                'created_at': '2026-10-19T08:15:00Z',
+                'valide_par': 'user-2',
+                'valide_le': '2026-10-19T08:20:00Z',
                 'membre': {'prenom': 'Awa', 'nom': 'Njoya'},
               },
             ],

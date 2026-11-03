@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../Controllers_distant/CycleCashBalanceController.dart';
 import '../../Controllers_distant/CycleController.dart';
 import '../../Controllers_distant/CycleTontineTourController.dart';
 import '../../ModeView/beneficiary_model.dart';
+import '../../ModeView/cycle_cash_balance_model.dart';
 import '../../ModeView/community_admin_dashboard_model.dart';
 import '../../ModeView/community_member_dashboard_model.dart';
 import '../../ModeView/community_members_model.dart';
@@ -10,6 +15,7 @@ import '../../ModeView/profile_model.dart';
 import '../../ModeView/treasury_model.dart';
 import '../../common/basewidget/app_bottom_nav_bar.dart';
 import '../../localization/app_localizations.dart';
+import '../../routes/app_route_observer.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_dimensions.dart';
 import '../../utils/management/storage_manager.dart';
@@ -164,10 +170,15 @@ class CommunityShell extends StatefulWidget {
   State<CommunityShell> createState() => _CommunityShellState();
 }
 
-class _CommunityShellState extends State<CommunityShell> {
+class _CommunityShellState extends State<CommunityShell> with RouteAware {
   int _tabIndex = 0;
   late UserProfile _profileUser;
   String? _cycleId;
+  String _cashBalanceText = '—';
+  bool _isLoadingCashBalance = true;
+  bool _cashBalanceError = false;
+  int _cashBalanceLoadGeneration = 0;
+  PageRoute<dynamic>? _communityRoute;
   List<PassageOrderEntry> _passageOrder = const [];
   bool _isLoadingPassageOrder = true;
   String? _passageOrderError;
@@ -179,6 +190,75 @@ class _CommunityShellState extends State<CommunityShell> {
     _profileUser = widget.user;
     _loadProfileUser();
     _loadPassageOrder();
+    unawaited(_loadCashBalance());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute<dynamic> && route != _communityRoute) {
+      if (_communityRoute != null) appRouteObserver.unsubscribe(this);
+      _communityRoute = route;
+      appRouteObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void didPopNext() {
+    unawaited(_loadCashBalance());
+  }
+
+  @override
+  void dispose() {
+    appRouteObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  Future<void> _loadCashBalance() async {
+    final generation = ++_cashBalanceLoadGeneration;
+    if (mounted) setState(() => _isLoadingCashBalance = true);
+
+    final cycles = await CycleController.getForGroup(widget.community.id);
+    if (!mounted || generation != _cashBalanceLoadGeneration) return;
+    final currentCycles =
+        cycles?.where((cycle) => cycle.status == 'EN_COURS').toList() ?? [];
+    final firstCycleId =
+        cycles != null && cycles.isNotEmpty ? cycles.first.id : null;
+    final cycleId =
+        (currentCycles.isNotEmpty ? currentCycles.first.id : null) ??
+        widget.community.cycleId ??
+        _cycleId ??
+        firstCycleId;
+
+    if (cycleId == null || cycleId.isEmpty) {
+      setState(() {
+        _cashBalanceText = '—';
+        _isLoadingCashBalance = false;
+        _cashBalanceError = false;
+      });
+      return;
+    }
+
+    _cycleId = cycleId;
+    final CycleCashBalance? balance =
+        await CycleCashBalanceController.getForCycle(cycleId);
+    if (!mounted || generation != _cashBalanceLoadGeneration) return;
+
+    setState(() {
+      if (balance != null) {
+        final amount = NumberFormat.decimalPattern('fr_FR').format(
+          balance.amount,
+        );
+        final currency = balance.currency == 'XAF' ? 'FCFA' : balance.currency;
+        _cashBalanceText = '$amount $currency';
+        _cashBalanceError = false;
+      } else {
+        _cashBalanceText = '—';
+        _cashBalanceError = true;
+      }
+      _isLoadingCashBalance = false;
+    });
   }
 
   Future<void> _loadPassageOrder() async {
@@ -273,12 +353,14 @@ class _CommunityShellState extends State<CommunityShell> {
     return GroupHealthStats(
       healthPercent: widget.health.healthPercent,
       healthLabel: widget.health.healthLabel,
-      cashBalance: widget.health.cashBalance,
+      cashBalance: _cashBalanceText,
       membersUpToDate: widget.health.membersUpToDate.clamp(0, total),
       membersTotal: total,
       pendingCount: widget.health.pendingCount,
       activeLoans: widget.health.activeLoans,
       lastUpdateLabel: widget.health.lastUpdateLabel,
+      isCashBalanceLoading: _isLoadingCashBalance,
+      cashBalanceError: _cashBalanceError,
     );
   }
 
@@ -318,6 +400,9 @@ class _CommunityShellState extends State<CommunityShell> {
   void _goToTab(int index) {
     if (index == _tabIndex) return;
     setState(() => _tabIndex = index);
+    if (index == 0) {
+      unawaited(_loadCashBalance());
+    }
     if (index == 1) {
       _loadPassageOrder();
     }

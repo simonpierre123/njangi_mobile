@@ -82,17 +82,10 @@ class MemberDashboardPage extends StatelessWidget {
             actions: [
               if (isTreasurer)
                 QuickAction(
-                  icon: Icons.add_circle_outline,
-                  label: AppLocalizations.t('record_contributions'),
-                  onTap: () => onQuickAction('record_contributions'),
+                  icon: Icons.account_balance_wallet_outlined,
+                  label: AppLocalizations.t('manage_finances'),
+                  onTap: () => _openFinanceManagementMenu(context),
                 ),
-              if (isTreasurer) ...[
-                QuickAction(
-                  icon: Icons.account_balance_outlined,
-                  label: AppLocalizations.t('manage_loans'),
-                  onTap: () => onQuickAction('loans'),
-                ),
-              ],
               QuickAction(
                 icon: Icons.receipt_long_outlined,
                 label: AppLocalizations.t('my_contributions'),
@@ -138,6 +131,78 @@ class MemberDashboardPage extends StatelessWidget {
       ),
     );
   }
+
+  Future<void> _openFinanceManagementMenu(BuildContext context) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder:
+          (sheetContext) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      AppLocalizations.t('finance_management_title'),
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                _FinanceMenuItem(
+                  icon: Icons.add_circle_outline,
+                  label: AppLocalizations.t('record_contributions'),
+                  onTap: () => Navigator.pop(sheetContext, 'record_contributions'),
+                ),
+                _FinanceMenuItem(
+                  icon: Icons.account_balance_outlined,
+                  label: AppLocalizations.t('manage_loans'),
+                  onTap: () => Navigator.pop(sheetContext, 'loans'),
+                ),
+                _FinanceMenuItem(
+                  icon: Icons.savings_outlined,
+                  label: AppLocalizations.t('manage_savings'),
+                  onTap: () => Navigator.pop(sheetContext, 'manage_savings'),
+                ),
+                _FinanceMenuItem(
+                  icon: Icons.health_and_safety_outlined,
+                  label: AppLocalizations.t('manage_emergency_fund'),
+                  onTap: () => Navigator.pop(sheetContext, 'emergency_fund'),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+    );
+    if (action != null) onQuickAction(action);
+  }
+}
+
+class _FinanceMenuItem extends StatelessWidget {
+  const _FinanceMenuItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => ListTile(
+    leading: Icon(icon, color: AppColors.primaryDark),
+    title: Text(label),
+    trailing: const Icon(Icons.chevron_right),
+    onTap: onTap,
+  );
 }
 
 class _SectionTitle extends StatelessWidget {

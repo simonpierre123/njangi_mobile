@@ -16,6 +16,8 @@ class GroupHealthStats {
     required this.pendingCount,
     required this.activeLoans,
     required this.lastUpdateLabel,
+    this.isCashBalanceLoading = false,
+    this.cashBalanceError = false,
   });
 
   final int healthPercent;
@@ -26,6 +28,8 @@ class GroupHealthStats {
   final int pendingCount;
   final int activeLoans;
   final String lastUpdateLabel;
+  final bool isCashBalanceLoading;
+  final bool cashBalanceError;
 }
 
 class PriorityItem {

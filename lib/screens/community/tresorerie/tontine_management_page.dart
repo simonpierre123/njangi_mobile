@@ -7,6 +7,7 @@ import '../../../common/basewidget/simple_app_bar.dart';
 import '../../../localization/app_localizations.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/app_constants.dart';
+import 'widgets/tontine_loading_skeleton.dart';
 
 class TontineManagementPage extends StatefulWidget {
   const TontineManagementPage({
@@ -112,9 +113,9 @@ class _TontineManagementPageState extends State<TontineManagementPage> {
   }
 
   void _message(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _openContribution(
@@ -237,20 +238,18 @@ class _TontineManagementPageState extends State<TontineManagementPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: Text(label, style: const TextStyle(color: AppColors.textSecondary)),
+          child: Text(
+            label,
+            style: const TextStyle(color: AppColors.textSecondary),
+          ),
         ),
         const SizedBox(width: 12),
-        Expanded(
-          child: Text(value, textAlign: TextAlign.end),
-        ),
+        Expanded(child: Text(value, textAlign: TextAlign.end)),
       ],
     ),
   );
 
-  Future<void> _decide(
-    Map<String, dynamic> operation,
-    String decision,
-  ) async {
+  Future<void> _decide(Map<String, dynamic> operation, String decision) async {
     final cycleId = _cycleId;
     final operationId = operation['id']?.toString();
     if (cycleId == null || operationId == null) return;
@@ -385,19 +384,14 @@ class _TontineManagementPageState extends State<TontineManagementPage> {
     final collected = members.fold<num>(0, (total, member) {
       final operation = _map(member['operation']);
       if (operation?['statut'] == 'VALIDE') {
-        return total + (num.tryParse(operation?['montant']?.toString() ?? '') ?? 0);
+        return total +
+            (num.tryParse(operation?['montant']?.toString() ?? '') ?? 0);
       }
       return total;
     });
-    final deadline = DateTime.tryParse(tour?['date_echeance']?.toString() ?? '');
-    final periodEnded =
-        deadline != null &&
-        DateUtils.dateOnly(DateTime.now()).isAfter(DateUtils.dateOnly(deadline));
     final everyonePaid = members.isNotEmpty && validated == members.length;
     final canClose =
-        tour != null &&
-        pending.isEmpty &&
-        (everyonePaid || periodEnded);
+        tour != null && pending.isEmpty && everyonePaid;
     final currency = overview?['devise']?.toString() ?? 'XAF';
 
     return Scaffold(
@@ -407,7 +401,13 @@ class _TontineManagementPageState extends State<TontineManagementPage> {
       ),
       body:
           _loading
-              ? const Center(child: CircularProgressIndicator())
+              ? SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                child: const TontineLoadingSkeleton(
+                  variant: TontineLoadingVariant.management,
+                ),
+              )
               : _error != null
               ? _LoadError(message: _error!, onRetry: _load)
               : RefreshIndicator(
@@ -418,9 +418,7 @@ class _TontineManagementPageState extends State<TontineManagementPage> {
                     OutlinedButton.icon(
                       onPressed: widget.onOpenHistory,
                       icon: const Icon(Icons.archive_outlined),
-                      label: Text(
-                        AppLocalizations.t('tontine_history_button'),
-                      ),
+                      label: Text(AppLocalizations.t('tontine_history_button')),
                     ),
                     const SizedBox(height: 16),
                     if (tour == null)
@@ -428,7 +426,8 @@ class _TontineManagementPageState extends State<TontineManagementPage> {
                     else ...[
                       _PeriodCard(
                         communityName: widget.community.name,
-                        period: tour['periode']?.toString() ??
+                        period:
+                            tour['periode']?.toString() ??
                             'TOUR-${tour['ordre'] ?? ''}',
                         dueDate: tour['date_echeance']?.toString(),
                         validated: validated,
@@ -473,9 +472,7 @@ class _TontineManagementPageState extends State<TontineManagementPage> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: _SummaryCard(
-                              label: AppLocalizations.t(
-                                'tontine_unpaid_count',
-                              ),
+                              label: AppLocalizations.t('tontine_unpaid_count'),
                               value: '${unpaid.length}',
                               icon: Icons.person_off_outlined,
                             ),
@@ -503,10 +500,11 @@ class _TontineManagementPageState extends State<TontineManagementPage> {
                               _map(member['operation'])?['montant'],
                               currency: currency,
                             ),
-                            onTap: () => _openContribution(
-                              member,
-                              _map(member['operation'])!,
-                            ),
+                            onTap:
+                                () => _openContribution(
+                                  member,
+                                  _map(member['operation'])!,
+                                ),
                           ),
                       const SizedBox(height: 24),
                       _SectionHeading(
@@ -523,8 +521,10 @@ class _TontineManagementPageState extends State<TontineManagementPage> {
                         for (final member in unpaid)
                           _UnpaidMemberTile(
                             name: _name(member),
-                            status: _map(member['operation'])?['statut']
-                                ?.toString(),
+                            status:
+                                _map(
+                                  member['operation'],
+                                )?['statut']?.toString(),
                             busy: _busyMembershipId == member['id']?.toString(),
                             onRemind: () => _sendReminder(member),
                           ),
@@ -556,7 +556,7 @@ class _TontineManagementPageState extends State<TontineManagementPage> {
                                       strokeWidth: 2,
                                     ),
                                   )
-                                  : const Icon(Icons.archive_outlined),
+                                  : const Icon(Icons.payments_outlined),
                           label: Text(
                             AppLocalizations.t('tontine_close_period_button'),
                           ),
@@ -659,7 +659,10 @@ class _SummaryCard extends StatelessWidget {
       children: [
         Icon(icon, color: AppColors.primaryDark),
         const SizedBox(height: 12),
-        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
         const SizedBox(height: 4),
         Text(
           value,
@@ -728,7 +731,9 @@ class _ContributionTile extends StatelessWidget {
     child: ListTile(
       leading: const CircleAvatar(child: Icon(Icons.person_outline)),
       title: Text(name),
-      subtitle: Text('$amount · ${AppLocalizations.t('tontine_status_pending')}'),
+      subtitle: Text(
+        '$amount · ${AppLocalizations.t('tontine_status_pending')}',
+      ),
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,
     ),

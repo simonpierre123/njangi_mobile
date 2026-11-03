@@ -52,10 +52,136 @@ void main() {
       group.logoUrl,
       'http://62.169.27.128:8001/storage/groupes/logos/logo.jpg',
     );
-    expect(group.progressPercent, 0.6);
+    expect(group.progressPercent, 0.5);
     expect(adapter.paths, contains('/api/utilisateurs/user-uuid/groupes'));
     expect(adapter.paths, contains('/api/groupes/group-uuid/membres'));
     expect(adapter.paths, contains('/api/groupes/group-uuid/cycles'));
+    expect(adapter.paths, contains('/api/cycles/cycle-uuid/membres'));
+    expect(
+      adapter.paths,
+      contains('/api/cycles/cycle-uuid/tontine/progression'),
+    );
+  });
+
+  test(
+    'shows full tontine progress when every cycle member was paid',
+    () async {
+      await AppLocalizations.load();
+      SharedPreferences.setMockInitialValues({
+        'user_data': jsonEncode({
+          'id': 'user-uuid',
+          'telephone': '+237600000000',
+          'statut': 1,
+          'active': '1',
+          'delete': '0',
+        }),
+      });
+      ApiService.dio.httpClientAdapter = _GroupsApiAdapter(paidTours: 2);
+
+      final groups = await GroupeNjangiController.getCurrentUserCommunities();
+
+      expect(groups, hasLength(1));
+      expect(groups.single.progressPercent, 1);
+    },
+  );
+
+  test(
+    'loads progress for the current cycle even if its tontine flag is false',
+    () async {
+      await AppLocalizations.load();
+      SharedPreferences.setMockInitialValues({
+        'user_data': jsonEncode({
+          'id': 'user-uuid',
+          'telephone': '+237600000000',
+          'statut': 1,
+          'active': '1',
+          'delete': '0',
+        }),
+      });
+      final adapter = _GroupsApiAdapter(tontineActive: false);
+      ApiService.dio.httpClientAdapter = adapter;
+
+      final groups = await GroupeNjangiController.getCurrentUserCommunities();
+
+      expect(groups, hasLength(1));
+      expect(groups.single.progressPercent, 0.5);
+      expect(
+        adapter.paths,
+        contains('/api/cycles/cycle-uuid/tontine/progression'),
+      );
+    },
+  );
+
+  test(
+    'loads progress for the selected cycle when API status is EN_ATTENTE',
+    () async {
+      await AppLocalizations.load();
+      SharedPreferences.setMockInitialValues({
+        'user_data': jsonEncode({
+          'id': 'user-uuid',
+          'telephone': '+237600000000',
+          'statut': 1,
+          'active': '1',
+          'delete': '0',
+        }),
+      });
+      final adapter = _GroupsApiAdapter(cycleStatus: 'EN_ATTENTE');
+      ApiService.dio.httpClientAdapter = adapter;
+
+      final groups = await GroupeNjangiController.getCurrentUserCommunities();
+
+      expect(groups, hasLength(1));
+      expect(groups.single.progressPercent, 0.5);
+      expect(
+        adapter.paths,
+        contains('/api/cycles/cycle-uuid/tontine/progression'),
+      );
+    },
+  );
+
+  test(
+    'falls back to paid tontine turns when the progress endpoint is unavailable',
+    () async {
+      await AppLocalizations.load();
+      SharedPreferences.setMockInitialValues({
+        'user_data': jsonEncode({
+          'id': 'user-uuid',
+          'telephone': '+237600000000',
+          'statut': 1,
+          'active': '1',
+          'delete': '0',
+        }),
+      });
+      final adapter = _GroupsApiAdapter(progressEndpointAvailable: false);
+      ApiService.dio.httpClientAdapter = adapter;
+
+      final groups = await GroupeNjangiController.getCurrentUserCommunities();
+
+      expect(groups, hasLength(1));
+      expect(groups.single.progressPercent, 0.5);
+      expect(adapter.paths, contains('/api/cycles/cycle-uuid/tontine/tours'));
+    },
+  );
+
+  test('accepts the earlier progress response member-count field', () async {
+    await AppLocalizations.load();
+    SharedPreferences.setMockInitialValues({
+      'user_data': jsonEncode({
+        'id': 'user-uuid',
+        'telephone': '+237600000000',
+        'statut': 1,
+        'active': '1',
+        'delete': '0',
+      }),
+    });
+    ApiService.dio.httpClientAdapter = _GroupsApiAdapter(
+      legacyProgressResponse: true,
+    );
+
+    final groups = await GroupeNjangiController.getCurrentUserCommunities();
+
+    expect(groups, hasLength(1));
+    expect(groups.single.progressPercent, 0.5);
   });
 
   test(
@@ -99,10 +225,23 @@ void main() {
 }
 
 class _GroupsApiAdapter implements HttpClientAdapter {
-  _GroupsApiAdapter({this.emptyCycles = false, this.role = 'ADMIN'});
+  _GroupsApiAdapter({
+    this.emptyCycles = false,
+    this.role = 'ADMIN',
+    this.paidTours = 1,
+    this.progressEndpointAvailable = true,
+    this.legacyProgressResponse = false,
+    this.tontineActive = true,
+    this.cycleStatus = 'EN_COURS',
+  });
 
   final bool emptyCycles;
   final String role;
+  final int paidTours;
+  final bool progressEndpointAvailable;
+  final bool legacyProgressResponse;
+  final bool tontineActive;
+  final String cycleStatus;
   final List<String> paths = [];
 
   @override
@@ -112,6 +251,17 @@ class _GroupsApiAdapter implements HttpClientAdapter {
     Future<void>? cancelFuture,
   ) async {
     paths.add(options.uri.path);
+    if (!progressEndpointAvailable &&
+        options.uri.path.endsWith('/cycles/cycle-uuid/tontine/progression')) {
+      return ResponseBody.fromString(
+        '{"message":"Not Found"}',
+        404,
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
+      );
+    }
+
     final Object response;
     if (options.uri.path.endsWith('/utilisateurs/user-uuid/groupes')) {
       response = {
@@ -168,6 +318,58 @@ class _GroupsApiAdapter implements HttpClientAdapter {
           },
         ],
       };
+    } else if (options.uri.path.endsWith('/cycles/cycle-uuid/membres')) {
+      response = {
+        'success': true,
+        'data': [
+          {
+            'id': 'cycle-membership-1',
+            'utilisateur_id': 'user-uuid',
+            'groupe_id': 'group-uuid',
+            'cycle_id': 'cycle-uuid',
+            'role': 'ADMIN',
+            'active': '1',
+            'statut': 'ACTIF',
+          },
+          {
+            'id': 'cycle-membership-2',
+            'utilisateur_id': 'user-2',
+            'groupe_id': 'group-uuid',
+            'cycle_id': 'cycle-uuid',
+            'role': 'MEMBRE',
+            'active': '1',
+            'statut': 'ACTIF',
+          },
+        ],
+      };
+    } else if (options.uri.path.endsWith(
+      '/cycles/cycle-uuid/tontine/progression',
+    )) {
+      response = {
+        'success': true,
+        'data': {
+          'tours_payes': paidTours,
+          if (legacyProgressResponse) 'membres_total': 2 else 'tours_total': 2,
+        },
+      };
+    } else if (options.uri.path.endsWith('/cycles/cycle-uuid/tontine/tours')) {
+      response = {
+        'success': true,
+        'data': [
+          {
+            'beneficiaire_membre_id': 'cycle-membership-1',
+            'ordre': 1,
+            'statut': paidTours > 0 ? 'PAYE' : 'A_VENIR',
+            'beneficiaire': {'id': 'cycle-membership-1'},
+          },
+          {
+            'beneficiaire_membre_id': 'cycle-membership-2',
+            'ordre': 2,
+            'statut': paidTours > 1 ? 'PAYE' : 'A_VENIR',
+            'beneficiaire': {'id': 'cycle-membership-2'},
+          },
+        ],
+      };
     } else {
       response = {
         'success': true,
@@ -176,12 +378,15 @@ class _GroupsApiAdapter implements HttpClientAdapter {
                 ? []
                 : [
                   {
+                    'id': 'cycle-uuid',
                     'numero': 1,
                     'montant_cotisation': 50000,
                     'devise': 'XAF',
                     'frequence_cycle': 'MENSUEL',
                     'jour_echeance': 'Chaque 5 du mois',
-                    'statut': 'EN_ATTENTE',
+                    'statut': cycleStatus,
+                    'nombre_membres': 2,
+                    'tontine_active': tontineActive,
                   },
                 ],
       };

@@ -6,6 +6,74 @@ import 'package:njangi/localization/app_localizations.dart';
 import 'package:njangi/utils/app_constants.dart';
 
 class CycleTontineTourController {
+  static Future<Map<String, dynamic>> getProgressForCycle(
+    String cycleId,
+  ) async {
+    try {
+      final response = await ApiService.dio.get(
+        'cycles/$cycleId/tontine/progression',
+      );
+      final body = response.data;
+      debugPrint('[TONTINE] getProgressForCycle($cycleId) API response: $body');
+      final data = body is Map ? body['data'] : null;
+      final paidTours = data is Map ? _toInt(data['tours_payes']) : null;
+      final totalTours =
+          data is Map
+              ? _toInt(data['tours_total']) ?? _toInt(data['membres_total'])
+              : null;
+      if (body is! Map ||
+          body['success'] != true ||
+          paidTours == null ||
+          totalTours == null) {
+        debugPrint(
+          '[API] Tontine progress returned an invalid response: $body',
+        );
+        print('[TONTINE] getProgressForCycle($cycleId) fallback initiated');
+        return _getProgressFromTours(cycleId);
+      }
+
+      final result = {
+        'success': true,
+        'paidTours': paidTours,
+        'totalTours': totalTours,
+      };
+      debugPrint('[TONTINE] getProgressForCycle($cycleId) returned: $result');
+      return result;
+    } on DioException catch (error) {
+      ApiService.logServerError(error);
+      return _getProgressFromTours(cycleId);
+    } catch (error) {
+      ApiService.logUnexpectedError(
+        'CycleTontineTourController.getProgressForCycle',
+        error,
+      );
+      const result = {'success': false};
+      debugPrint('[TONTINE] getProgressForCycle($cycleId) returned: $result');
+      return result;
+    }
+  }
+
+  static Future<Map<String, dynamic>> _getProgressFromTours(
+    String cycleId,
+  ) async {
+    final toursResult = await getForCycle(cycleId);
+    final entries = toursResult['entries'];
+    if (toursResult['success'] != true || entries is! List) {
+      return {'success': false};
+    }
+
+    final tours = entries.whereType<PassageOrderEntry>().toList();
+    final result = {
+      'success': true,
+      'paidTours': tours.where((tour) => tour.isPaid).length,
+      'totalTours': tours.length,
+    };
+    debugPrint(
+      '[TONTINE] getProgressForCycle($cycleId) fallback returned: $result',
+    );
+    return result;
+  }
+
   static Future<Map<String, dynamic>> getForCycle(String cycleId) async {
     try {
       final response = await ApiService.dio.get(

@@ -13,17 +13,30 @@ import '../../../common/basewidget/media_source_sheet.dart';
 import '../../../common/basewidget/simple_app_bar.dart';
 import '../../../localization/app_localizations.dart';
 import '../../../utils/app_colors.dart';
+import 'widgets/tontine_loading_skeleton.dart';
 import '../../../utils/app_dimensions.dart';
+
+class CycleContributionRouteArgs {
+  const CycleContributionRouteArgs({
+    required this.community,
+    this.initialContributionType,
+  });
+
+  final CommunityModel community;
+  final String? initialContributionType;
+}
 
 class CycleContributionPage extends StatefulWidget {
   const CycleContributionPage({
     super.key,
     required this.community,
     required this.onBack,
+    this.initialContributionType,
   });
 
   final CommunityModel community;
   final VoidCallback onBack;
+  final String? initialContributionType;
 
   @override
   State<CycleContributionPage> createState() => _CycleContributionPageState();
@@ -42,6 +55,22 @@ class _CycleContributionPageState extends State<CycleContributionPage> {
   bool _loading = false;
   bool _submitting = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    final initialType = widget.initialContributionType;
+    if (initialType == 'EPARGNE' || initialType == 'TONTINE') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (initialType == 'EPARGNE') {
+          _chooseSavings();
+        } else {
+          _chooseTontine();
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -817,7 +846,9 @@ class _CycleContributionPageState extends State<CycleContributionPage> {
               ),
               if (_loading) ...[
                 SizedBox(height: AppDimensions.spaceXl.h),
-                const Center(child: CircularProgressIndicator()),
+                const TontineLoadingSkeleton(
+                  variant: TontineLoadingVariant.contribution,
+                ),
               ] else if (_error != null) ...[
                 SizedBox(height: AppDimensions.spaceLg.h),
                 _ErrorMessage(

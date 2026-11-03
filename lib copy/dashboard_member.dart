@@ -1,11 +1,22 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:njangi/Controllers_distant/CycleCashBalanceController.dart';
+import 'package:njangi/Controllers_distant/CycleTontineTourController.dart';
+import 'package:njangi/ModeView/beneficiary_model.dart';
+import 'package:njangi/ModeView/cycle_cash_balance_model.dart';
+import 'package:njangi/common/basewidget/shimmer_loading.dart';
+import 'package:njangi/routes/app_route_observer.dart';
 
 void main() {
   runApp(const TontineApp());
 }
 
 class TontineApp extends StatelessWidget {
-  const TontineApp({super.key});
+  const TontineApp({super.key, this.cycleId});
+
+  final String? cycleId;
 
   @override
   Widget build(BuildContext context) {
@@ -16,13 +27,180 @@ class TontineApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFFF7FAF9),
         fontFamily: 'sans-serif',
       ),
-      home: const DashboardScreen(),
+      navigatorObservers: [appRouteObserver],
+      home: DashboardScreen(cycleId: cycleId),
     );
   }
 }
 
-class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
+class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({super.key, this.cycleId});
+
+  final String? cycleId;
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> with RouteAware {
+  PageRoute<dynamic>? _dashboardRoute;
+  String _cashBalance = '—';
+  bool _isLoadingCashBalance = true;
+  bool _cashBalanceError = false;
+  int _cashBalanceLoadGeneration = 0;
+  bool _isLoadingCycleProgress = true;
+  bool _cycleProgressError = false;
+  double _cycleProgress = 0;
+  int _paidTours = 0;
+  int _totalTours = 0;
+  String? _nextBeneficiary;
+  int _cycleProgressLoadGeneration = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadCashBalance());
+    unawaited(_loadCycleProgress());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute<dynamic> && route != _dashboardRoute) {
+      if (_dashboardRoute != null) appRouteObserver.unsubscribe(this);
+      _dashboardRoute = route;
+      appRouteObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void didPopNext() {
+    unawaited(_loadCashBalance());
+    unawaited(_loadCycleProgress());
+  }
+
+  @override
+  void didUpdateWidget(covariant DashboardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.cycleId != oldWidget.cycleId) {
+      unawaited(_loadCashBalance());
+      unawaited(_loadCycleProgress());
+    }
+  }
+
+  @override
+  void dispose() {
+    appRouteObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  Future<void> _loadCashBalance() async {
+    final generation = ++_cashBalanceLoadGeneration;
+    if (mounted) {
+      setState(() {
+        _isLoadingCashBalance = true;
+        _cashBalanceError = false;
+      });
+    }
+
+    final cycleId = widget.cycleId;
+    if (cycleId == null || cycleId.isEmpty) {
+      if (!mounted || generation != _cashBalanceLoadGeneration) return;
+      setState(() {
+        _cashBalance = '—';
+        _isLoadingCashBalance = false;
+        _cashBalanceError = true;
+      });
+      return;
+    }
+
+    final CycleCashBalance? balance =
+        await CycleCashBalanceController.getForCycle(cycleId);
+    if (!mounted || generation != _cashBalanceLoadGeneration) return;
+
+    setState(() {
+      if (balance == null) {
+        _cashBalance = '—';
+        _cashBalanceError = true;
+      } else {
+        final amount = NumberFormat.decimalPattern(
+          'fr_FR',
+        ).format(balance.amount);
+        final currency = balance.currency == 'XAF' ? 'FCFA' : balance.currency;
+        _cashBalance = '$amount $currency';
+      }
+      _isLoadingCashBalance = false;
+    });
+  }
+
+  Future<void> _loadCycleProgress() async {
+    final generation = ++_cycleProgressLoadGeneration;
+    if (mounted) {
+      setState(() {
+        _isLoadingCycleProgress = true;
+        _cycleProgressError = false;
+      });
+    }
+
+    final cycleId = widget.cycleId;
+    if (cycleId == null || cycleId.isEmpty) {
+      if (!mounted || generation != _cycleProgressLoadGeneration) return;
+      setState(() {
+        _isLoadingCycleProgress = false;
+        _cycleProgressError = true;
+        _cycleProgress = 0;
+        _paidTours = 0;
+        _totalTours = 0;
+        _nextBeneficiary = null;
+      });
+      return;
+    }
+
+    final results = await Future.wait([
+      CycleTontineTourController.getProgressForCycle(cycleId),
+      CycleTontineTourController.getForCycle(cycleId),
+    ]);
+    if (!mounted || generation != _cycleProgressLoadGeneration) return;
+
+    final progressResult = results[0];
+    final toursResult = results[1];
+    final paidTours = progressResult['paidTours'];
+    final totalTours = progressResult['totalTours'];
+    if (progressResult['success'] != true ||
+        paidTours is! int ||
+        totalTours is! int ||
+        totalTours < 0) {
+      setState(() {
+        _isLoadingCycleProgress = false;
+        _cycleProgressError = true;
+        _cycleProgress = 0;
+        _paidTours = 0;
+        _totalTours = 0;
+        _nextBeneficiary = null;
+      });
+      return;
+    }
+
+    final entries = toursResult['entries'];
+    String? nextBeneficiary;
+    if (toursResult['success'] == true && entries is List<PassageOrderEntry>) {
+      for (final entry in entries) {
+        if (!entry.isPaid) {
+          nextBeneficiary = entry.name;
+          break;
+        }
+      }
+    }
+    setState(() {
+      _isLoadingCycleProgress = false;
+      _cycleProgressError = false;
+      _paidTours = paidTours;
+      _totalTours = totalTours;
+      _cycleProgress = (paidTours / totalTours).clamp(0.0, 1.0);
+      _nextBeneficiary = nextBeneficiary;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,57 +219,76 @@ class DashboardScreen extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: const [
-                Text("Famille Bamiléké", 
-                  style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
-                Text("Cycle 8/12", 
-                  style: TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(
+                  "Famille Bamiléké",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  "Cycle 8/12",
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                ),
               ],
-            )
+            ),
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHealthCard(),
-            const SizedBox(height: 25),
-            _buildSectionTitle("Actions requises"),
-            const SizedBox(height: 10),
-            _buildActionItem(
-              icon: Icons.account_balance_wallet_outlined,
-              title: "Cotisation due",
-              subtitle: "50 000 FCFA • Aujourd'hui",
-              trailing: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E5E4E),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await Future.wait([_loadCashBalance(), _loadCycleProgress()]);
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHealthCard(),
+              const SizedBox(height: 25),
+              _buildSectionTitle("Actions requises"),
+              const SizedBox(height: 10),
+              _buildActionItem(
+                icon: Icons.account_balance_wallet_outlined,
+                title: "Cotisation due",
+                subtitle: "50 000 FCFA • Aujourd'hui",
+                trailing: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1E5E4E),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  child: const Text(
+                    "Payer",
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
-                child: const Text("Payer", style: TextStyle(color: Colors.white)),
               ),
-            ),
-            const SizedBox(height: 10),
-            _buildActionItem(
-              icon: Icons.calendar_today_outlined,
-              title: "Réunion de groupe",
-              subtitle: "Demain à 18h00",
-              trailing: const Icon(Icons.chevron_right),
-            ),
-            const SizedBox(height: 25),
-            _buildSectionTitle("Actions rapides"),
-            const SizedBox(height: 10),
-            _buildQuickActionsGrid(),
-            const SizedBox(height: 25),
-            _buildCycleCard(),
-            const SizedBox(height: 25),
-            _buildMembersSummary(),
-            const SizedBox(height: 25),
-            _buildSectionTitle("Activité récente"),
-            const SizedBox(height: 10),
-            _buildRecentActivity(),
-          ],
+              const SizedBox(height: 10),
+              _buildActionItem(
+                icon: Icons.calendar_today_outlined,
+                title: "Réunion de groupe",
+                subtitle: "Demain à 18h00",
+                trailing: const Icon(Icons.chevron_right),
+              ),
+              const SizedBox(height: 25),
+              _buildSectionTitle("Actions rapides"),
+              const SizedBox(height: 10),
+              _buildQuickActionsGrid(),
+              const SizedBox(height: 25),
+              _buildCycleCard(),
+              const SizedBox(height: 25),
+              _buildMembersSummary(),
+              const SizedBox(height: 25),
+              _buildSectionTitle("Activité récente"),
+              const SizedBox(height: 10),
+              _buildRecentActivity(),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: _buildBottomNav(),
@@ -114,7 +311,16 @@ class DashboardScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildHealthStat("SANTÉ DU GROUPE", "94%", isBadge: true),
-              _buildHealthStat("Caisse actuelle", "2 450 000 FCFA", isLarge: true),
+              _buildHealthStat(
+                "Caisse actuelle",
+                _isLoadingCashBalance
+                    ? " "
+                    : _cashBalanceError
+                    ? "Indisponible"
+                    : _cashBalance,
+                isLarge: true,
+                isLoading: _isLoadingCashBalance,
+              ),
             ],
           ),
           const SizedBox(height: 20),
@@ -127,38 +333,62 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 15),
-          const Text("Mis à jour il y a 5 min", 
-            style: TextStyle(color: Colors.white60, fontSize: 10)),
+          const Text(
+            "Mis à jour il y a 5 min",
+            style: TextStyle(color: Colors.white60, fontSize: 10),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildHealthStat(String label, String value, {bool isBadge = false, bool isLarge = false}) {
+  Widget _buildHealthStat(
+    String label,
+    String value, {
+    bool isBadge = false,
+    bool isLarge = false,
+    bool isLoading = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10)),
-        const SizedBox(height: 5),
-        Row(
-          children: [
-            Text(value, style: TextStyle(
-              color: Colors.white, 
-              fontSize: isLarge ? 20 : 28, 
-              fontWeight: FontWeight.bold)),
-            if (isBadge) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white24,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Text("Stable", style: TextStyle(color: Colors.white, fontSize: 10)),
-              )
-            ]
-          ],
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 10),
         ),
+        const SizedBox(height: 5),
+        if (isLoading)
+          const Shimmer(child: SkeletonBox(width: 132, height: 24, radius: 4))
+        else
+          Row(
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isLarge ? 20 : 28,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              if (isBadge) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    "Stable",
+                    style: TextStyle(color: Colors.white, fontSize: 10),
+                  ),
+                ),
+              ],
+            ],
+          ),
       ],
     );
   }
@@ -167,13 +397,27 @@ class DashboardScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10)),
-        Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 10),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildActionItem({required IconData icon, required String title, required String subtitle, required Widget trailing}) {
+  Widget _buildActionItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Widget trailing,
+  }) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -192,8 +436,14 @@ class DashboardScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  subtitle,
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
               ],
             ),
           ),
@@ -231,13 +481,23 @@ class DashboardScreen extends StatelessWidget {
         children: [
           Icon(icon, color: const Color(0xFF1E5E4E), size: 20),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(color: Color(0xFF1E5E4E), fontSize: 11, fontWeight: FontWeight.bold)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF1E5E4E),
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildCycleCard() {
+    final progressPercent = (_cycleProgress * 100).round();
+    final remainingTours = (_totalTours - _paidTours).clamp(0, _totalTours);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -248,32 +508,89 @@ class DashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Cycle en cours", style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text(
+            "Cycle en cours",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 15),
-          Row(
-            children: [
-              const Text("60%", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF1E5E4E))),
-              const Spacer(),
-              const Text("Complété", style: TextStyle(color: Colors.grey, fontSize: 10)),
-            ],
-          ),
+          if (_isLoadingCycleProgress)
+            const Shimmer(
+              child: SkeletonBox(width: 72, height: 38, radius: 5),
+            )
+          else if (_cycleProgressError)
+            const Text(
+              "Progression indisponible",
+              style: TextStyle(color: Colors.grey, fontSize: 12),
+            )
+          else
+            Row(
+              children: [
+                Text(
+                  "$progressPercent%",
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E5E4E),
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  "$_paidTours/$_totalTours tours",
+                  style: const TextStyle(color: Colors.grey, fontSize: 10),
+                ),
+              ],
+            ),
           const SizedBox(height: 10),
-          LinearProgressIndicator(
-            value: 0.6,
-            backgroundColor: Colors.green.withOpacity(0.1),
-            color: const Color(0xFF1E5E4E),
-            minHeight: 8,
-          ),
+          if (_isLoadingCycleProgress)
+            const Shimmer(
+              child: SkeletonBox(
+                width: double.infinity,
+                height: 8,
+                radius: 4,
+              ),
+            )
+          else
+            LinearProgressIndicator(
+              value: _cycleProgressError ? 0 : _cycleProgress,
+              backgroundColor: Colors.green.withOpacity(0.1),
+              color: const Color(0xFF1E5E4E),
+              minHeight: 8,
+            ),
           const SizedBox(height: 20),
-          Row(
-            children: const [
-              Icon(Icons.person_outline, size: 16, color: Colors.grey),
-              SizedBox(width: 5),
-              Text("Prochain bénéficiaire: ", style: TextStyle(fontSize: 12)),
-              Text("Jean D.", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-            ],
-          ),
-          const Text("4 cycles restants dans cette période", style: TextStyle(color: Colors.grey, fontSize: 10)),
+          if (_isLoadingCycleProgress)
+            const Shimmer(
+              child: SkeletonBox(width: 210, height: 16, radius: 4),
+            )
+          else if (!_cycleProgressError) ...[
+            Row(
+              children: [
+                const Icon(
+                  Icons.person_outline,
+                  size: 16,
+                  color: Colors.grey,
+                ),
+                const SizedBox(width: 5),
+                const Text(
+                  "Prochain bénéficiaire: ",
+                  style: TextStyle(fontSize: 12),
+                ),
+                Flexible(
+                  child: Text(
+                    _nextBeneficiary ?? "Non disponible",
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              "$remainingTours ${remainingTours == 1 ? 'personne restante' : 'personnes restantes'} dans ce cycle",
+              style: const TextStyle(color: Colors.grey, fontSize: 10),
+            ),
+          ],
         ],
       ),
     );
@@ -296,9 +613,24 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 15),
-          _buildMemberRow("À jour", "12", Colors.green.withOpacity(0.1), Colors.green),
-          _buildMemberRow("En attente", "3", Colors.orange.withOpacity(0.1), Colors.orange),
-          _buildMemberRow("En retard", "1", Colors.red.withOpacity(0.1), Colors.red),
+          _buildMemberRow(
+            "À jour",
+            "12",
+            Colors.green.withOpacity(0.1),
+            Colors.green,
+          ),
+          _buildMemberRow(
+            "En attente",
+            "3",
+            Colors.orange.withOpacity(0.1),
+            Colors.orange,
+          ),
+          _buildMemberRow(
+            "En retard",
+            "1",
+            Colors.red.withOpacity(0.1),
+            Colors.red,
+          ),
           const SizedBox(height: 15),
           SizedBox(
             width: double.infinity,
@@ -307,11 +639,16 @@ class DashboardScreen extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Color(0xFFD1F5EA)),
                 backgroundColor: const Color(0xFFE6F7F2),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: const Text("Voir tous les membres", style: TextStyle(color: Color(0xFF1E5E4E))),
+              child: const Text(
+                "Voir tous les membres",
+                style: TextStyle(color: Color(0xFF1E5E4E)),
+              ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -322,12 +659,18 @@ class DashboardScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(10),
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(label, style: TextStyle(color: text, fontSize: 12)),
-            Text(count, style: TextStyle(color: text, fontWeight: FontWeight.bold)),
+            Text(
+              count,
+              style: TextStyle(color: text, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ),
@@ -337,36 +680,79 @@ class DashboardScreen extends StatelessWidget {
   Widget _buildRecentActivity() {
     return Column(
       children: [
-        _buildActivityItem(Icons.person_add_alt, "Marie a cotisé 50 000 FCFA", "Il y a 2h", const Color(0xFFE6F7F2)),
-        _buildActivityItem(Icons.groups_outlined, "Réunion planifiée", "Il y a 5h", Colors.orange.withOpacity(0.1)),
-        _buildActivityItem(Icons.check_circle_outline, "Prêt approuvé pour Alex", "Hier", Colors.purple.withOpacity(0.1)),
+        _buildActivityItem(
+          Icons.person_add_alt,
+          "Marie a cotisé 50 000 FCFA",
+          "Il y a 2h",
+          const Color(0xFFE6F7F2),
+        ),
+        _buildActivityItem(
+          Icons.groups_outlined,
+          "Réunion planifiée",
+          "Il y a 5h",
+          Colors.orange.withOpacity(0.1),
+        ),
+        _buildActivityItem(
+          Icons.check_circle_outline,
+          "Prêt approuvé pour Alex",
+          "Hier",
+          Colors.purple.withOpacity(0.1),
+        ),
       ],
     );
   }
 
-  Widget _buildActivityItem(IconData icon, String title, String time, Color color) {
+  Widget _buildActivityItem(
+    IconData icon,
+    String title,
+    String time,
+    Color color,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Row(
         children: [
-          CircleAvatar(backgroundColor: color, radius: 18, child: Icon(icon, size: 18, color: Colors.black54)),
+          CircleAvatar(
+            backgroundColor: color,
+            radius: 18,
+            child: Icon(icon, size: 18, color: Colors.black54),
+          ),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-              Text(time, style: const TextStyle(color: Colors.grey, fontSize: 10)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                time,
+                style: const TextStyle(color: Colors.grey, fontSize: 10),
+              ),
             ],
-          )
+          ),
         ],
       ),
     );
   }
 
   Widget _buildSectionTitle(String title) {
-    return Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E3A34)));
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF1E3A34),
+      ),
+    );
   }
 
   Widget _buildBottomNav() {
@@ -379,16 +765,31 @@ class DashboardScreen extends StatelessWidget {
         BottomNavigationBarItem(
           icon: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            decoration: BoxDecoration(color: const Color(0xFFD1F5EA), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: const Color(0xFFD1F5EA),
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: const Icon(Icons.grid_view_rounded),
           ),
           label: 'Tableau de Bord',
         ),
-        const BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Trésorerie'),
-        const BottomNavigationBarItem(icon: Icon(Icons.people_outline), label: 'Membres'),
-        const BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profil'),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.history),
+          label: 'Trésorerie',
+        ),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.people_outline),
+          label: 'Membres',
+        ),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.person_outline),
+          label: 'Profil',
+        ),
       ],
-      selectedLabelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+      selectedLabelStyle: const TextStyle(
+        fontSize: 10,
+        fontWeight: FontWeight.bold,
+      ),
       unselectedLabelStyle: const TextStyle(fontSize: 10),
     );
   }

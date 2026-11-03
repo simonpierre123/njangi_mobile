@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:njangi/api/firebase_api.dart';
 import 'package:njangi/datasource/api_service.dart';
 import 'package:njangi/Models/Notification.dart' as app_notification;
@@ -73,7 +72,6 @@ class _SessionTimeoutState extends State<_SessionTimeout>
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: '.env');
   ApiService.initializeInterceptors();
   await Firebase.initializeApp();
   await FirebaseApi.initializeFCM();

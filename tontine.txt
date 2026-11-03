@@ -2,8 +2,8 @@ PROCESSUS TECHNIQUE DES COTISATIONS TONTINE ET EPARGNE
 =====================================================
 
 Document de référence — application Njangi
-Périmètre : parcours « Mes cotisations » et gestion des cotisations Tontine
-dans l’application Flutter et l’API Laravel.
+Périmètre : dépôts Tontine et Épargne, gestion et validation des cotisations,
+clôtures, archives et rapport PDF d’Épargne dans Flutter et l’API Laravel.
 État décrit : comportement observé dans le code au moment de la rédaction.
 
 
@@ -11,15 +11,16 @@ dans l’application Flutter et l’API Laravel.
 ------------------------
 
 Ce document décrit les dépôts Tontine et Épargne effectués depuis « Mes
-cotisations », leur enregistrement dans la base de données, leur suivi et la
-procédure de validation ou de rejet d’une cotisation Tontine.
+cotisations », leur enregistrement et leur suivi, la revue des dépôts par
+l’interface de gestion financière, ainsi que la clôture et la consultation des
+archives Tontine et Épargne.
 
 Les paiements Mobile Money par fournisseur ne sont pas intégrés. Le parcours
 « Paiement de test dans l’application » écrit une opération en base, mais ne
 débite aucun compte et ne contacte aucun opérateur.
 
-Les retraits d’épargne, la clôture du cycle et les autres opérations financières
-ne font pas partie des parcours de dépôt documentés ici.
+Les retraits d’épargne, la clôture générale du cycle et les autres opérations
+financières ne sont pas décrits comme des parcours de dépôt dans ce document.
 
 
 2. ACTEURS ET RESPONSABILITES
@@ -34,18 +35,21 @@ Membre du cycle
   - Consulte l’état EN_ATTENTE, VALIDE ou REJETE de ses opérations.
 
 Trésorier
-  - Accède depuis le tableau de bord Flutter à l’action « Enregistrer les
-    cotisations », qui ouvre l’écran de gestion Tontine.
-  - Consulte les cotisations en attente, examine les détails et le justificatif
-    éventuel, puis valide ou rejette la cotisation.
-  - Dans l’implémentation actuelle, il peut aussi valider sa propre cotisation.
+  - Accède dans Flutter à « Gérer les finances », puis à « Enregistrer les
+    cotisations » pour ouvrir la gestion Tontine ou à « Gérer l’épargne » pour
+    ouvrir la gestion Épargne.
+  - Consulte les dépôts en attente, examine les détails et le justificatif
+    éventuel, puis valide ou rejette le dépôt.
+  - Peut clôturer une période Épargne et consulter/imprimer ses archives.
+  - Les contrôles de rôle qui affichent les entrées de gestion sont réalisés
+    dans Flutter; les routes décrites ci-dessous vérifient l’adhésion au cycle.
 
 Autre membre du cycle
-  - N’obtient pas l’action de gestion depuis le tableau de bord Flutter.
+  - Ne voit pas les entrées de gestion réservées au trésorier dans Flutter.
   - L’API vérifie l’adhésion active au cycle, mais n’impose pas le rôle
-    TRESORIER pour consulter ou traiter les cotisations Tontine. Le contrôle
-    d’affichage de l’action est réalisé dans Flutter; il ne constitue donc pas
-    une restriction d’autorisation côté serveur.
+    TRESORIER pour les routes de gestion Tontine et Épargne décrites ici. Le
+    contrôle d’affichage dans Flutter n’est donc pas une restriction
+    d’autorisation côté serveur.
 
 Application Flutter
   - Présente les règles et les valeurs reçues de l’API.
@@ -411,13 +415,134 @@ statut précédent.
 
 Le contrôle du rôle dans Flutter améliore l’expérience utilisateur, mais ne
 remplace pas une autorisation serveur. Puisque l’API autorise tout membre actif
-du cycle à traiter une cotisation Tontine, un appel direct avec un jeton membre
-peut également effectuer cette action.
+du cycle à consulter et traiter les cotisations Tontine, un appel direct avec
+un jeton membre peut également effectuer ces actions.
 
 Pour l’Épargne, seul un dépôt réel validé est ajouté au solde disponible.
 
+9. GESTION, CLOTURE ET ARCHIVES
+-------------------------------
 
-9. ETATS ET REGLES DE SOUMISSION
+9.1 Gestion de la Tontine
+
+Depuis le tableau de bord du cycle, le trésorier ouvre « Gérer les finances »,
+puis « Enregistrer les cotisations ». L’écran de gestion charge
+GET /api/cycles/{cycleId}/tontine/gestion et affiche :
+
+  - le montant de cotisation et la devise;
+  - le tour courant et son échéance;
+  - la liste des membres et leur opération éventuelle pour ce tour;
+  - les cotisations en attente, à examiner et à traiter selon la procédure 8;
+  - les membres qui n’ont pas encore cotisé, auxquels un rappel personnalisé
+    peut être envoyé depuis l’écran.
+
+Après chaque décision réussie, l’écran recharge les données du tour. Une
+cotisation Tontine validée est comptabilisée pour son tour; une cotisation
+rejetée ne compte pas comme un paiement validé.
+
+9.2 Clôture d’un tour Tontine
+
+La clôture concerne uniquement le tour A_VENIR de plus petit ordre qui n’a pas
+encore de date_cloture. Elle est déclenchée depuis l’écran de gestion et
+enregistrée par :
+
+  POST /api/cycles/{cycleId}/tontine/tours/{tourId}/cloturer
+
+L’API effectue la clôture dans une transaction et refuse l’opération si :
+
+  - le tour demandé n’est pas le tour courant ou est déjà clôturé;
+  - au moins une cotisation de ce tour est EN_ATTENTE;
+  - tous les membres actifs non-invités n’ont pas une cotisation VALIDE et la
+    date d’échéance du tour n’est pas encore dépassée.
+
+La période peut donc être clôturée quand tous les membres ont payé, ou après
+le dépassement de l’échéance, même si certains n’ont pas cotisé. La clôture
+enregistre date_cloture sur le tour; elle ne supprime pas les cotisations.
+Après archivage, le tour et ses cotisations ne peuvent plus être modifiés ou
+validés. L’API renvoie HTTP 409 si la période est déjà archivée ou si elle
+n’est plus la période courante, et HTTP 422 si les conditions de clôture ne
+sont pas réunies.
+
+9.3 Consultation de l’historique Tontine
+
+L’entrée « Historique/Archives » affiche les tours clôturés ou payés, triés du
+plus récent au plus ancien. Les données proviennent de
+GET /api/cycles/{cycleId}/tontine/gestion, qui renvoie les tours et leurs
+cotisations; il n’existe pas de route d’archives Tontine distincte.
+
+En sélectionnant un tour, l’utilisateur voit ses cotisations avec le nom du
+membre, le montant, le statut, la date et l’heure de cotisation, le nom du
+validateur et la date/heure de validation lorsqu’elles sont fournies par
+l’API. Si un reçu image existe, il peut être consulté dans le détail. Les tours
+archivés sont en lecture seule. La page affiche le total des seules
+cotisations VALIDE. À noter : la réponse actuelle de
+GET /{cycleId}/tontine/gestion ne sérialise pas le valideur; son nom peut donc
+rester absent dans cet historique, même si valide_par et valide_le sont
+enregistrés sur l’opération.
+
+9.4 Gestion de l’Épargne et tableau de bord
+
+Depuis « Gérer les finances », sélectionner « Gérer l’épargne ». La page
+charge GET /api/cycles/{cycleId}/epargne/gestion et affiche la période ouverte,
+son échéance et un tableau de bord limité à cette période :
+
+  - montant total des dépôts VALIDE;
+  - nombre de dépôts VALIDE;
+  - nombre de dépôts EN_ATTENTE.
+
+Les chiffres des périodes archivées ne sont pas ajoutés au tableau de bord
+courant. La liste des dépôts en attente indique le membre, le montant et la
+date/heure. En ouvrant un dépôt, le trésorier peut consulter le mode et la
+référence de paiement, le reçu image s’il existe, puis VALIDER ou REJETER. Un
+motif est demandé en cas de rejet. Toute décision réussie recharge le tableau
+de bord.
+
+9.5 Clôture d’une période Épargne
+
+Depuis la page de gestion, le trésorier sélectionne « Clôturer la période » et
+confirme. Flutter désactive le bouton lorsqu’il reste des dépôts EN_ATTENTE;
+l’API revérifie cette règle. L’appel est :
+
+  POST /api/cycles/{cycleId}/epargne/periodes/cloturer
+  corps : { "periode": "AAAA-MM" }
+
+L’API n’accepte que la période courante non encore archivée. Dans une
+transaction, elle crée un enregistrement durable contenant la période, le
+montant total VALIDE, le nombre total de dépôts, le nombre de dépôts VALIDE,
+l’identifiant et le nom de la personne ayant clôturé, et l’horodatage de
+clôture. La clôture est refusée en présence d’un dépôt EN_ATTENTE.
+
+La clôture ne supprime ni ne remet à zéro les opérations historiques. Une fois
+la période archivée, celle-ci n’est plus considérée comme période courante.
+Tant qu’une nouvelle période n’est pas disponible, le tableau de bord affiche
+zéro et aucune période ouverte. Une période archivée ne peut pas être clôturée
+une seconde fois ni être modifiée par une décision tardive.
+
+9.6 Archives Épargne et rapport PDF
+
+La page « Archives » récupère les périodes clôturées par
+GET /api/cycles/{cycleId}/epargne/archives. Chaque entrée présente la période,
+le montant cotisé, le nombre total de dépôts, le nombre de dépôts validés,
+l’auteur de la clôture et sa date/heure.
+
+En ouvrant une archive, Flutter appelle
+GET /api/cycles/{cycleId}/epargne/archives/{archiveId}. Le détail présente le
+tableau de bord de la clôture et la liste des dépôts de la période. Chaque
+dépôt peut être ouvert pour consulter son statut, son membre, son montant, sa
+date/heure, son valideur, son horodatage de validation et, le cas échéant, son
+reçu image.
+
+Le bouton « Imprimer le rapport » génère côté Flutter un rapport PDF A4
+professionnel, paginé et orienté paysage. Il contient l’identification du
+groupe et de la période, le résumé des montants et nombres, le nom du
+clôturant, les dépôts et leurs états/détails disponibles, ainsi qu’un espace
+de signature du trésorier. Il s’agit d’un emplacement de signature sur le
+document imprimé, pas d’une signature électronique. L’impression ou le partage
+du PDF utilise le système d’impression de l’appareil; le fichier ne remplace
+pas l’archive conservée par l’API.
+
+
+10. ETATS ET REGLES DE SOUMISSION
 --------------------------------
 
 EN_ATTENTE
@@ -440,7 +565,7 @@ cotisation REJETE ne bloque pas une nouvelle soumission. Les opérations
 d’Épargne ont leurs contrôles de doublon distincts.
 
 
-10. API ET CONTRATS D’ENTREE
+11. API ET CONTRATS D’ENTREE
 ----------------------------
 
 Les routes ci-dessous sont sous le middleware auth:sanctum. Le préfixe commun
@@ -461,11 +586,25 @@ est /api/cycles.
        Retourne les cotisations Tontine EN_ATTENTE pour un membre actif du
        cycle; l’API ne vérifie pas le rôle TRESORIER.
 
+  GET  /{cycleId}/tontine/gestion
+       Retourne le tour courant, les tours et leurs cotisations, la liste des
+       membres et leur état de paiement. Flutter l’utilise pour la gestion et
+       l’historique Tontine.
+
   POST /{cycleId}/tontine/cotisations/{operationId}/review
        Traite une cotisation Tontine avec decision = VALIDE ou REJETE et, en
        cas de rejet, motif_rejet. Un membre actif du cycle peut la traiter,
        y compris s’il l’a lui-même soumise. Un paiement de test peut aussi être
        validé.
+
+  POST /{cycleId}/tontine/tours/{tourId}/cloturer
+       Archive le tour courant lorsque toutes les cotisations ne sont plus en
+       attente et que tous les membres ont payé, ou que son échéance est
+       dépassée.
+
+  POST /{cycleId}/tontine/tours/{tourId}/rappels/{membershipId}
+       Envoie un rappel personnalisé à un membre qui n’a pas encore cotisé au
+       tour courant.
 
   GET  /{cycleId}/epargne/cotisations
        Retourne les règles d’Épargne, le solde disponible, les périodes et
@@ -476,6 +615,26 @@ est /api/cycles.
        Champs principaux : periode, montant, mode_paiement, operateur,
        reference_paiement; preuve_paiement pour ESPECES.
        Réponse réussie : HTTP 201 et l’opération créée.
+
+  GET  /{cycleId}/epargne/gestion
+       Retourne la période courante, les montants validés et les nombres de
+       dépôts validés/en attente, ainsi que la liste des dépôts en attente.
+
+  POST /{cycleId}/epargne/cotisations/{operationId}/review
+       Valide ou rejette un dépôt Épargne EN_ATTENTE. En cas de rejet,
+       motif_rejet est requis. Un dépôt appartenant à une période archivée ne
+       peut plus être modifié.
+
+  POST /{cycleId}/epargne/periodes/cloturer
+       Clôture et archive la période courante; le corps contient periode.
+       Refusée si un dépôt de cette période est encore EN_ATTENTE.
+
+  GET  /{cycleId}/epargne/archives
+       Retourne les clôtures Épargne et leurs résumés.
+
+  GET  /{cycleId}/epargne/archives/{archiveId}
+       Retourne le résumé et les dépôts détaillés d’une clôture. Flutter
+       utilise cette réponse pour afficher et générer le rapport PDF.
 
   POST /{cycleId}/paiements/simuler
        Enregistre un paiement de test TONTINE ou EPARGNE. Le nom de route et
@@ -500,7 +659,7 @@ un message explicatif; l’application doit rafraîchir le contexte lorsque le
 tour ou la période a changé.
 
 
-11. SEQUENCE SIMPLIFIEE
+12. SEQUENCE SIMPLIFIEE
 -----------------------
 
 Le diagramme ci-dessous représente une soumission réelle et sa revue. Un
@@ -545,7 +704,7 @@ sequenceDiagram
 ```
 
 
-12. LIMITES ACTUELLES ET EVOLUTIONS ULTERIEURES
+13. LIMITES ACTUELLES ET EVOLUTIONS ULTERIEURES
 -----------------------------------------------
 
 Comportements actuellement implémentés :
@@ -558,18 +717,25 @@ Comportements actuellement implémentés :
     simulées;
   - paiements de test sans débit réel ni appel opérateur; validation possible
     des paiements de test Tontine;
-  - vérification backend des montants, périodes, droits et doublons.
+  - vérification backend des montants, périodes, droits et doublons;
+  - tableau de bord de la période Épargne courante, validation des dépôts,
+    clôture persistée et archives détaillées;
+  - historique Tontine des tours clôturés/payés et cotisations associées;
+  - rapport PDF imprimable des archives Épargne avec espace de signature.
 
 Non implémenté ou à faire évoluer :
 
   - API MTN/Orange, débit réel, notification de paiement et confirmation
     automatique de transaction;
-  - interface d’administration de revue Épargne dédiée; le backend expose
-    toutefois une liste générique d’opérations du cycle et une décision
-    générique permettant au trésorier/admin de traiter une opération
-    EN_ATTENTE, y compris une opération Épargne;
   - émission de reçus numériques ou notification push après validation;
-  - périodes futures d’Épargne, actuellement absentes de la liste renvoyée;
+  - rapport PDF Tontine et signature électronique;
+  - affichage fiable du nom du valideur dans l’historique Tontine : l’API de
+    gestion ne renvoie actuellement pas cette relation, contrairement à
+    l’archive Épargne;
+  - autorisation serveur des routes de gestion financière selon le rôle
+    TRESORIER : l’interface Flutter masque les actions aux autres rôles, mais
+    les endpoints de gestion décrits ici vérifient l’adhésion au cycle, pas
+    le rôle trésorier.
 
 La mise en place future d’un fournisseur de paiement devrait conserver le
 parcours utilisateur général, mais remplacer la preuve déclarative par une
@@ -579,12 +745,17 @@ du statut. Le simple retour d’une page de paiement ne devra jamais suffire à
 marquer une cotisation VALIDE.
 
 
-13. FICHIERS DE REFERENCE
+14. FICHIERS DE REFERENCE
 -------------------------
 
 Application Flutter :
   lib/screens/community/tresorerie/cycle_contribution_page.dart
+  lib/screens/community/tresorerie/tontine_management_page.dart
+  lib/screens/community/tresorerie/tontine_history_page.dart
+  lib/screens/community/tresorerie/savings_management_page.dart
+  lib/Controllers_distant/CycleTontineManagementController.dart
   lib/Controllers_distant/CycleTontineContributionController.dart
+  lib/Controllers_distant/CycleSavingsManagementController.dart
   lib/Controllers_distant/CycleSavingsContributionController.dart
   lib/Controllers_distant/CyclePaymentSimulationController.dart
 
@@ -594,9 +765,12 @@ Backend Laravel :
   app/Services/CycleAuthorizationService.php
   app/Services/CycleTontineTourScheduler.php
   app/Models/CycleOperation.php
+  app/Models/CycleEpargneCloture.php
+  tests/Feature/SavingsManagementTest.php
 
 Base de données / configuration :
   database/migrations/2026_10_13_120207_create_cycle_financial_records_tables.php
   database/migrations/2026_10_21_155028_add_tontine_payment_details_to_cycle_operations_table.php
   database/migrations/2026_10_22_150000_add_simulation_flag_to_cycle_operations_table.php
+  database/migrations/2026_10_27_110530_create_cycle_epargne_clotures_table.php
   config/cycle_payments.php

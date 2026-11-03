@@ -1,11 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:njangi/Controllers_distant/CycleCashBalanceController.dart';
+import 'package:njangi/ModeView/cycle_cash_balance_model.dart';
+import 'package:njangi/common/basewidget/shimmer_loading.dart';
+import 'package:njangi/routes/app_route_observer.dart';
 
 void main() {
   runApp(const TontineAdminApp());
 }
 
 class TontineAdminApp extends StatelessWidget {
-  const TontineAdminApp({super.key});
+  const TontineAdminApp({super.key, this.cycleId});
+
+  final String? cycleId;
 
   @override
   Widget build(BuildContext context) {
@@ -16,20 +25,104 @@ class TontineAdminApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFFF7FAF9),
         fontFamily: 'sans-serif',
       ),
-      home: const AdminDashboardScreen(),
+      navigatorObservers: [appRouteObserver],
+      home: AdminDashboardScreen(cycleId: cycleId),
     );
   }
 }
 
 class AdminDashboardScreen extends StatefulWidget {
-  const AdminDashboardScreen({super.key});
+  const AdminDashboardScreen({super.key, this.cycleId});
+
+  final String? cycleId;
 
   @override
   State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
 }
 
-class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
+class _AdminDashboardScreenState extends State<AdminDashboardScreen>
+    with RouteAware {
   int _currentNavIndex = 0;
+  PageRoute<dynamic>? _dashboardRoute;
+  String _cashBalance = '—';
+  bool _isLoadingCashBalance = true;
+  bool _cashBalanceError = false;
+  int _cashBalanceLoadGeneration = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadCashBalance());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute<dynamic> && route != _dashboardRoute) {
+      if (_dashboardRoute != null) appRouteObserver.unsubscribe(this);
+      _dashboardRoute = route;
+      appRouteObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void didPopNext() {
+    unawaited(_loadCashBalance());
+  }
+
+  @override
+  void didUpdateWidget(covariant AdminDashboardScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.cycleId != oldWidget.cycleId) {
+      unawaited(_loadCashBalance());
+    }
+  }
+
+  @override
+  void dispose() {
+    appRouteObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  Future<void> _loadCashBalance() async {
+    final generation = ++_cashBalanceLoadGeneration;
+    if (mounted) {
+      setState(() {
+        _isLoadingCashBalance = true;
+        _cashBalanceError = false;
+      });
+    }
+
+    final cycleId = widget.cycleId;
+    if (cycleId == null || cycleId.isEmpty) {
+      if (!mounted || generation != _cashBalanceLoadGeneration) return;
+      setState(() {
+        _cashBalance = '—';
+        _isLoadingCashBalance = false;
+        _cashBalanceError = true;
+      });
+      return;
+    }
+
+    final CycleCashBalance? balance =
+        await CycleCashBalanceController.getForCycle(cycleId);
+    if (!mounted || generation != _cashBalanceLoadGeneration) return;
+
+    setState(() {
+      if (balance == null) {
+        _cashBalance = '—';
+        _cashBalanceError = true;
+      } else {
+        final amount = NumberFormat.decimalPattern(
+          'fr_FR',
+        ).format(balance.amount);
+        final currency = balance.currency == 'XAF' ? 'FCFA' : balance.currency;
+        _cashBalance = '$amount $currency';
+      }
+      _isLoadingCashBalance = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +149,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 color: primaryGreen,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.hub_outlined, color: Colors.white, size: 20),
+              child: const Icon(
+                Icons.hub_outlined,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
             Column(
@@ -64,19 +161,30 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               children: [
                 const Text(
                   "Famille Bamiléké",
-                  style: TextStyle(color: textDark, fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: textDark,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFE6F5EE),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: const Text(
                         "ADMIN",
-                        style: TextStyle(color: primaryGreen, fontSize: 9, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: primaryGreen,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -85,66 +193,74 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       style: TextStyle(color: Colors.grey, fontSize: 11),
                     ),
                   ],
-                )
+                ),
               ],
-            )
+            ),
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Carte Verte : Santé du Groupe
-            _buildGroupHealthCard(cardGreenBg),
-            const SizedBox(height: 24),
+      body: RefreshIndicator(
+        onRefresh: _loadCashBalance,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. Carte Verte : Santé du Groupe
+              _buildGroupHealthCard(cardGreenBg),
+              const SizedBox(height: 24),
 
-            // 2. Section : Priorités de gestion
-            _buildSectionTitle("Priorités de gestion", textDark),
-            const SizedBox(height: 12),
-            _buildPrioritiesCard(),
-            const SizedBox(height: 24),
+              // 2. Section : Priorités de gestion
+              _buildSectionTitle("Priorités de gestion", textDark),
+              const SizedBox(height: 12),
+              _buildPrioritiesCard(),
+              const SizedBox(height: 24),
 
-            // 3. Section : Actions rapides
-            _buildSectionTitle("Actions rapides", textDark),
-            const SizedBox(height: 12),
-            _buildQuickActionsGrid(primaryGreen),
-            const SizedBox(height: 24),
+              // 3. Section : Actions rapides
+              _buildSectionTitle("Actions rapides", textDark),
+              const SizedBox(height: 12),
+              _buildQuickActionsGrid(primaryGreen),
+              const SizedBox(height: 24),
 
-            // 4. Section : Cycle en cours
-            _buildCycleProgressCard(primaryGreen, textDark),
-            const SizedBox(height: 24),
+              // 4. Section : Cycle en cours
+              _buildCycleProgressCard(primaryGreen, textDark),
+              const SizedBox(height: 24),
 
-            // 5. Section : Statut des Membres
-            _buildSectionTitle("Statut des Membres", textDark),
-            const SizedBox(height: 12),
-            _buildMembersStatusCard(primaryGreen, textDark),
-            const SizedBox(height: 24),
+              // 5. Section : Statut des Membres
+              _buildSectionTitle("Statut des Membres", textDark),
+              const SizedBox(height: 12),
+              _buildMembersStatusCard(primaryGreen, textDark),
+              const SizedBox(height: 24),
 
-            // 6. Section : Gestion des Prêts
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildSectionTitle("Gestion des Prêts", textDark),
-                TextButton(
-                  onPressed: () {},
-                  child: const Text(
-                    "Dossiers",
-                    style: TextStyle(color: primaryGreen, fontWeight: FontWeight.bold, fontSize: 12),
+              // 6. Section : Gestion des Prêts
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildSectionTitle("Gestion des Prêts", textDark),
+                  TextButton(
+                    onPressed: () {},
+                    child: const Text(
+                      "Dossiers",
+                      style: TextStyle(
+                        color: primaryGreen,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
                   ),
-                )
-              ],
-            ),
-            _buildLoansManagementCard(primaryGreen, textDark),
-            const SizedBox(height: 24),
+                ],
+              ),
+              _buildLoansManagementCard(primaryGreen, textDark),
+              const SizedBox(height: 24),
 
-            // 7. Section : Activité récente
-            _buildSectionTitle("Activité récente", textDark),
-            const SizedBox(height: 12),
-            _buildRecentActivityList(primaryGreen, textDark),
-            const SizedBox(height: 40),
-          ],
+              // 7. Section : Activité récente
+              _buildSectionTitle("Activité récente", textDark),
+              const SizedBox(height: 12),
+              _buildRecentActivityList(primaryGreen, textDark),
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: _buildBottomNav(primaryGreen, lightGreenBg),
@@ -157,11 +273,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget _buildSectionTitle(String title, Color color) {
     return Text(
       title,
-      style: TextStyle(
-        color: color,
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-      ),
+      style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.bold),
     );
   }
 
@@ -183,36 +295,78 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("SANTÉ DU GROUPE", style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold)),
+                  const Text(
+                    "SANTÉ DU GROUPE",
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   Row(
                     children: [
                       const Text(
                         "94%",
-                        style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Text("Stable", style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                      )
+                        child: const Text(
+                          "Stable",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ],
               ),
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text("Caisse actuelle", style: TextStyle(color: Colors.white70, fontSize: 10)),
-                  SizedBox(height: 4),
-                  Text(
-                    "2 450 000 FCFA",
-                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  const Text(
+                    "Caisse actuelle",
+                    style: TextStyle(color: Colors.white70, fontSize: 10),
                   ),
+                  const SizedBox(height: 4),
+                  if (_isLoadingCashBalance)
+                    const Shimmer(
+                      child: SkeletonBox(width: 132, height: 22, radius: 4),
+                    )
+                  else if (_cashBalanceError)
+                    const Text(
+                      "Indisponible",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    )
+                  else
+                    Text(
+                      _cashBalance,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                 ],
               ),
             ],
@@ -240,9 +394,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 10)),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 10),
+        ),
         const SizedBox(height: 4),
-        Text(value, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ],
     );
   }
@@ -257,18 +421,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       ),
       child: Column(
         children: [
-          _buildPriorityItem(Icons.payment, "3 cotisations à enregistrer", false),
+          _buildPriorityItem(
+            Icons.payment,
+            "3 cotisations à enregistrer",
+            false,
+          ),
           const Divider(height: 1, indent: 16, endIndent: 16),
-          _buildPriorityItem(Icons.description_outlined, "2 demandes de prêt", false),
+          _buildPriorityItem(
+            Icons.description_outlined,
+            "2 demandes de prêt",
+            false,
+          ),
           const Divider(height: 1, indent: 16, endIndent: 16),
-          _buildPriorityItem(Icons.warning_amber_rounded, "1 membre en retard", true),
+          _buildPriorityItem(
+            Icons.warning_amber_rounded,
+            "1 membre en retard",
+            true,
+          ),
         ],
       ),
     );
   }
 
   Widget _buildPriorityItem(IconData icon, String text, bool isAlert) {
-    final accentColor = isAlert ? const Color(0xFFE55C5C) : const Color(0xFF1E5E4E);
+    final accentColor =
+        isAlert ? const Color(0xFFE55C5C) : const Color(0xFF1E5E4E);
     return ListTile(
       leading: Icon(icon, color: accentColor),
       title: Text(
@@ -294,15 +471,31 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       mainAxisSpacing: 12,
       childAspectRatio: 2.1,
       children: [
-        _buildQuickActionItem(Icons.add_circle_outline, "Enregistrer Cotisations", primaryColor),
-        _buildQuickActionItem(Icons.account_balance_outlined, "Gérer les Prêts", primaryColor),
+        _buildQuickActionItem(
+          Icons.add_circle_outline,
+          "Enregistrer Cotisations",
+          primaryColor,
+        ),
+        _buildQuickActionItem(
+          Icons.account_balance_outlined,
+          "Gérer les Prêts",
+          primaryColor,
+        ),
         _buildQuickActionItem(Icons.people_outline, "Membres", primaryColor),
-        _buildQuickActionItem(Icons.insert_chart_outlined, "Rapports", primaryColor),
+        _buildQuickActionItem(
+          Icons.insert_chart_outlined,
+          "Rapports",
+          primaryColor,
+        ),
       ],
     );
   }
 
-  Widget _buildQuickActionItem(IconData icon, String label, Color primaryColor) {
+  Widget _buildQuickActionItem(
+    IconData icon,
+    String label,
+    Color primaryColor,
+  ) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFFEBFDF5),
@@ -352,7 +545,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             children: [
               const Text(
                 "Cycle en cours",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1C2D27)),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: Color(0xFF1C2D27),
+                ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -362,7 +559,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 child: const Text(
                   "Cycle 8 sur 12",
-                  style: TextStyle(color: Color(0xFF1E5E4E), fontSize: 10, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Color(0xFF1E5E4E),
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -371,8 +572,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Progression", style: TextStyle(color: Colors.grey, fontSize: 11)),
-              Text("60%", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+              Text(
+                "Progression",
+                style: TextStyle(color: Colors.grey, fontSize: 11),
+              ),
+              Text(
+                "60%",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -398,9 +605,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   child: const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Prochain bénéficiaire", style: TextStyle(color: Colors.grey, fontSize: 10)),
+                      Text(
+                        "Prochain bénéficiaire",
+                        style: TextStyle(color: Colors.grey, fontSize: 10),
+                      ),
                       SizedBox(height: 4),
-                      Text("Jean D.", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      Text(
+                        "Jean D.",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -416,15 +632,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   child: const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Restants", style: TextStyle(color: Colors.grey, fontSize: 10)),
+                      Text(
+                        "Restants",
+                        style: TextStyle(color: Colors.grey, fontSize: 10),
+                      ),
                       SizedBox(height: 4),
-                      Text("4 cycles", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                      Text(
+                        "4 cycles",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
             ],
-          )
+          ),
         ],
       ),
     );
@@ -443,17 +668,38 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         children: [
           Row(
             children: [
-              _buildStatusBox("Total", "15", Colors.white, textDark, hasBorder: true),
+              _buildStatusBox(
+                "Total",
+                "15",
+                Colors.white,
+                textDark,
+                hasBorder: true,
+              ),
               const SizedBox(width: 8),
-              _buildStatusBox("À jour", "11", const Color(0xFFEBFDF5), const Color(0xFF1E5E4E)),
+              _buildStatusBox(
+                "À jour",
+                "11",
+                const Color(0xFFEBFDF5),
+                const Color(0xFF1E5E4E),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              _buildStatusBox("En attente", "3", const Color(0xFFFFF9E6), const Color(0xFFB28900)),
+              _buildStatusBox(
+                "En attente",
+                "3",
+                const Color(0xFFFFF9E6),
+                const Color(0xFFB28900),
+              ),
               const SizedBox(width: 8),
-              _buildStatusBox("En retard", "1", const Color(0xFFFEECEB), const Color(0xFFE55C5C)),
+              _buildStatusBox(
+                "En retard",
+                "1",
+                const Color(0xFFFEECEB),
+                const Color(0xFFE55C5C),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -464,7 +710,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Color(0xFFD1F5EA)),
                 backgroundColor: const Color(0xFFEBFDF5),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: const Row(
@@ -472,34 +720,57 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 children: [
                   Text(
                     "Gérer les membres",
-                    style: TextStyle(color: Color(0xFF1E5E4E), fontWeight: FontWeight.bold, fontSize: 13),
+                    style: TextStyle(
+                      color: Color(0xFF1E5E4E),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
                   ),
                   SizedBox(width: 4),
                   Icon(Icons.chevron_right, size: 16, color: Color(0xFF1E5E4E)),
                 ],
               ),
             ),
-          )
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildStatusBox(String title, String count, Color bgColor, Color textColor, {bool hasBorder = false}) {
+  Widget _buildStatusBox(
+    String title,
+    String count,
+    Color bgColor,
+    Color textColor, {
+    bool hasBorder = false,
+  }) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: BorderRadius.circular(12),
-          border: hasBorder ? Border.all(color: Colors.grey.withOpacity(0.2)) : null,
+          border:
+              hasBorder
+                  ? Border.all(color: Colors.grey.withOpacity(0.2))
+                  : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(color: Colors.grey, fontSize: 10)),
+            Text(
+              title,
+              style: const TextStyle(color: Colors.grey, fontSize: 10),
+            ),
             const SizedBox(height: 4),
-            Text(count, style: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              count,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
       ),
@@ -535,15 +806,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               children: [
                 const Text(
                   "CAPACITÉ D'EMPRUNT",
-                  style: TextStyle(color: Color(0xFF1E5E4E), fontSize: 10, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Color(0xFF1E5E4E),
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 Text(
                   "1 200 000 FCFA",
-                  style: TextStyle(color: primaryColor, fontSize: 14, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: primaryColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -556,7 +835,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
-          Text(value, style: TextStyle(color: textDark, fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(
+            value,
+            style: TextStyle(
+              color: textDark,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
         ],
       ),
     );
@@ -607,7 +893,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Color(0xFFD1F5EA)),
                 backgroundColor: const Color(0xFFEBFDF5),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: const Row(
@@ -615,14 +903,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 children: [
                   Text(
                     "Voir tout l'historique",
-                    style: TextStyle(color: Color(0xFF1E5E4E), fontWeight: FontWeight.bold, fontSize: 13),
+                    style: TextStyle(
+                      color: Color(0xFF1E5E4E),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
                   ),
                   SizedBox(width: 4),
                   Icon(Icons.chevron_right, size: 16, color: Color(0xFF1E5E4E)),
                 ],
               ),
             ),
-          )
+          ),
         ],
       ),
     );
@@ -651,7 +943,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             children: [
               Text(
                 title,
-                style: TextStyle(color: textDark, fontWeight: FontWeight.bold, fontSize: 13),
+                style: TextStyle(
+                  color: textDark,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
@@ -660,7 +956,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
             ],
           ),
-        )
+        ),
       ],
     );
   }
@@ -678,6 +974,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         setState(() {
           _currentNavIndex = index;
         });
+        if (index == 0) unawaited(_loadCashBalance());
       },
       items: [
         BottomNavigationBarItem(

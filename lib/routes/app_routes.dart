@@ -62,6 +62,8 @@ class AppRoutes {
   static const cycleContribution = '/community/contribution';
   static const tontineManagement = '/community/tontine/management';
   static const tontineHistory = '/community/tontine/history';
+  static const savingsManagement = '/community/savings/management';
+  static const savingsHistory = '/community/savings/history';
 
   static const financialSummary = '/community/report/summary';
   static const detailedReport = '/community/report/detailed';

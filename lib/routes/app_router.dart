@@ -58,6 +58,7 @@ import '../screens/community/tresorerie/cycle_completed_page.dart';
 import '../screens/community/tresorerie/disburse_funds_sheet.dart';
 import '../screens/community/tresorerie/tontine_history_page.dart';
 import '../screens/community/tresorerie/tontine_management_page.dart';
+import '../screens/community/tresorerie/savings_management_page.dart';
 import '../screens/home/home_shell.dart';
 import '../screens/home/invitation_detail_page.dart';
 import '../screens/kyc/kyc_capture_page.dart';
@@ -786,6 +787,24 @@ class AppRouter {
                 _push(AppRoutes.cycleContribution, arguments: community);
                 return;
               }
+              if (action == 'manage_savings') {
+                _push(AppRoutes.savingsManagement, arguments: community);
+                return;
+              }
+              if (action == 'loans') {
+                _push(
+                  AppRoutes.comingSoon,
+                  arguments: AppLocalizations.t('manage_loans'),
+                );
+                return;
+              }
+              if (action == 'emergency_fund') {
+                _push(
+                  AppRoutes.comingSoon,
+                  arguments: AppLocalizations.t('manage_emergency_fund'),
+                );
+                return;
+              }
               if (action == 'reports') {
                 _push(AppRoutes.financialSummary, arguments: community);
                 return;
@@ -1189,9 +1208,19 @@ class AppRouter {
         );
 
       case AppRoutes.cycleContribution:
-        final community = settings.arguments as CommunityModel?;
+        final arguments = settings.arguments;
+        final routeArgs =
+            arguments is CycleContributionRouteArgs ? arguments : null;
+        final community =
+            routeArgs?.community ?? arguments as CommunityModel?;
         if (community == null) return page(const _MissingCommunityRedirect());
-        return page(CycleContributionPage(community: community, onBack: _pop));
+        return page(
+          CycleContributionPage(
+            community: community,
+            onBack: _pop,
+            initialContributionType: routeArgs?.initialContributionType,
+          ),
+        );
 
       case AppRoutes.tontineManagement:
         final community = settings.arguments as CommunityModel?;
@@ -1209,6 +1238,23 @@ class AppRouter {
         final community = settings.arguments as CommunityModel?;
         if (community == null) return page(const _MissingCommunityRedirect());
         return page(TontineHistoryPage(community: community, onBack: _pop));
+
+      case AppRoutes.savingsManagement:
+        final community = settings.arguments as CommunityModel?;
+        if (community == null) return page(const _MissingCommunityRedirect());
+        return page(
+          SavingsManagementPage(
+            community: community,
+            onBack: _pop,
+            onOpenHistory: () =>
+                _push(AppRoutes.savingsHistory, arguments: community),
+          ),
+        );
+
+      case AppRoutes.savingsHistory:
+        final community = settings.arguments as CommunityModel?;
+        if (community == null) return page(const _MissingCommunityRedirect());
+        return page(SavingsHistoryPage(community: community, onBack: _pop));
 
       case AppRoutes.financialSummary:
         final community = settings.arguments as CommunityModel?;

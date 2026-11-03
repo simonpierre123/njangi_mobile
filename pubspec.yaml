@@ -44,15 +44,15 @@ dependencies:
   local_auth: ^2.3.0
   firebase_core: ^4.15.0
   firebase_messaging: ^16.7.0
-  googleapis_auth: ^2.0.0
   flutter_local_notifications: ^19.5.0
-  flutter_dotenv: ^6.0.1
   flutter_contacts: ^1.1.9
   mobile_scanner: ^7.4.2
   contacts_service: ^0.6.3
   permission_handler: 12.0.1
   qr_flutter: ^4.1.0
   share_plus: ^12.0.2
+  pdf: ^3.11.3
+  printing: ^5.14.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -63,6 +63,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.4
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -75,7 +76,6 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  
   # Police Geist — tous les poids + italiques, fichiers dans assets/fonts/
   fonts:
     - family: Geist
@@ -129,8 +129,11 @@ flutter:
   assets:
     - assets/images/
     - assets/lang/
-    - .env
-    - secrets/key.json
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/images/logo.jpeg
 
   # To add assets to your application, add an assets section, like this:
   # assets:

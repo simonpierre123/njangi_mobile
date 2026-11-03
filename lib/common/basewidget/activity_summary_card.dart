@@ -15,8 +15,10 @@ class ActivitySummaryCard extends StatelessWidget {
     required this.eyebrow,
     required this.title,
     required this.chips,
-    required this.pendingAmountLabel,
-    required this.pendingAmount,
+    required this.debtAmountLabel,
+    required this.debtAmount,
+    this.secondaryAmountLabel,
+    this.secondaryAmount,
     this.variant = ActivitySummaryVariant.empty,
     this.hasAlert = false,
   });
@@ -24,8 +26,10 @@ class ActivitySummaryCard extends StatelessWidget {
   final String eyebrow;
   final String title;
   final List<StatChip> chips;
-  final String pendingAmountLabel;
-  final String pendingAmount;
+  final String debtAmountLabel;
+  final String debtAmount;
+  final String? secondaryAmountLabel;
+  final String? secondaryAmount;
   final ActivitySummaryVariant variant;
   final bool hasAlert;
 
@@ -114,47 +118,62 @@ class ActivitySummaryCard extends StatelessWidget {
                           : AppColors.divider,
                 ),
                 SizedBox(height: AppDimensions.spaceMd.h),
-                SizedBox(height: AppDimensions.spaceSm.h),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        pendingAmountLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color:
-                              isFilled
-                                  ? AppColors.white70
-                                  : AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        pendingAmount,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color:
-                              isFilled
-                                  ? AppColors.white
-                                  : AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
+                _buildAmountRow(
+                  label: debtAmountLabel,
+                  amount: debtAmount,
+                  isFilled: isFilled,
                 ),
+                if (secondaryAmountLabel != null &&
+                    secondaryAmount != null) ...[
+                  SizedBox(height: AppDimensions.spaceSm.h),
+                  _buildAmountRow(
+                    label: secondaryAmountLabel!,
+                    amount: secondaryAmount!,
+                    isFilled: isFilled,
+                  ),
+                ],
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAmountRow({
+    required String label,
+    required String amount,
+    required bool isFilled,
+  }) {
+    final textColor = isFilled ? AppColors.white : AppColors.textPrimary;
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              color: isFilled ? AppColors.white70 : AppColors.textSecondary,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            amount,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: textColor,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

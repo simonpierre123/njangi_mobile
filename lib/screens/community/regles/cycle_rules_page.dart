@@ -76,6 +76,7 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
   int _maxAdmins = 1;
   DateTime? _startDate;
   DateTime? _endDate;
+  String? _meetingTime;
   String? _savingsDueDay;
 
   @override
@@ -187,6 +188,7 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
         cycle.tontineWeekday ?? _weekdayFromLabel(cycle.dueDay) ?? 7;
     _startDate = cycle.startDate;
     _endDate = cycle.endDate;
+    _meetingTime = cycle.meetingTime;
     _savingsDueDay = cycle.savingsDueDay;
     _savingsDueDayController.text = cycle.savingsDueDay ?? '';
   }
@@ -283,6 +285,34 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
     });
   }
 
+  Future<void> _pickMeetingTime() async {
+    final parts = (_meetingTime ?? '18:00').split(':');
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(
+        hour: int.tryParse(parts.first) ?? 18,
+        minute: parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0,
+      ),
+    );
+    if (picked == null) return;
+    setState(() {
+      _meetingTime =
+          '${picked.hour.toString().padLeft(2, '0')}:'
+          '${picked.minute.toString().padLeft(2, '0')}';
+    });
+  }
+
+  String _formattedMeetingTime(String? value) {
+    if (value == null || value.isEmpty) {
+      return AppLocalizations.t('meeting_time_not_set');
+    }
+    final parts = value.split(':');
+    return TimeOfDay(
+      hour: int.tryParse(parts.first) ?? 18,
+      minute: parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0,
+    ).format(context);
+  }
+
   String _formatDate(DateTime? date) =>
       date == null
           ? AppLocalizations.t('not_configured')
@@ -308,6 +338,7 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
     ),
     MapEntry('frequence_cycle', _frequencyLabel(cycle.frequency)),
     MapEntry('jour_echeance', cycle.dueDay ?? '—'),
+    MapEntry('heure_reunion', _formattedMeetingTime(cycle.meetingTime)),
     MapEntry(
       'tontine_calendrier_mode',
       cycle.tontineCalendarMode == 'NIEME_JOUR_SEMAINE'
@@ -401,6 +432,7 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
               : null,
       'frequence_cycle': _frequencyToApi(_frequency),
       'jour_echeance': weekdayLabel,
+      'heure_reunion': _meetingTime,
       'tontine_calendrier_mode':
           _frequency == ContributionFrequency.mensuelle
               ? _tontineCalendarMode
@@ -446,6 +478,7 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
       'nombre_max_pret_simultane': cycle.maxSimultaneousLoans,
       'frequence_cycle': cycle.frequency,
       'jour_echeance': cycle.dueDay,
+      'heure_reunion': cycle.meetingTime,
       'tontine_calendrier_mode': cycle.tontineCalendarMode,
       'tontine_ordinal_semaine': cycle.tontineWeekOrdinal,
       'tontine_jour_semaine': cycle.tontineWeekday,
@@ -597,19 +630,19 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
                     SizedBox(height: AppDimensions.spaceLg.h),
                     _buildRuleSection(
                       AppLocalizations.t('cycle_rules_general'),
-                      _ruleValues(cycle).take(7).toList(),
+                      _ruleValues(cycle).take(9).toList(),
                     ),
                     _buildRuleSection(
                       AppLocalizations.t('cycle_rules_loans'),
-                      _ruleValues(cycle).skip(7).take(6).toList(),
+                      _ruleValues(cycle).skip(9).take(6).toList(),
                     ),
                     _buildRuleSection(
                       AppLocalizations.t('cycle_rules_savings'),
-                      _ruleValues(cycle).skip(13).take(8).toList(),
+                      _ruleValues(cycle).skip(15).take(8).toList(),
                     ),
                     _buildRuleSection(
                       AppLocalizations.t('cycle_rules_protection'),
-                      _ruleValues(cycle).skip(21).toList(),
+                      _ruleValues(cycle).skip(23).toList(),
                     ),
                     if (_isAdmin && _proposal != null) ...[
                       SizedBox(height: AppDimensions.spaceLg.h),
@@ -865,6 +898,33 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
               ),
             ],
           ],
+          SizedBox(height: AppDimensions.spaceMd.h),
+          InputDecorator(
+            decoration: InputDecoration(
+              labelText: AppLocalizations.t('meeting_time_label'),
+              border: const OutlineInputBorder(),
+            ),
+            child: InkWell(
+              onTap: _pickMeetingTime,
+              child: Row(
+                children: [
+                  const Icon(Icons.access_time),
+                  SizedBox(width: AppDimensions.spaceSm.w),
+                  Text(_formattedMeetingTime(_meetingTime)),
+                  const Spacer(),
+                  const Icon(Icons.edit_outlined, size: 18),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: AppDimensions.spaceXs.h),
+          Text(
+            AppLocalizations.t('meeting_time_helper'),
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.textSecondary,
+            ),
+          ),
           SizedBox(height: AppDimensions.spaceMd.h),
           _datePickerTile('date_fin', _endDate, isStart: false),
           SizedBox(height: AppDimensions.spaceXs.h),

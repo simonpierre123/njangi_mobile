@@ -10,10 +10,16 @@ class RecentActivityCard extends StatelessWidget {
     super.key,
     required this.items,
     required this.onSeeAll,
+    this.isLoading = false,
+    this.errorMessage,
+    this.onRetry,
   });
 
   final List<ActivityItem> items;
   final VoidCallback onSeeAll;
+  final bool isLoading;
+  final String? errorMessage;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -26,10 +32,39 @@ class RecentActivityCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          for (final item in items) ...[
-            _ActivityRow(item: item),
-            SizedBox(height: AppDimensions.spaceSm.h),
-          ],
+          if (isLoading)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: CircularProgressIndicator(),
+            )
+          else if (errorMessage != null)
+            Column(
+              children: [
+                Text(
+                  errorMessage!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppColors.textSecondary),
+                ),
+                if (onRetry != null)
+                  TextButton(
+                    onPressed: onRetry,
+                    child: Text(AppLocalizations.t('retry')),
+                  ),
+              ],
+            )
+          else if (items.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(
+                AppLocalizations.t('activity_empty'),
+                style: const TextStyle(color: AppColors.textSecondary),
+              ),
+            )
+          else
+            for (final item in items) ...[
+              _ActivityRow(item: item),
+              SizedBox(height: AppDimensions.spaceSm.h),
+            ],
           SizedBox(height: AppDimensions.spaceSm.h),
           SizedBox(
             width: double.infinity,

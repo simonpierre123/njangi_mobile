@@ -61,6 +61,7 @@ void main() {
       'nombre_max_pret_simultane': 2,
       'frequence_cycle': 'MENSUEL',
       'jour_echeance': AppLocalizations.t('due_day_sunday'),
+      'heure_reunion': '18:00',
       'tontine_calendrier_mode': 'NIEME_JOUR_SEMAINE',
       'tontine_ordinal_semaine': 2,
       'tontine_jour_semaine': 7,

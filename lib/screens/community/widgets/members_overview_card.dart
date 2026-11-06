@@ -41,7 +41,7 @@ class MembersOverviewCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '${stats.total}',
+                _count(stats.total),
                 style: const TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 18,
@@ -53,21 +53,21 @@ class MembersOverviewCard extends StatelessWidget {
           SizedBox(height: AppDimensions.spaceMd.h),
           _MemberRow(
             label: AppLocalizations.t('up_to_date'),
-            count: stats.upToDate,
+            count: _count(stats.upToDate),
             bg: AppColors.tagMintBg,
             color: AppColors.primaryDark,
           ),
           SizedBox(height: AppDimensions.spaceSm.h),
           _MemberRow(
             label: AppLocalizations.t('pending_label'),
-            count: stats.pending,
+            count: _count(stats.pending),
             bg: AppColors.warningBg,
             color: AppColors.warningText,
           ),
           SizedBox(height: AppDimensions.spaceSm.h),
           _MemberRow(
             label: AppLocalizations.t('overdue_label'),
-            count: stats.lateCount,
+            count: _count(stats.lateCount),
             bg: AppColors.tagRedBg,
             color: AppColors.alertRed,
           ),
@@ -109,6 +109,9 @@ class MembersOverviewCard extends StatelessWidget {
       ),
     );
   }
+
+  String _count(int value) =>
+      stats.isLoading || stats.hasError ? '—' : '$value';
 }
 
 class _MemberRow extends StatelessWidget {
@@ -120,7 +123,7 @@ class _MemberRow extends StatelessWidget {
   });
 
   final String label;
-  final int count;
+  final String count;
   final Color bg;
   final Color color;
 
@@ -145,7 +148,7 @@ class _MemberRow extends StatelessWidget {
             ),
           ),
           Text(
-            '$count',
+            count,
             style: TextStyle(
               color: color,
               fontSize: 14,

@@ -51,7 +51,9 @@ class MemberCycleCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '${(info.progressPercent * 100).round()}%',
+                info.progressPercent == null
+                    ? '—'
+                    : '${(info.progressPercent! * 100).round()}%',
                 style: const TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 36,
@@ -108,7 +110,7 @@ class MemberCycleCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${info.remainingCycles} ${AppLocalizations.t('cycles_remaining_period')}',
+            _remainingBeneficiariesLabel(info.remainingBeneficiaries),
             style: const TextStyle(
               fontSize: 11,
               color: AppColors.textSecondary,
@@ -117,5 +119,15 @@ class MemberCycleCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _remainingBeneficiariesLabel(int? count) {
+    if (count == null) return '—';
+    final label = AppLocalizations.t(
+      count == 1
+          ? 'remaining_beneficiary_period_singular'
+          : 'remaining_beneficiaries_period',
+    );
+    return '$count $label';
   }
 }

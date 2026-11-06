@@ -47,6 +47,7 @@ class _CreateCommunityStep2PageState extends State<CreateCommunityStep2Page> {
   late String _tontineCalendarMode = widget.draft.tontineCalendarMode;
   late int _tontineWeekOrdinal = widget.draft.tontineWeekOrdinal;
   late int _tontineWeekday = _weekdayOptions.indexOf(_dueDay) + 1;
+  late String _meetingTime = widget.draft.meetingTime;
 
   List<String> get _weekdayOptions => [
     AppLocalizations.t('due_day_monday'),
@@ -94,12 +95,39 @@ class _CreateCommunityStep2PageState extends State<CreateCommunityStep2Page> {
         frequency: _frequency,
         startDate: _startDate,
         dueDayLabel: _usesWeekdaySchedule ? _dueDay : null,
+        meetingTime: _meetingTime,
         tontineCalendarMode: _tontineCalendarMode,
         tontineWeekOrdinal: _tontineWeekOrdinal,
         tontineWeekday: _tontineWeekday,
         expectedMemberCount: _membersController.text,
       ),
     );
+  }
+
+  Future<void> _pickMeetingTime() async {
+    final parts = _meetingTime.split(':');
+    final initialTime = TimeOfDay(
+      hour: int.tryParse(parts.first) ?? 18,
+      minute: parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0,
+    );
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+    );
+    if (picked == null) return;
+    setState(() {
+      _meetingTime =
+          '${picked.hour.toString().padLeft(2, '0')}:'
+          '${picked.minute.toString().padLeft(2, '0')}';
+    });
+  }
+
+  String _formattedMeetingTime(BuildContext context) {
+    final parts = _meetingTime.split(':');
+    return TimeOfDay(
+      hour: int.tryParse(parts.first) ?? 18,
+      minute: parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0,
+    ).format(context);
   }
 
   bool _startDateMatchesMonthlyRule() {
@@ -361,6 +389,35 @@ class _CreateCommunityStep2PageState extends State<CreateCommunityStep2Page> {
                           color: AppColors.textSecondary,
                         ),
                       ),
+                    if (_frequency != null) ...[
+                      SizedBox(height: AppDimensions.spaceMd.h),
+                      InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.t('meeting_time_label'),
+                          border: const OutlineInputBorder(),
+                        ),
+                        child: InkWell(
+                          onTap: _pickMeetingTime,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.access_time),
+                              SizedBox(width: AppDimensions.spaceSm.w),
+                              Text(_formattedMeetingTime(context)),
+                              const Spacer(),
+                              const Icon(Icons.edit_outlined, size: 18),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: AppDimensions.spaceXs.h),
+                      Text(
+                        AppLocalizations.t('meeting_time_helper'),
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
                     SizedBox(height: AppDimensions.spaceMd.h),
                     AppTextField(
                       label:

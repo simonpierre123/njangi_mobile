@@ -29,15 +29,15 @@ class MemberCycleInfo {
     required this.progressPercent,
     required this.progressLabel,
     required this.nextBeneficiary,
-    required this.remainingCycles,
+    required this.remainingBeneficiaries,
     this.currentCycle = 0,
     this.totalCycle = 0,
   });
 
-  final double progressPercent; // 0.0 à 1.0
+  final double? progressPercent; // 0.0 à 1.0
   final String progressLabel;
   final String nextBeneficiary;
-  final int remainingCycles;
+  final int? remainingBeneficiaries;
   final int currentCycle;
   final int totalCycle;
 }

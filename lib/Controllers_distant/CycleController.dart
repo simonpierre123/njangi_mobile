@@ -214,6 +214,7 @@ class CycleController {
           usesWeekdaySchedule
               ? _localizedWeekdayLabel(draft.tontineWeekday)
               : null,
+      meetingTime: draft.meetingTime,
       tontineCalendarMode:
           draft.tontineActive ? draft.tontineCalendarMode : 'DATE_MOIS',
       tontineWeekOrdinal: draft.tontineActive ? draft.tontineWeekOrdinal : null,

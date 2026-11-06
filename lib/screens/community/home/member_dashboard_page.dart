@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../ModeView/community_admin_dashboard_model.dart';
 import '../../../ModeView/community_member_dashboard_model.dart';
+import '../../../common/basewidget/shimmer_loading.dart';
 import '../../../localization/app_localizations.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/app_dimensions.dart';
@@ -20,8 +21,6 @@ import '../widgets/required_action_card.dart';
 /// Ne possède plus de Scaffold/AppBar/bottom nav propres : c'est
 /// [CommunityShell] qui les fournit désormais.
 ///
-/// TODO (Njoya) : remplacer les paramètres par le vrai flux de l'API —
-/// alimenté pour l'instant par datasource/community_member_mock_datasource.dart.
 class MemberDashboardPage extends StatelessWidget {
   const MemberDashboardPage({
     super.key,
@@ -29,9 +28,15 @@ class MemberDashboardPage extends StatelessWidget {
     required this.health,
     required this.loans,
     required this.requiredActions,
+    required this.isLoadingRequiredActions,
+    required this.requiredActionsError,
+    required this.onRetryRequiredActions,
     required this.cycle,
     required this.memberStatus,
     required this.activity,
+    required this.isLoadingActivity,
+    required this.activityError,
+    required this.onRetryActivity,
     required this.onQuickAction,
     required this.onActionPay,
     required this.onActionTap,
@@ -43,9 +48,15 @@ class MemberDashboardPage extends StatelessWidget {
   final GroupHealthStats health;
   final LoanStats loans;
   final List<RequiredActionItem> requiredActions;
+  final bool isLoadingRequiredActions;
+  final String? requiredActionsError;
+  final VoidCallback onRetryRequiredActions;
   final MemberCycleInfo cycle;
   final MemberStatusStats memberStatus;
   final List<ActivityItem> activity;
+  final bool isLoadingActivity;
+  final String? activityError;
+  final VoidCallback onRetryActivity;
   final ValueChanged<String> onQuickAction;
   final ValueChanged<RequiredActionItem> onActionPay;
   final ValueChanged<RequiredActionItem> onActionTap;
@@ -66,15 +77,31 @@ class MemberDashboardPage extends StatelessWidget {
           SizedBox(height: AppDimensions.spaceLg.h),
           _SectionTitle(AppLocalizations.t('required_actions')),
           SizedBox(height: AppDimensions.spaceSm.h),
-          for (var i = 0; i < requiredActions.length; i++) ...[
-            RequiredActionCard(
-              item: requiredActions[i],
-              onAction: () => onActionPay(requiredActions[i]),
-              onTap: () => onActionTap(requiredActions[i]),
-            ),
-            if (i != requiredActions.length - 1)
-              SizedBox(height: AppDimensions.spaceSm.h),
-          ],
+          if (isLoadingRequiredActions)
+            const _RequiredActionsShimmer()
+          else if (requiredActionsError != null)
+            _RequiredActionsError(
+              message: requiredActionsError!,
+              onRetry: onRetryRequiredActions,
+            )
+          else if (requiredActions.isEmpty)
+            Text(
+              AppLocalizations.t('required_actions_none'),
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+              ),
+            )
+          else
+            for (var i = 0; i < requiredActions.length; i++) ...[
+              RequiredActionCard(
+                item: requiredActions[i],
+                onAction: () => onActionPay(requiredActions[i]),
+                onTap: () => onActionTap(requiredActions[i]),
+              ),
+              if (i != requiredActions.length - 1)
+                SizedBox(height: AppDimensions.spaceSm.h),
+            ],
           SizedBox(height: AppDimensions.spaceLg.h),
           _SectionTitle(AppLocalizations.t('quick_actions')),
           SizedBox(height: AppDimensions.spaceSm.h),
@@ -125,7 +152,13 @@ class MemberDashboardPage extends StatelessWidget {
           SizedBox(height: AppDimensions.spaceLg.h),
           _SectionTitle(AppLocalizations.t('recent_activity')),
           SizedBox(height: AppDimensions.spaceSm.h),
-          RecentActivityCard(items: activity, onSeeAll: onSeeAllActivity),
+          RecentActivityCard(
+            items: activity,
+            onSeeAll: onSeeAllActivity,
+            isLoading: isLoadingActivity,
+            errorMessage: activityError,
+            onRetry: onRetryActivity,
+          ),
           SizedBox(height: AppDimensions.spaceXl.h),
         ],
       ),
@@ -159,7 +192,8 @@ class MemberDashboardPage extends StatelessWidget {
                 _FinanceMenuItem(
                   icon: Icons.add_circle_outline,
                   label: AppLocalizations.t('record_contributions'),
-                  onTap: () => Navigator.pop(sheetContext, 'record_contributions'),
+                  onTap:
+                      () => Navigator.pop(sheetContext, 'record_contributions'),
                 ),
                 _FinanceMenuItem(
                   icon: Icons.account_balance_outlined,
@@ -203,6 +237,55 @@ class _FinanceMenuItem extends StatelessWidget {
     trailing: const Icon(Icons.chevron_right),
     onTap: onTap,
   );
+}
+
+class _RequiredActionsShimmer extends StatelessWidget {
+  const _RequiredActionsShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer(
+      child: Column(
+        children: [
+          for (var i = 0; i < 2; i++) ...[
+            Container(
+              height: 72,
+              decoration: BoxDecoration(
+                color: AppColors.neutralGrayLighter,
+                borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+              ),
+            ),
+            if (i == 0) SizedBox(height: AppDimensions.spaceSm.h),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RequiredActionsError extends StatelessWidget {
+  const _RequiredActionsError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            message,
+            style: const TextStyle(color: AppColors.error, fontSize: 12),
+          ),
+        ),
+        TextButton(
+          onPressed: onRetry,
+          child: Text(AppLocalizations.t('retry')),
+        ),
+      ],
+    );
+  }
 }
 
 class _SectionTitle extends StatelessWidget {

@@ -31,7 +31,7 @@ class MembersStatusCard extends StatelessWidget {
             children: [
               _StatusBox(
                 title: AppLocalizations.t('total_label'),
-                count: '${stats.total}',
+                count: _count(stats.total),
                 bg: AppColors.white,
                 textColor: AppColors.textPrimary,
                 hasBorder: true,
@@ -39,7 +39,7 @@ class MembersStatusCard extends StatelessWidget {
               SizedBox(width: AppDimensions.spaceSm.w),
               _StatusBox(
                 title: AppLocalizations.t('up_to_date'),
-                count: '${stats.upToDate}',
+                count: _count(stats.upToDate),
                 bg: AppColors.iconBgMint,
                 textColor: AppColors.primaryDark,
               ),
@@ -50,7 +50,7 @@ class MembersStatusCard extends StatelessWidget {
             children: [
               _StatusBox(
                 title: AppLocalizations.t('pending_label'),
-                count: '${stats.pending}',
+                count: _count(stats.pending),
                 bg: AppColors.warningBg,
                 textColor: AppColors.warningText,
                 labelMatchesValue: true,
@@ -58,7 +58,7 @@ class MembersStatusCard extends StatelessWidget {
               SizedBox(width: AppDimensions.spaceSm.w),
               _StatusBox(
                 title: AppLocalizations.t('overdue_label'),
-                count: '${stats.lateCount}',
+                count: _count(stats.lateCount),
                 bg: AppColors.tagRedBg,
                 textColor: AppColors.alertRed,
                 labelMatchesValue: true,
@@ -103,6 +103,9 @@ class MembersStatusCard extends StatelessWidget {
       ),
     );
   }
+
+  String _count(int value) =>
+      stats.isLoading || stats.hasError ? '—' : '$value';
 }
 
 class _StatusBox extends StatelessWidget {

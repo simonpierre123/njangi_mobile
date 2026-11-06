@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../../ModeView/community_admin_dashboard_model.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
@@ -23,17 +24,17 @@ class LoansManagementCard extends StatelessWidget {
         children: [
           _LoanRow(
             label: AppLocalizations.t('active_loans'),
-            value: '${stats.activeLoans}',
+            value: _value(stats.activeLoans),
           ),
           const Divider(height: 1, color: AppColors.divider),
           _LoanRow(
             label: AppLocalizations.t('pending_requests'),
-            value: '${stats.pendingRequests}',
+            value: _value(stats.pendingRequests),
           ),
           const Divider(height: 1, color: AppColors.divider),
           _LoanRow(
             label: AppLocalizations.t('overdue_label'),
-            value: '${stats.overdue}',
+            value: _value(stats.overdue),
           ),
           SizedBox(height: AppDimensions.spaceMd.h),
           Container(
@@ -44,18 +45,22 @@ class LoansManagementCard extends StatelessWidget {
               border: Border.all(color: AppColors.borderMint),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  AppLocalizations.t('borrowing_capacity').toUpperCase(),
-                  style: const TextStyle(
-                    color: AppColors.primaryDark,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
+                Expanded(
+                  child: Text(
+                    AppLocalizations.t('borrowing_capacity').toUpperCase(),
+                    style: const TextStyle(
+                      color: AppColors.primaryDark,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 Text(
-                  stats.borrowingCapacity,
+                  stats.isLoading || stats.hasError
+                      ? '—'
+                      : '${NumberFormat.decimalPattern('fr_FR').format(stats.borrowingCapacity)} '
+                          '${stats.currency == 'XAF' ? 'FCFA' : stats.currency}',
                   style: const TextStyle(
                     color: AppColors.primaryDark,
                     fontSize: 14,
@@ -68,6 +73,12 @@ class LoansManagementCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _value(int value) {
+    if (stats.isLoading) return '—';
+    if (stats.hasError) return '!';
+    return '$value';
   }
 }
 

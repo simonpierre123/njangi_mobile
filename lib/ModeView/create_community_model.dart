@@ -108,6 +108,7 @@ class CommunityDraft {
     this.frequency,
     this.startDate,
     this.dueDayLabel,
+    this.meetingTime = '18:00',
     this.tontineCalendarMode = 'DATE_MOIS',
     this.tontineWeekOrdinal = 2,
     this.tontineWeekday = 7,
@@ -147,6 +148,7 @@ class CommunityDraft {
   final ContributionFrequency? frequency;
   final DateTime? startDate;
   final String? dueDayLabel;
+  final String meetingTime;
   final String tontineCalendarMode;
   final int tontineWeekOrdinal;
   final int tontineWeekday;
@@ -186,6 +188,7 @@ class CommunityDraft {
     ContributionFrequency? frequency,
     DateTime? startDate,
     String? dueDayLabel,
+    String? meetingTime,
     String? tontineCalendarMode,
     int? tontineWeekOrdinal,
     int? tontineWeekday,
@@ -223,6 +226,7 @@ class CommunityDraft {
       frequency: frequency ?? this.frequency,
       startDate: startDate ?? this.startDate,
       dueDayLabel: dueDayLabel ?? this.dueDayLabel,
+      meetingTime: meetingTime ?? this.meetingTime,
       tontineCalendarMode: tontineCalendarMode ?? this.tontineCalendarMode,
       tontineWeekOrdinal: tontineWeekOrdinal ?? this.tontineWeekOrdinal,
       tontineWeekday: tontineWeekday ?? this.tontineWeekday,

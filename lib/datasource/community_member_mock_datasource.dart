@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../ModeView/community_admin_dashboard_model.dart';
 import '../ModeView/community_member_dashboard_model.dart';
 import '../utils/app_colors.dart';
-import 'community_admin_mock_datasource.dart';
 
 /// Données mock pour le tableau de bord membre (non-admin), en attendant
 /// l'API. Isolé ici pour que le remplacement par les vraies données ne
@@ -10,29 +9,11 @@ import 'community_admin_mock_datasource.dart';
 class CommunityMemberMockDatasource {
   CommunityMemberMockDatasource._();
 
-  // Santé du groupe identique à la vue admin — réutilisation directe,
-  // pas de duplication de données.
-  static const health = CommunityAdminMockDatasource.health;
-
-  static const requiredActions = [
-    RequiredActionItem(
-      icon: Icons.payments_outlined,
-      title: 'Cotisation due',
-      subtitle: '50 000 FCFA • Aujourd\'hui',
-      actionLabel: 'Payer',
-    ),
-    RequiredActionItem(
-      icon: Icons.event_outlined,
-      title: 'Réunion de groupe',
-      subtitle: 'Demain à 18h00',
-    ),
-  ];
-
   static const cycle = MemberCycleInfo(
     progressPercent: 0.6,
     progressLabel: 'Complétée',
     nextBeneficiary: 'Jean D.',
-    remainingCycles: 4,
+    remainingBeneficiaries: 4,
   );
 
   static const memberStatus = MemberStatusStats(

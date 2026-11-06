@@ -17,17 +17,23 @@ import '../widgets/recent_activity_card.dart';
 /// [CommunityShell] qui les fournit désormais (pattern shell — un seul
 /// Scaffold pour les 4 onglets de la communauté).
 ///
-/// TODO (Njoya) : remplacer les paramètres par le vrai flux de l'API —
-/// alimenté pour l'instant par datasource/community_admin_mock_datasource.dart.
+/// Les priorités et les indicateurs de santé viennent du cycle actif ;
+/// certains autres blocs restent alimentés par le datasource mock.
 class AdminDashboardPage extends StatelessWidget {
   const AdminDashboardPage({
     super.key,
     required this.health,
     required this.priorities,
+    required this.isLoadingPriorities,
+    required this.prioritiesError,
+    required this.onRetryPriorities,
     required this.cycle,
     required this.memberStatus,
     required this.loans,
     required this.activity,
+    required this.isLoadingActivity,
+    required this.activityError,
+    required this.onRetryActivity,
     required this.onQuickAction,
     required this.onPriorityTap,
     required this.onManageMembers,
@@ -37,10 +43,16 @@ class AdminDashboardPage extends StatelessWidget {
 
   final GroupHealthStats health;
   final List<PriorityItem> priorities;
+  final bool isLoadingPriorities;
+  final String? prioritiesError;
+  final VoidCallback onRetryPriorities;
   final CycleInfo cycle;
   final MemberStatusStats memberStatus;
   final LoanStats loans;
   final List<ActivityItem> activity;
+  final bool isLoadingActivity;
+  final String? activityError;
+  final VoidCallback onRetryActivity;
   final ValueChanged<String> onQuickAction;
   final ValueChanged<PriorityItem> onPriorityTap;
   final VoidCallback onManageMembers;
@@ -61,7 +73,13 @@ class AdminDashboardPage extends StatelessWidget {
           SizedBox(height: AppDimensions.spaceLg.h),
           _SectionTitle(AppLocalizations.t('management_priorities')),
           SizedBox(height: AppDimensions.spaceSm.h),
-          PrioritiesCard(items: priorities, onItemTap: onPriorityTap),
+          PrioritiesCard(
+            items: priorities,
+            isLoading: isLoadingPriorities,
+            errorMessage: prioritiesError,
+            onRetry: onRetryPriorities,
+            onItemTap: onPriorityTap,
+          ),
           SizedBox(height: AppDimensions.spaceLg.h),
           _SectionTitle(AppLocalizations.t('quick_actions')),
           SizedBox(height: AppDimensions.spaceSm.h),
@@ -101,7 +119,13 @@ class AdminDashboardPage extends StatelessWidget {
           SizedBox(height: AppDimensions.spaceLg.h),
           _SectionTitle(AppLocalizations.t('recent_activity')),
           SizedBox(height: AppDimensions.spaceSm.h),
-          RecentActivityCard(items: activity, onSeeAll: onSeeAllActivity),
+          RecentActivityCard(
+            items: activity,
+            onSeeAll: onSeeAllActivity,
+            isLoading: isLoadingActivity,
+            errorMessage: activityError,
+            onRetry: onRetryActivity,
+          ),
           SizedBox(height: AppDimensions.spaceXl.h),
         ],
       ),

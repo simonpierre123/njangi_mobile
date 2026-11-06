@@ -63,7 +63,9 @@ class CycleProgressCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '${(cycle.progressPercent * 100).round()}%',
+                cycle.progressPercent == null
+                    ? '—'
+                    : '${(cycle.progressPercent! * 100).round()}%',
                 style: const TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 12,
@@ -93,9 +95,10 @@ class CycleProgressCard extends StatelessWidget {
               SizedBox(width: AppDimensions.spaceSm.w),
               Expanded(
                 child: _InfoBox(
-                  label: AppLocalizations.t('remaining_label'),
-                  value:
-                      '${cycle.remainingCycles} ${AppLocalizations.t('cycles_word')}',
+                  label: AppLocalizations.t(
+                    'remaining_beneficiaries_label',
+                  ),
+                  value: cycle.remainingBeneficiaries?.toString() ?? '—',
                 ),
               ),
             ],

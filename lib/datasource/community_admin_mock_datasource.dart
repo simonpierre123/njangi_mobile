@@ -8,33 +8,12 @@ import '../utils/app_colors.dart';
 class CommunityAdminMockDatasource {
   CommunityAdminMockDatasource._();
 
-  static const health = GroupHealthStats(
-    healthPercent: 94,
-    healthLabel: 'Stable',
-    cashBalance: '2 450 000 FCFA',
-    membersUpToDate: 12,
-    membersTotal: 15,
-    pendingCount: 3,
-    activeLoans: 2,
-    lastUpdateLabel: 'Mis à jour il y a 5 min',
-  );
-
-  static const priorities = [
-    PriorityItem(icon: Icons.payment, label: '3 cotisations à enregistrer'),
-    PriorityItem(icon: Icons.description_outlined, label: '2 demandes de prêt'),
-    PriorityItem(
-      icon: Icons.warning_amber_rounded,
-      label: '1 membre en retard',
-      isAlert: true,
-    ),
-  ];
-
   static const cycle = CycleInfo(
     currentCycle: 8,
     totalCycle: 12,
     progressPercent: 0.65,
     nextBeneficiary: 'Jean D.',
-    remainingCycles: 4,
+    remainingBeneficiaries: 4,
   );
 
   static const memberStatus = MemberStatusStats(
@@ -48,7 +27,7 @@ class CommunityAdminMockDatasource {
     activeLoans: 2,
     pendingRequests: 2,
     overdue: 0,
-    borrowingCapacity: '1 200 000 FCFA',
+    borrowingCapacity: 1200000,
   );
 
   static const activity = [

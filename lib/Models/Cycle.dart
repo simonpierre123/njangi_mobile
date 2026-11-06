@@ -17,6 +17,7 @@ class Cycle {
     this.maxSimultaneousLoans,
     this.frequency,
     this.dueDay,
+    this.meetingTime,
     this.tontineCalendarMode = 'DATE_MOIS',
     this.tontineWeekOrdinal,
     this.tontineWeekday,
@@ -58,6 +59,7 @@ class Cycle {
   final int? maxSimultaneousLoans;
   final String? frequency;
   final String? dueDay;
+  final String? meetingTime;
   final String tontineCalendarMode;
   final int? tontineWeekOrdinal;
   final int? tontineWeekday;
@@ -102,6 +104,7 @@ class Cycle {
       maxSimultaneousLoans: _toInt(json['nombre_max_pret_simultane']),
       frequency: json['frequence_cycle']?.toString(),
       dueDay: json['jour_echeance']?.toString(),
+      meetingTime: json['heure_reunion']?.toString(),
       tontineCalendarMode:
           json['tontine_calendrier_mode']?.toString() ?? 'DATE_MOIS',
       tontineWeekOrdinal: _toInt(json['tontine_ordinal_semaine']),
@@ -144,6 +147,7 @@ class Cycle {
     'nombre_max_pret_simultane': maxSimultaneousLoans,
     'frequence_cycle': frequency,
     'jour_echeance': dueDay,
+    'heure_reunion': meetingTime,
     'tontine_calendrier_mode': tontineCalendarMode,
     'tontine_ordinal_semaine':
         tontineCalendarMode == 'NIEME_JOUR_SEMAINE' ? tontineWeekOrdinal : null,

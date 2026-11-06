@@ -112,8 +112,32 @@ void main() {
     },
   );
 
+  test('does not use a pending cycle for the tontine progress bar', () async {
+    await AppLocalizations.load();
+    SharedPreferences.setMockInitialValues({
+      'user_data': jsonEncode({
+        'id': 'user-uuid',
+        'telephone': '+237600000000',
+        'statut': 1,
+        'active': '1',
+        'delete': '0',
+      }),
+    });
+    final adapter = _GroupsApiAdapter(cycleStatus: 'EN_ATTENTE');
+    ApiService.dio.httpClientAdapter = adapter;
+
+    final groups = await GroupeNjangiController.getCurrentUserCommunities();
+
+    expect(groups, hasLength(1));
+    expect(groups.single.progressPercent, 0);
+    expect(
+      adapter.paths,
+      isNot(contains('/api/cycles/cycle-uuid/tontine/progression')),
+    );
+  });
+
   test(
-    'loads progress for the selected cycle when API status is EN_ATTENTE',
+    'loads progress for the latest closed cycle when there is no current cycle',
     () async {
       await AppLocalizations.load();
       SharedPreferences.setMockInitialValues({
@@ -125,7 +149,7 @@ void main() {
           'delete': '0',
         }),
       });
-      final adapter = _GroupsApiAdapter(cycleStatus: 'EN_ATTENTE');
+      final adapter = _GroupsApiAdapter(cycleStatus: 'TERMINEE');
       ApiService.dio.httpClientAdapter = adapter;
 
       final groups = await GroupeNjangiController.getCurrentUserCommunities();

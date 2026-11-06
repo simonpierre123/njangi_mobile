@@ -94,7 +94,12 @@ class GroupeNjangiController {
             }
           }
           var progressPercent = 0.0;
-          if (cycleId != null && cycleId.isNotEmpty) {
+          final cycleStatus = cycle?.status?.trim().toUpperCase();
+          final isProgressCycle =
+              cycleStatus == 'EN_COURS' ||
+              cycleStatus == 'ACTIF' ||
+              cycleStatus == 'TERMINEE';
+          if (isProgressCycle && cycleId != null && cycleId.isNotEmpty) {
             final progressResult =
                 await CycleTontineTourController.getProgressForCycle(cycleId);
             final paidTours = progressResult['paidTours'];
@@ -113,6 +118,10 @@ class GroupeNjangiController {
                 '[GROUPES] Progression Tontine indisponible pour le cycle $cycleId.',
               );
             }
+          } else {
+            debugPrint(
+              '[GROUPES] Progression ignorée: aucun cycle en cours ou clôturé pour le groupe $groupId.',
+            );
           }
           final type = group['type']?.toString() ?? '';
           final rawLogo = group['logo']?.toString();
@@ -210,11 +219,41 @@ class GroupeNjangiController {
   }
 
   static Cycle? _selectCycle(List<Cycle> cycles) {
-    for (final cycle in cycles) {
-      final status = cycle.status?.trim().toUpperCase();
-      if (status == 'EN_COURS' || status == 'ACTIF') return cycle;
+    final currentCycles = cycles
+        .where((cycle) {
+          final status = cycle.status?.trim().toUpperCase();
+          return status == 'EN_COURS' || status == 'ACTIF';
+        })
+        .toList(growable: false);
+    if (currentCycles.isNotEmpty) return _latestCycle(currentCycles);
+
+    final completedCycles = cycles
+        .where((cycle) => cycle.status?.trim().toUpperCase() == 'TERMINEE')
+        .toList(growable: false);
+    return completedCycles.isEmpty ? null : _latestCycle(completedCycles);
+  }
+
+  static Cycle _latestCycle(List<Cycle> cycles) {
+    var latest = cycles.first;
+    for (final cycle in cycles.skip(1)) {
+      final cycleNumber = cycle.number;
+      final latestNumber = latest.number;
+      if (cycleNumber != null &&
+          latestNumber != null &&
+          cycleNumber != latestNumber) {
+        if (cycleNumber > latestNumber) latest = cycle;
+        continue;
+      }
+
+      final cycleDate = cycle.endDate ?? cycle.startDate;
+      final latestDate = latest.endDate ?? latest.startDate;
+      if (cycleDate != null &&
+          latestDate != null &&
+          cycleDate.isAfter(latestDate)) {
+        latest = cycle;
+      }
     }
-    return cycles.isEmpty ? null : cycles.first;
+    return latest;
   }
 
   static String? _localizeDueDay(String? value) {

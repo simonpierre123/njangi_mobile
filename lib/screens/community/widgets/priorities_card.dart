@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../ModeView/community_admin_dashboard_model.dart';
+import '../../../common/basewidget/shimmer_loading.dart';
+import '../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
 
@@ -7,9 +9,19 @@ import '../../../../utils/app_dimensions.dart';
 /// de prêt, retards...). Chaque item est sa propre pilule colorée —
 /// #F1F8F6 en temps normal, #FFDAD6 (20%) pour un item d'alerte.
 class PrioritiesCard extends StatelessWidget {
-  const PrioritiesCard({super.key, required this.items, this.onItemTap});
+  const PrioritiesCard({
+    super.key,
+    required this.items,
+    this.isLoading = false,
+    this.errorMessage,
+    this.onRetry,
+    this.onItemTap,
+  });
 
   final List<PriorityItem> items;
+  final bool isLoading;
+  final String? errorMessage;
+  final VoidCallback? onRetry;
   final ValueChanged<PriorityItem>? onItemTap;
 
   @override
@@ -21,18 +33,44 @@ class PrioritiesCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppDimensions.radiusCard),
         border: Border.all(color: AppColors.inputBorder),
       ),
-      child: Column(
-        children: [
-          for (var i = 0; i < items.length; i++) ...[
-            _PriorityRow(
-              item: items[i],
-              onTap: () => onItemTap?.call(items[i]),
-            ),
-            if (i != items.length - 1)
-              SizedBox(height: AppDimensions.spaceSm.h),
-          ],
-        ],
-      ),
+      child:
+          isLoading
+              ? Shimmer(
+                child: Column(
+                  children: [
+                    for (var i = 0; i < 3; i++) ...[
+                      const SkeletonBox(width: double.infinity, height: 48),
+                      if (i != 2) SizedBox(height: AppDimensions.spaceSm.h),
+                    ],
+                  ],
+                ),
+              )
+              : errorMessage != null
+              ? Column(
+                children: [
+                  Text(
+                    errorMessage!,
+                    style: const TextStyle(color: AppColors.textSecondary),
+                  ),
+                  if (onRetry != null)
+                    TextButton(
+                      onPressed: onRetry,
+                      child: Text(AppLocalizations.t('retry')),
+                    ),
+                ],
+              )
+              : Column(
+                children: [
+                  for (var i = 0; i < items.length; i++) ...[
+                    _PriorityRow(
+                      item: items[i],
+                      onTap: () => onItemTap?.call(items[i]),
+                    ),
+                    if (i != items.length - 1)
+                      SizedBox(height: AppDimensions.spaceSm.h),
+                  ],
+                ],
+              ),
     );
   }
 }

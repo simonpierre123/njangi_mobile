@@ -50,12 +50,14 @@ import '../screens/community/creation/invite/invite_join_page.dart';
 import '../screens/community/creation/invite/invite_phone_page.dart';
 import '../screens/community/membres/member_details_page.dart';
 import '../screens/community/rapport/detailed_report_page.dart';
+import '../screens/community/rapport/cycle_history_page.dart';
 import '../screens/community/regles/cycle_rules_page.dart';
 import '../screens/community/rapport/financial_summary_page.dart';
 import '../screens/community/tresorerie/contribution_detail_page.dart';
 import '../screens/community/tresorerie/cycle_contribution_page.dart';
 import '../screens/community/tresorerie/cycle_completed_page.dart';
 import '../screens/community/tresorerie/disburse_funds_sheet.dart';
+import '../screens/community/tresorerie/loan_request_page.dart';
 import '../screens/community/tresorerie/tontine_history_page.dart';
 import '../screens/community/tresorerie/tontine_management_page.dart';
 import '../screens/community/tresorerie/savings_management_page.dart';
@@ -315,6 +317,26 @@ class AppRouter {
               ),
             ],
           ),
+    );
+  }
+
+  static Future<void> _showCycleHistoryMenu(CommunityModel community) async {
+    final navigator = navigatorKey.currentState!;
+    final type = await showModalBottomSheet<String>(
+      context: navigator.context,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder:
+          (sheetContext) => CycleHistoryMenu(
+            onSelect:
+                (selectedType) => Navigator.pop(sheetContext, selectedType),
+          ),
+    );
+    if (type == null) return;
+
+    _push(
+      AppRoutes.cycleHistoryDetail,
+      arguments: CycleHistoryRouteArgs(community: community, type: type),
     );
   }
 
@@ -753,8 +775,10 @@ class AppRouter {
       case AppRoutes.communityShell:
         final community = settings.arguments as CommunityModel?;
         if (community == null) return page(const _MissingCommunityRedirect());
-        final isAdmin =
-            ['ADMIN', 'CO_ADMIN'].contains(community.role?.toUpperCase());
+        final isAdmin = [
+          'ADMIN',
+          'CO_ADMIN',
+        ].contains(community.role?.toUpperCase());
         final adminSummary = _communityMemberSummary(community, admin: true);
         final memberSummary = _communityMemberSummary(community, admin: false);
         final adminDirectory = _adminMemberDirectory(community);
@@ -763,21 +787,11 @@ class AppRouter {
           CommunityShell(
             community: community,
             onBack: _pop,
-            // Dashboard — TODO (Njoya) : mock commun à toutes les
-            // communautés pour l'instant, à individualiser avec l'API.
-            health: CommunityAdminMockDatasource.health,
-            adminPriorities: CommunityAdminMockDatasource.priorities,
-            memberRequiredActions:
-                CommunityMemberMockDatasource.requiredActions,
             adminCycle: CommunityAdminMockDatasource.cycle,
             memberCycle: CommunityMemberMockDatasource.cycle,
             adminMemberStatus: CommunityAdminMockDatasource.memberStatus,
             memberMemberStatus: CommunityMemberMockDatasource.memberStatus,
             loans: CommunityAdminMockDatasource.loans,
-            dashboardActivity:
-                isAdmin
-                    ? CommunityAdminMockDatasource.activity
-                    : CommunityMemberMockDatasource.activity,
             onQuickAction: (action) {
               if (action == 'record_contributions') {
                 _push(AppRoutes.tontineManagement, arguments: community);
@@ -785,6 +799,10 @@ class AppRouter {
               }
               if (action == 'my_contributions') {
                 _push(AppRoutes.cycleContribution, arguments: community);
+                return;
+              }
+              if (action == 'request_loan') {
+                _push(AppRoutes.loanRequest, arguments: community);
                 return;
               }
               if (action == 'manage_savings') {
@@ -823,14 +841,15 @@ class AppRouter {
             },
             onPriorityTap:
                 (p) => _push(AppRoutes.comingSoon, arguments: p.label),
-            onSeeAllActivity:
-                () => _push(
-                  AppRoutes.comingSoon,
-                  arguments: "Historique d'activité",
-                ),
+            onSeeAllActivity: () => _showCycleHistoryMenu(community),
             onActionPay:
-                (item) =>
-                    _push(AppRoutes.comingSoon, arguments: item.actionLabel),
+                (_) => _push(
+                  AppRoutes.cycleContribution,
+                  arguments: CycleContributionRouteArgs(
+                    community: community,
+                    initialContributionType: 'TONTINE',
+                  ),
+                ),
             onActionTap:
                 (item) => _push(AppRoutes.comingSoon, arguments: item.title),
             // Trésorerie
@@ -851,16 +870,11 @@ class AppRouter {
             onHistoryItemTap:
                 (item) =>
                     _push(AppRoutes.comingSoon, arguments: item.cycleLabel),
-            onSeeAllHistory:
-                () => _push(
-                  AppRoutes.comingSoon,
-                  arguments: 'Historique complet',
-                ),
+            onSeeAllHistory: () => _showCycleHistoryMenu(community),
             onOpenDetailedReport:
                 () => _push(AppRoutes.detailedReport, arguments: community),
             onRequestLoan:
-                () =>
-                    _push(AppRoutes.comingSoon, arguments: 'Demander un prêt'),
+                () => _push(AppRoutes.loanRequest, arguments: community),
             currentBeneficiary: CommunityBeneficiaryMockDatasource.current,
             beneficiaryStats: CommunityBeneficiaryMockDatasource.stats,
             payoutHistory: CommunityBeneficiaryMockDatasource.payoutHistory,
@@ -1211,8 +1225,7 @@ class AppRouter {
         final arguments = settings.arguments;
         final routeArgs =
             arguments is CycleContributionRouteArgs ? arguments : null;
-        final community =
-            routeArgs?.community ?? arguments as CommunityModel?;
+        final community = routeArgs?.community ?? arguments as CommunityModel?;
         if (community == null) return page(const _MissingCommunityRedirect());
         return page(
           CycleContributionPage(
@@ -1239,6 +1252,37 @@ class AppRouter {
         if (community == null) return page(const _MissingCommunityRedirect());
         return page(TontineHistoryPage(community: community, onBack: _pop));
 
+      case AppRoutes.cycleHistoryCategories:
+        final community = settings.arguments as CommunityModel?;
+        if (community == null) return page(const _MissingCommunityRedirect());
+        return page(
+          CycleHistoryCategoryPage(
+            community: community,
+            onBack: _pop,
+            onSelect:
+                (type) => _push(
+                  AppRoutes.cycleHistoryDetail,
+                  arguments: CycleHistoryRouteArgs(
+                    community: community,
+                    type: type,
+                  ),
+                ),
+          ),
+        );
+
+      case AppRoutes.cycleHistoryDetail:
+        final arguments = settings.arguments;
+        if (arguments is! CycleHistoryRouteArgs) {
+          return page(const _MissingCommunityRedirect());
+        }
+        return page(
+          CycleActivityHistoryPage(
+            community: arguments.community,
+            type: arguments.type,
+            onBack: _pop,
+          ),
+        );
+
       case AppRoutes.savingsManagement:
         final community = settings.arguments as CommunityModel?;
         if (community == null) return page(const _MissingCommunityRedirect());
@@ -1246,8 +1290,8 @@ class AppRouter {
           SavingsManagementPage(
             community: community,
             onBack: _pop,
-            onOpenHistory: () =>
-                _push(AppRoutes.savingsHistory, arguments: community),
+            onOpenHistory:
+                () => _push(AppRoutes.savingsHistory, arguments: community),
           ),
         );
 
@@ -1443,6 +1487,11 @@ class AppRouter {
                     : const CycleRulesRouteArgs(),
           ),
         );
+
+      case AppRoutes.loanRequest:
+        final community = settings.arguments as CommunityModel?;
+        if (community == null) return page(const _MissingCommunityRedirect());
+        return page(LoanRequestPage(community: community));
 
       default:
         return page(

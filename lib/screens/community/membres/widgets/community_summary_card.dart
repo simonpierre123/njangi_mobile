@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../../ModeView/community_members_model.dart';
+import '../../../../common/basewidget/network_avatar.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
+import '../../../../utils/app_constants.dart';
 import '../../../../utils/app_dimensions.dart';
 
 /// Carte verte "La communauté" — stats globales + aperçu des avatars.
@@ -11,10 +13,12 @@ class CommunitySummaryCard extends StatelessWidget {
   const CommunitySummaryCard({
     super.key,
     required this.summary,
+    this.previewMemberPhotoUrls = const [],
     this.previewCount = 3,
   });
 
   final CommunitySummary summary;
+  final List<String?> previewMemberPhotoUrls;
   final int previewCount;
 
   @override
@@ -76,8 +80,8 @@ class CommunitySummaryCard extends StatelessWidget {
           ),
           SizedBox(height: AppDimensions.spaceMd.h),
           _AvatarPreviewRow(
-            total: summary.totalMembers,
             previewCount: previewCount,
+            photoUrls: previewMemberPhotoUrls,
           ),
         ],
       ),
@@ -86,17 +90,21 @@ class CommunitySummaryCard extends StatelessWidget {
 }
 
 class _AvatarPreviewRow extends StatelessWidget {
-  const _AvatarPreviewRow({required this.total, required this.previewCount});
+  const _AvatarPreviewRow({
+    required this.previewCount,
+    required this.photoUrls,
+  });
 
-  final int total;
   final int previewCount;
+  final List<String?> photoUrls;
 
   @override
   Widget build(BuildContext context) {
-    final remaining = total - previewCount;
     const circleSize = 32.0;
     const overlap = 12.0; // chevauchement entre chaque cercle
-    final itemCount = previewCount + (remaining > 0 ? 1 : 0);
+    final itemCount =
+        photoUrls.isEmpty ? previewCount : photoUrls.length.clamp(0, previewCount);
+    if (itemCount == 0) return const SizedBox.shrink();
     final totalWidth = circleSize + (itemCount - 1) * (circleSize - overlap);
 
     return SizedBox(
@@ -104,43 +112,36 @@ class _AvatarPreviewRow extends StatelessWidget {
       height: circleSize,
       child: Stack(
         children: [
-          for (var i = 0; i < previewCount; i++)
+          for (var i = 0; i < itemCount; i++)
             Positioned(
               left: i * (circleSize - overlap),
               child: Container(
                 width: circleSize,
                 height: circleSize,
+                padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: AppColors.white.withValues(alpha: 0.3),
+                  color: AppColors.mediumGreen,
                   border: Border.all(color: AppColors.mediumGreen, width: 2),
                 ),
-              ),
-            ),
-          if (remaining > 0)
-            Positioned(
-              left: previewCount * (circleSize - overlap),
-              child: Container(
-                width: circleSize,
-                height: circleSize,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.primary,
-                  border: Border.all(color: AppColors.mediumGreen, width: 2),
-                ),
-                child: Text(
-                  '+$remaining',
-                  style: const TextStyle(
-                    color: AppColors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
+                child: NetworkAvatar(
+                  radius: (circleSize - 4) / 2,
+                  seed: i + 1,
+                  imageUrl: _mediaUrl(photoUrls.isEmpty ? null : photoUrls[i]),
+                  fallbackIcon: null,
+                  fallbackBg: AppColors.white.withValues(alpha: 0.3),
                 ),
               ),
             ),
         ],
       ),
     );
+  }
+
+  String? _mediaUrl(String? path) {
+    final value = path?.trim();
+    if (value == null || value.isEmpty) return null;
+    if (value.startsWith('http')) return value;
+    return '${AppConstants.imageBaseUrl}${value.replaceFirst(RegExp(r'^/+'), '')}';
   }
 }

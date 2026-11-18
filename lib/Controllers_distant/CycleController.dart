@@ -181,6 +181,18 @@ class CycleController {
         return AppLocalizations.t('cycle_amount_required');
       }
     }
+    if (draft.penaltiesEnabled) {
+      final latePenalty = _parseAmount(draft.latePenaltyAmount);
+      final indisciplinePenalty = _parseAmount(
+        draft.indisciplinePenaltyAmount,
+      );
+      if (latePenalty == null ||
+          latePenalty <= 0 ||
+          indisciplinePenalty == null ||
+          indisciplinePenalty <= 0) {
+        return AppLocalizations.t('cycle_penalty_amount_required');
+      }
+    }
     return null;
   }
 
@@ -232,6 +244,15 @@ class CycleController {
       loanModuleActive: draft.allowLoans ? '1' : '0',
       collectiveLoanValidation: draft.collectiveValidation ? '1' : '0',
       penaltiesEnabled: draft.penaltiesEnabled ? '1' : '0',
+      latePenaltyAmount:
+          draft.penaltiesEnabled
+              ? _parseAmount(draft.latePenaltyAmount)
+              : null,
+      indisciplinePenaltyAmount:
+          draft.penaltiesEnabled
+              ? _parseAmount(draft.indisciplinePenaltyAmount)
+              : null,
+      indisciplinePenaltyMode: draft.indisciplinePenaltyMode,
       savingsActive: draft.savingsActive,
       savingsMode: draft.savingsMode,
       savingsFixedAmount:

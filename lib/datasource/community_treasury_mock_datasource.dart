@@ -4,38 +4,6 @@ import '../ModeView/treasury_model.dart';
 class CommunityTreasuryMockDatasource {
   CommunityTreasuryMockDatasource._();
 
-  static const financialPosition = FinancialPosition(
-    participationPercent: 100,
-    statusLabel: 'À jour',
-    totalContributed: '400 000 FCFA',
-    activeLoanLabel: 'Aucun',
-    nextDueDate: '12 Oct.',
-  );
-
-  static const receipt = ContributionReceipt(
-    title: "Cotisation d'Octobre",
-    dueLabel: 'Échéance : 12 Oct.',
-    amount: '50 000 FCFA',
-  );
-
-  static const history = [
-    ContributionHistoryItem(
-      cycleLabel: 'Cycle 7/12',
-      dateLabel: '12 Septembre 2023',
-      amount: '50 000 FCFA',
-    ),
-    ContributionHistoryItem(
-      cycleLabel: 'Cycle 6/12',
-      dateLabel: '12 Août 2023',
-      amount: '50 000 FCFA',
-    ),
-    ContributionHistoryItem(
-      cycleLabel: 'Cycle 5/12',
-      dateLabel: '12 Juillet 2023',
-      amount: '50 000 FCFA',
-    ),
-  ];
-
   static const collection = CollectionStatus(
     collectedAmount: '650 000 XAF',
     targetAmount: '750 000 XAF',

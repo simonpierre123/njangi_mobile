@@ -39,9 +39,13 @@ class PassageOrderEntry {
     this.membershipId,
     this.isPaid = false,
     this.photoUrl,
+    this.tourId,
+    this.dueDate,
+    this.tourStatus,
   });
 
   final String? membershipId;
+  final String? tourId;
   final int order;
   final String name;
   final String statusLabel; // "Actuel · Cycle 8/12" / "Prochain · Cycle 9/12"
@@ -49,9 +53,12 @@ class PassageOrderEntry {
   final bool isCurrent;
   final bool isPaid;
   final String? photoUrl;
+  final DateTime? dueDate;
+  final String? tourStatus;
 
   PassageOrderEntry copyWith({
     String? membershipId,
+    String? tourId,
     int? order,
     String? name,
     String? statusLabel,
@@ -59,9 +66,12 @@ class PassageOrderEntry {
     bool? isCurrent,
     bool? isPaid,
     String? photoUrl,
+    DateTime? dueDate,
+    String? tourStatus,
   }) {
     return PassageOrderEntry(
       membershipId: membershipId ?? this.membershipId,
+      tourId: tourId ?? this.tourId,
       order: order ?? this.order,
       name: name ?? this.name,
       statusLabel: statusLabel ?? this.statusLabel,
@@ -69,6 +79,8 @@ class PassageOrderEntry {
       isCurrent: isCurrent ?? this.isCurrent,
       isPaid: isPaid ?? this.isPaid,
       photoUrl: photoUrl ?? this.photoUrl,
+      dueDate: dueDate ?? this.dueDate,
+      tourStatus: tourStatus ?? this.tourStatus,
     );
   }
 }

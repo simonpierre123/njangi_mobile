@@ -119,7 +119,10 @@ class CommunityDraft {
     this.maxLoanDurationMonths = '',
     this.maxSimultaneousLoans = '',
     this.adminValidationRequired = true,
-    this.penaltiesEnabled = true,
+    this.penaltiesEnabled = false,
+    this.latePenaltyAmount = '',
+    this.indisciplinePenaltyAmount = '',
+    this.indisciplinePenaltyMode = 'POINTAGE_ADMIN',
     this.maxAdminCount = 3,
     this.collectiveValidation = true,
     this.savingsActive = false,
@@ -160,6 +163,9 @@ class CommunityDraft {
   final String maxSimultaneousLoans;
   final bool adminValidationRequired;
   final bool penaltiesEnabled;
+  final String latePenaltyAmount;
+  final String indisciplinePenaltyAmount;
+  final String indisciplinePenaltyMode;
   final int maxAdminCount;
   final bool collectiveValidation;
   final bool savingsActive;
@@ -199,6 +205,9 @@ class CommunityDraft {
     String? maxSimultaneousLoans,
     bool? adminValidationRequired,
     bool? penaltiesEnabled,
+    String? latePenaltyAmount,
+    String? indisciplinePenaltyAmount,
+    String? indisciplinePenaltyMode,
     int? maxAdminCount,
     bool? collectiveValidation,
     bool? savingsActive,
@@ -239,6 +248,11 @@ class CommunityDraft {
       adminValidationRequired:
           adminValidationRequired ?? this.adminValidationRequired,
       penaltiesEnabled: penaltiesEnabled ?? this.penaltiesEnabled,
+      latePenaltyAmount: latePenaltyAmount ?? this.latePenaltyAmount,
+      indisciplinePenaltyAmount:
+          indisciplinePenaltyAmount ?? this.indisciplinePenaltyAmount,
+      indisciplinePenaltyMode:
+          indisciplinePenaltyMode ?? this.indisciplinePenaltyMode,
       maxAdminCount: maxAdminCount ?? this.maxAdminCount,
       collectiveValidation: collectiveValidation ?? this.collectiveValidation,
       savingsActive: savingsActive ?? this.savingsActive,

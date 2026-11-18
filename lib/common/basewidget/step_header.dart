@@ -28,9 +28,13 @@ class StepHeader extends StatelessWidget {
             padding: EdgeInsets.zero,
           ),
           SizedBox(width: AppDimensions.spaceXs.w),
-          Text(
-            '${AppLocalizations.t('step_word')} $step ${AppLocalizations.t('of_word')} $totalSteps',
-            style: Theme.of(context).textTheme.bodyMedium,
+          Expanded(
+            child: Text(
+              '${AppLocalizations.t('step_word')} $step ${AppLocalizations.t('of_word')} $totalSteps',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
           ),
         ],
       ),

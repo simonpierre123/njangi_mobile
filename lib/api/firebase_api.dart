@@ -75,12 +75,6 @@ class FirebaseApi {
     if (launchDetails?.didNotificationLaunchApp == true) {
       _queueLocalNotificationTap(launchDetails?.notificationResponse?.payload);
     }
-    final token = await _firebaseMessaging.getToken();
-    if (token != null && token.isNotEmpty) {
-      await StorageManager.saveTokenFireBase(token);
-    }
-
-    _firebaseMessaging.onTokenRefresh.listen(_saveAndSyncToken);
     // final userData = await StorageManager.loadUserData();
     // final user = userData?['user'] as User?;
 
@@ -103,6 +97,7 @@ class FirebaseApi {
 
     if (!_listenersRegistered) {
       _listenersRegistered = true;
+      _firebaseMessaging.onTokenRefresh.listen(_saveAndSyncToken);
       FirebaseMessaging.onMessage.listen(_showNotification);
       FirebaseMessaging.onMessageOpenedApp.listen((message) {
         unawaited(_dispatchNotificationTap(message.data));
@@ -113,6 +108,18 @@ class FirebaseApi {
           initialMessage.data,
         );
       }
+    }
+
+    try {
+      final token = await _firebaseMessaging.getToken();
+      if (token != null && token.isNotEmpty) {
+        await StorageManager.saveTokenFireBase(token);
+      }
+    } on FirebaseException catch (error) {
+      log(
+        'Impossible de récupérer le token FCM au démarrage '
+        '(${error.code}): ${error.message ?? error}',
+      );
     }
   }
 

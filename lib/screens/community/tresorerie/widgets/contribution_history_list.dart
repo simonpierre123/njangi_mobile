@@ -1,22 +1,55 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../../../common/basewidget/shimmer_loading.dart';
 import '../../../../ModeView/treasury_model.dart';
 import '../../../../localization/app_localizations.dart';
 import '../../../../utils/app_colors.dart';
 import '../../../../utils/app_dimensions.dart';
 
-/// Liste de l'historique de cotisations personnelles.
+/// Liste des cycles précédents et du cycle en cours du groupe.
 class ContributionHistoryList extends StatelessWidget {
   const ContributionHistoryList({
     super.key,
     required this.items,
     required this.onItemTap,
+    required this.isLoading,
+    required this.error,
   });
 
-  final List<ContributionHistoryItem> items;
-  final ValueChanged<ContributionHistoryItem> onItemTap;
+  final List<CycleHistoryItem> items;
+  final ValueChanged<CycleHistoryItem> onItemTap;
+  final bool isLoading;
+  final String? error;
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return Shimmer(
+        child: Column(
+          children: [
+            for (var index = 0; index < 3; index++) ...[
+              _HistoryRowSkeleton(),
+              SizedBox(height: 10),
+            ],
+          ],
+        ),
+      );
+    }
+    if (error != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Text(error!, style: const TextStyle(color: AppColors.error)),
+      );
+    }
+    if (items.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Text(
+          AppLocalizations.t('no_cycle_history'),
+          style: const TextStyle(color: AppColors.textSecondary),
+        ),
+      );
+    }
     return Column(
       children: [
         for (var i = 0; i < items.length; i++) ...[
@@ -28,14 +61,56 @@ class ContributionHistoryList extends StatelessWidget {
   }
 }
 
+class _HistoryRowSkeleton extends StatelessWidget {
+  const _HistoryRowSkeleton();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    decoration: BoxDecoration(
+      color: AppColors.white,
+      borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
+      border: Border.all(color: AppColors.inputBorder),
+    ),
+    padding: EdgeInsets.symmetric(
+      horizontal: AppDimensions.spaceMd.w,
+      vertical: AppDimensions.spaceSm.h,
+    ),
+    child: const Row(
+      children: [
+        SkeletonBox(width: 32, height: 32, isCircle: true),
+        SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SkeletonBox(width: 110, height: 13),
+              SizedBox(height: 7),
+              SkeletonBox(width: 85, height: 10),
+            ],
+          ),
+        ),
+        SizedBox(width: 12),
+        SkeletonBox(width: 78, height: 15),
+      ],
+    ),
+  );
+}
+
 class _HistoryRow extends StatelessWidget {
   const _HistoryRow({required this.item, required this.onTap});
 
-  final ContributionHistoryItem item;
+  final CycleHistoryItem item;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final date = item.endDate ?? item.startDate;
+    final dateLabel =
+        date == null
+            ? '—'
+            : DateFormat.yMMMd(AppLocalizations.locale.value).format(date);
+    final amount =
+        '${NumberFormat.decimalPattern(AppLocalizations.locale.value).format(item.amount)} ${item.currency}';
     return Material(
       color: AppColors.white,
       borderRadius: BorderRadius.circular(AppDimensions.radiusLg),
@@ -71,7 +146,10 @@ class _HistoryRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      item.cycleLabel,
+                      AppLocalizations.t(
+                        'cycle_history_item',
+                        args: [item.number],
+                      ),
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
@@ -80,7 +158,7 @@ class _HistoryRow extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      item.dateLabel,
+                      dateLabel,
                       style: const TextStyle(
                         fontSize: 11,
                         color: AppColors.textSecondary,
@@ -93,7 +171,7 @@ class _HistoryRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    item.amount,
+                    amount,
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 13,
@@ -113,7 +191,11 @@ class _HistoryRow extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      AppLocalizations.t('paid_label'),
+                      AppLocalizations.t(
+                        item.isCurrent
+                            ? 'cycle_status_current'
+                            : 'cycle_status_closed',
+                      ),
                       style: const TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w700,

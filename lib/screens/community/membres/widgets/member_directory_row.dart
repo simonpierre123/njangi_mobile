@@ -14,13 +14,28 @@ class MemberDirectoryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLate = entry.status == MemberRowStatus.late;
-    final badgeBg = isLate ? AppColors.tagRedBg : AppColors.tagMintBg;
-    final badgeText = isLate ? AppColors.alertRed : AppColors.primaryDark;
-    final badgeLabel =
-        isLate
-            ? AppLocalizations.t('overdue_label')
-            : AppLocalizations.t('up_to_date');
+    final (badgeBg, badgeText, badgeLabel) = switch (entry.status) {
+      MemberRowStatus.upToDate => (
+        AppColors.tagMintBg,
+        AppColors.primaryDark,
+        AppLocalizations.t('up_to_date'),
+      ),
+      MemberRowStatus.pending => (
+        AppColors.warningBg,
+        AppColors.warningText,
+        AppLocalizations.t('pending_label'),
+      ),
+      MemberRowStatus.late => (
+        AppColors.tagRedBg,
+        AppColors.alertRed,
+        AppLocalizations.t('needs_regularization'),
+      ),
+      MemberRowStatus.unknown => (
+        AppColors.neutralGrayLight,
+        AppColors.textSecondary,
+        AppLocalizations.t('compliance_unavailable'),
+      ),
+    };
 
     return Container(
       padding: EdgeInsets.symmetric(

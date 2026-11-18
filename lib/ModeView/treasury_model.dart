@@ -1,8 +1,7 @@
-/// Modèles pour l'espace "Trésorerie" d'une communauté.
-///
-/// TODO (Njoya) : à remplacer/aligner sur le modèle réel une fois l'API
-/// branchée — alimentés pour l'instant par
-/// datasource/community_treasury_mock_datasource.dart.
+import '../Models/Cycle.dart';
+
+// Les modèles du reçu et de l'historique correspondent aux données de l'API;
+// les autres sections de la trésorerie restent partiellement alimentées par mocks.
 
 enum ContributionStatus { upToDate, pending, late }
 
@@ -23,30 +22,97 @@ class FinancialPosition {
   final String nextDueDate;
 }
 
-/// Reçu de cotisation en attente/à venir.
+/// Détails d'une cotisation Tontine validée.
 class ContributionReceipt {
   const ContributionReceipt({
     required this.title,
     required this.dueLabel,
     required this.amount,
+    this.operationId,
+    this.cycleLabel,
+    this.groupName,
+    this.period,
+    this.operationDate,
+    this.validatedAt,
+    this.paymentMode,
+    this.operator,
+    this.paymentReference,
+    this.validatorName,
+    this.isSimulation = false,
   });
 
   final String title;
   final String dueLabel;
   final String amount;
+  final String? operationId;
+  final String? cycleLabel;
+  final String? groupName;
+  final String? period;
+  final String? operationDate;
+  final String? validatedAt;
+  final String? paymentMode;
+  final String? operator;
+  final String? paymentReference;
+  final String? validatorName;
+  final bool isSimulation;
 }
 
-/// Une ligne de l'historique de cotisations personnelles.
-class ContributionHistoryItem {
-  const ContributionHistoryItem({
-    required this.cycleLabel,
-    required this.dateLabel,
+/// A cycle displayed in the member's cycle history.
+class CycleHistoryItem {
+  const CycleHistoryItem({
+    required this.id,
+    required this.number,
     required this.amount,
+    required this.currency,
+    required this.startDate,
+    required this.endDate,
+    required this.isCurrent,
   });
 
-  final String cycleLabel;
-  final String dateLabel;
-  final String amount;
+  final String id;
+  final int number;
+  final int amount;
+  final String currency;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final bool isCurrent;
+}
+
+List<CycleHistoryItem> cycleHistoryFromCycles(Iterable<Cycle> cycles) {
+  final eligibleCycles =
+      cycles
+          .where(
+            (cycle) =>
+                cycle.status == 'EN_COURS' || cycle.status == 'TERMINEE',
+          )
+          .where((cycle) => cycle.id != null)
+          .toList()
+        ..sort(
+          (first, second) =>
+              (second.number ?? 0).compareTo(first.number ?? 0),
+        );
+
+  return eligibleCycles
+      .map(
+        (cycle) => CycleHistoryItem(
+          id: cycle.id!,
+          number: cycle.number ?? 0,
+          amount: cycle.contributionAmount ?? 0,
+          currency: cycle.currency ?? 'XAF',
+          startDate: cycle.startDate,
+          endDate: cycle.endDate,
+          isCurrent: cycle.status == 'EN_COURS',
+        ),
+      )
+      .toList(growable: false);
+}
+
+List<CycleHistoryItem> visibleCycleHistory(
+  List<CycleHistoryItem> items, {
+  required bool expanded,
+}) {
+  if (expanded || items.length <= 3) return items;
+  return items.take(3).toList(growable: false);
 }
 
 /// État global de la collecte (onglet "Contributions").

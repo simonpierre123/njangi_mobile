@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../Controllers_distant/CycleController.dart';
 import '../../../Controllers_distant/CycleTontineManagementController.dart';
+import '../../../Controllers_distant/CyclePenaltyController.dart';
 import '../../../ModeView/community_model.dart';
 import '../../../common/basewidget/simple_app_bar.dart';
 import '../../../localization/app_localizations.dart';
@@ -150,6 +151,13 @@ class _TontineManagementPageState extends State<TontineManagementPage> {
                       AppLocalizations.t('contribution_period_label'),
                       operation['periode']?.toString() ?? '—',
                     ),
+                    if (operation['type'] == 'PENALITE') ...[
+                      _detailRow(
+                        AppLocalizations.t('penalty_reason_label'),
+                        _map(operation['penalite'])?['motif']?.toString() ??
+                            '—',
+                      ),
+                    ],
                     _detailRow(
                       AppLocalizations.t('payment_method_label'),
                       operation['mode_paiement']?.toString() ?? '—',
@@ -289,12 +297,20 @@ class _TontineManagementPageState extends State<TontineManagementPage> {
       if (reason == null || reason.isEmpty) return;
     }
 
-    final result = await CycleTontineManagementController.review(
-      cycleId: cycleId,
-      operationId: operationId,
-      decision: decision,
-      reason: reason,
-    );
+    final result =
+        operation['type'] == 'PENALITE'
+            ? await CyclePenaltyController.reviewPayment(
+              cycleId: cycleId,
+              paymentId: operationId,
+              decision: decision,
+              reason: reason,
+            )
+            : await CycleTontineManagementController.review(
+              cycleId: cycleId,
+              operationId: operationId,
+              decision: decision,
+              reason: reason,
+            );
     if (!mounted) return;
     _message(
       result['message']?.toString() ??
@@ -320,6 +336,30 @@ class _TontineManagementPageState extends State<TontineManagementPage> {
       result['message']?.toString() ??
           AppLocalizations.t('tontine_reminder_error'),
     );
+  }
+
+  Future<void> _setAttendance(
+    Map<String, dynamic> member,
+    String status,
+  ) async {
+    final cycleId = _cycleId;
+    final tourId = _map(_overview?['tour_courant'])?['id']?.toString();
+    final membershipId = member['id']?.toString();
+    if (cycleId == null || tourId == null || membershipId == null) return;
+    setState(() => _busyMembershipId = membershipId);
+    final result = await CyclePenaltyController.updateAttendance(
+      cycleId: cycleId,
+      tourId: tourId,
+      membershipId: membershipId,
+      status: status,
+    );
+    if (!mounted) return;
+    setState(() => _busyMembershipId = null);
+    _message(
+      result['message']?.toString() ??
+          AppLocalizations.t('tontine_attendance_save_error'),
+    );
+    if (result['success'] == true) await _load();
   }
 
   Future<void> _closePeriod() async {
@@ -375,6 +415,16 @@ class _TontineManagementPageState extends State<TontineManagementPage> {
         members.where((member) {
           return _map(member['operation'])?['statut'] == 'EN_ATTENTE';
         }).toList();
+    final pendingPenaltyPayments = _maps(
+      overview?['paiements_penalites_en_attente'],
+    );
+    final canPointAttendance = overview?['peut_pointer_presence'] == true;
+    final dueDate = DateTime.tryParse(tour?['date_echeance']?.toString() ?? '');
+    final attendanceDateReached =
+        dueDate != null &&
+        !DateUtils.dateOnly(
+          dueDate,
+        ).isAfter(DateUtils.dateOnly(DateTime.now()));
     final unpaid =
         members.where((member) {
           final operation = _map(member['operation']);
@@ -390,8 +440,7 @@ class _TontineManagementPageState extends State<TontineManagementPage> {
       return total;
     });
     final everyonePaid = members.isNotEmpty && validated == members.length;
-    final canClose =
-        tour != null && pending.isEmpty && everyonePaid;
+    final canClose = tour != null && pending.isEmpty && everyonePaid;
     final currency = overview?['devise']?.toString() ?? 'XAF';
 
     return Scaffold(
@@ -506,6 +555,27 @@ class _TontineManagementPageState extends State<TontineManagementPage> {
                                   _map(member['operation'])!,
                                 ),
                           ),
+                      if (pendingPenaltyPayments.isNotEmpty) ...[
+                        const SizedBox(height: 24),
+                        _SectionHeading(
+                          title: AppLocalizations.t('pending_penalty_payments'),
+                          count: pendingPenaltyPayments.length,
+                        ),
+                        for (final payment in pendingPenaltyPayments)
+                          _ContributionTile(
+                            name: _name(_map(payment['membre'])),
+                            amount: _amount(
+                              payment['montant'],
+                              currency: currency,
+                            ),
+                            onTap:
+                                () => _openContribution(
+                                  _map(payment['membre']) ??
+                                      <String, dynamic>{},
+                                  payment,
+                                ),
+                          ),
+                      ],
                       const SizedBox(height: 24),
                       _SectionHeading(
                         title: AppLocalizations.t('tontine_members_to_remind'),
@@ -528,6 +598,29 @@ class _TontineManagementPageState extends State<TontineManagementPage> {
                             busy: _busyMembershipId == member['id']?.toString(),
                             onRemind: () => _sendReminder(member),
                           ),
+                      if (canPointAttendance) ...[
+                        const SizedBox(height: 24),
+                        _SectionHeading(
+                          title: AppLocalizations.t('tontine_attendance_title'),
+                          count: members.length,
+                        ),
+                        if (!attendanceDateReached)
+                          _EmptyHint(
+                            text: AppLocalizations.t(
+                              'tontine_attendance_not_open',
+                            ),
+                          )
+                        else
+                          for (final member in members)
+                            _AttendanceTile(
+                              name: _name(member),
+                              status: member['presence']?.toString(),
+                              busy:
+                                  _busyMembershipId == member['id']?.toString(),
+                              onChanged:
+                                  (status) => _setAttendance(member, status),
+                            ),
+                      ],
                       const SizedBox(height: 24),
                       if (pending.isNotEmpty)
                         _EmptyHint(
@@ -775,6 +868,75 @@ class _UnpaidMemberTile extends StatelessWidget {
                 )
                 : const Icon(Icons.notifications_active_outlined, size: 18),
         label: Text(AppLocalizations.t('tontine_remind_button')),
+      ),
+    ),
+  );
+}
+
+class _AttendanceTile extends StatelessWidget {
+  const _AttendanceTile({
+    required this.name,
+    required this.status,
+    required this.busy,
+    required this.onChanged,
+  });
+
+  final String name;
+  final String? status;
+  final bool busy;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    margin: const EdgeInsets.only(bottom: 8),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              name,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 150,
+            child: DropdownButtonFormField<String>(
+              value: status == 'PRESENT' || status == 'ABSENT' ? status : null,
+              decoration: InputDecoration(
+                isDense: true,
+                labelText: AppLocalizations.t('tontine_attendance_status'),
+              ),
+              items: [
+                DropdownMenuItem(
+                  value: 'PRESENT',
+                  child: Text(AppLocalizations.t('tontine_attendance_present')),
+                ),
+                DropdownMenuItem(
+                  value: 'ABSENT',
+                  child: Text(AppLocalizations.t('tontine_attendance_absent')),
+                ),
+              ],
+              onChanged:
+                  busy
+                      ? null
+                      : (value) {
+                        if (value != null && value != status) {
+                          onChanged(value);
+                        }
+                      },
+            ),
+          ),
+          if (busy) ...[
+            const SizedBox(width: 8),
+            const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ],
+        ],
       ),
     ),
   );

@@ -37,6 +37,7 @@ class MemberDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compliance = details.compliance;
     final documents =
         <({String label, String? path})>[
           (
@@ -129,6 +130,52 @@ class MemberDetailsPage extends StatelessWidget {
               ),
               _info(AppLocalizations.t('member_status_label'), details.status),
               _info(AppLocalizations.t('member_id_label'), details.userId),
+              if (compliance != null) ...[
+                SizedBox(height: AppDimensions.spaceLg.h),
+                Text(
+                  AppLocalizations.t('member_compliance_title'),
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                SizedBox(height: AppDimensions.spaceSm.h),
+                if (compliance.currentPeriod != null)
+                  _complianceItem(
+                    icon:
+                        compliance.contributionValidated
+                            ? Icons.check_circle
+                            : Icons.radio_button_unchecked,
+                    isComplete: compliance.contributionValidated,
+                    label: _contributionStatusLabel(
+                      compliance.contributionStatus,
+                      compliance.currentPeriod!,
+                    ),
+                  ),
+                for (final loan in compliance.loans)
+                  _complianceItem(
+                    icon: Icons.account_balance_wallet_outlined,
+                    isComplete: false,
+                    label: AppLocalizations.t(
+                      'loan_repayment_required',
+                      args: [loan.remainingAmount, compliance.currency],
+                    ),
+                    detail:
+                        loan.repaymentDate == null
+                            ? null
+                            : AppLocalizations.t(
+                              'loan_repayment_due_date',
+                              args: [loan.repaymentDate!.split('T').first],
+                            ),
+                  ),
+                if (compliance.isUpToDate)
+                  _complianceItem(
+                    icon: Icons.check_circle,
+                    isComplete: true,
+                    label: AppLocalizations.t('member_is_up_to_date'),
+                  ),
+              ],
               if (documents.isNotEmpty) ...[
                 SizedBox(height: AppDimensions.spaceLg.h),
                 Text(
@@ -149,6 +196,64 @@ class MemberDetailsPage extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  String _contributionStatusLabel(String status, String period) {
+    final key = switch (status) {
+      'VALIDE' => 'current_tour_contribution_done',
+      'EN_ATTENTE' => 'current_tour_contribution_pending',
+      'REJETE' => 'current_tour_contribution_rejected',
+      'SIMULATION' => 'current_tour_contribution_simulation',
+      _ => 'current_tour_contribution_required',
+    };
+    return AppLocalizations.t(key, args: [period]);
+  }
+
+  Widget _complianceItem({
+    required IconData icon,
+    required bool isComplete,
+    required String label,
+    String? detail,
+  }) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: AppDimensions.spaceSm.h),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            size: 18,
+            color: isComplete ? AppColors.primaryDark : AppColors.warningText,
+          ),
+          SizedBox(width: AppDimensions.spaceSm.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (detail != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    detail,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

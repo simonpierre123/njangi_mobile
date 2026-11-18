@@ -27,6 +27,9 @@ class Cycle {
     this.loanModuleActive = '0',
     this.collectiveLoanValidation = '1',
     this.penaltiesEnabled = '1',
+    this.latePenaltyAmount,
+    this.indisciplinePenaltyAmount,
+    this.indisciplinePenaltyMode = 'POINTAGE_ADMIN',
     this.savingsActive = false,
     this.savingsMode,
     this.savingsFixedAmount,
@@ -69,6 +72,9 @@ class Cycle {
   final String loanModuleActive;
   final String collectiveLoanValidation;
   final String penaltiesEnabled;
+  final int? latePenaltyAmount;
+  final int? indisciplinePenaltyAmount;
+  final String indisciplinePenaltyMode;
   final bool savingsActive;
   final String? savingsMode;
   final int? savingsFixedAmount;
@@ -117,6 +123,12 @@ class Cycle {
       collectiveLoanValidation:
           json['validation_pret_colectif']?.toString() ?? '1',
       penaltiesEnabled: json['appliquer_penalites']?.toString() ?? '1',
+      latePenaltyAmount: _toInt(json['montant_penalite_retard']),
+      indisciplinePenaltyAmount: _toInt(
+        json['montant_penalite_indiscipline'],
+      ),
+      indisciplinePenaltyMode:
+          json['mode_penalite_indiscipline']?.toString() ?? 'POINTAGE_ADMIN',
       savingsActive: _toBool(json['epargne_active']) ?? false,
       savingsMode: json['epargne_mode']?.toString(),
       savingsFixedAmount: _toInt(json['epargne_montant_fixe']),
@@ -163,6 +175,9 @@ class Cycle {
     'module_pret_actif': loanModuleActive,
     'validation_pret_colectif': collectiveLoanValidation,
     'appliquer_penalites': penaltiesEnabled,
+    'montant_penalite_retard': latePenaltyAmount ?? 0,
+    'montant_penalite_indiscipline': indisciplinePenaltyAmount ?? 0,
+    'mode_penalite_indiscipline': indisciplinePenaltyMode,
     'epargne_active': savingsActive,
     'epargne_mode': savingsMode,
     'epargne_montant_fixe': savingsFixedAmount,

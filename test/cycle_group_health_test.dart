@@ -9,6 +9,7 @@ void main() {
       'membres_a_jour': 2,
       'membres_en_attente': 2,
       'membres_en_retard': 1,
+      'membres_ayant_cotise_tour_courant': 3,
       'prets_actifs': 0,
       'cotisations_en_attente': 0,
     });
@@ -17,5 +18,6 @@ void main() {
     expect(health.membersUpToDate, 2);
     expect(health.membersPending, 2);
     expect(health.membersOverdue, 1);
+    expect(health.currentTourContributors, 3);
   });
 }

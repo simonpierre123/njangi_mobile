@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../Controllers_distant/CycleController.dart';
 import '../../../Controllers_distant/CyclePaymentSimulationController.dart';
+import '../../../Controllers_distant/CyclePenaltyController.dart';
 import '../../../Controllers_distant/CycleSavingsContributionController.dart';
 import '../../../Controllers_distant/CycleTontineContributionController.dart';
 import '../../../ModeView/community_model.dart';
@@ -45,6 +46,7 @@ class CycleContributionPage extends StatefulWidget {
 class _CycleContributionPageState extends State<CycleContributionPage> {
   final _referenceController = TextEditingController();
   final _savingsAmountController = TextEditingController();
+  final _penaltyAmountController = TextEditingController();
   String? _cycleId;
   String? _selectedContributionType;
   String? _selectedSavingsPeriod;
@@ -52,6 +54,9 @@ class _CycleContributionPageState extends State<CycleContributionPage> {
   String _operator = 'MTN';
   File? _receipt;
   Map<String, dynamic>? _contextData;
+  List<Map<String, dynamic>> _penalties = const [];
+  Map<String, dynamic>? _selectedPenalty;
+  String? _penaltiesError;
   bool _loading = false;
   bool _submitting = false;
   String? _error;
@@ -76,6 +81,7 @@ class _CycleContributionPageState extends State<CycleContributionPage> {
   void dispose() {
     _referenceController.dispose();
     _savingsAmountController.dispose();
+    _penaltyAmountController.dispose();
     super.dispose();
   }
 
@@ -105,8 +111,13 @@ class _CycleContributionPageState extends State<CycleContributionPage> {
   Future<void> _loadContext() async {
     final cycleId = _cycleId;
     if (cycleId == null || cycleId.isEmpty) return;
-    final result = await CycleTontineContributionController.getContext(cycleId);
+    final results = await Future.wait([
+      CycleTontineContributionController.getContext(cycleId),
+      CyclePenaltyController.getForCycle(cycleId),
+    ]);
     if (!mounted) return;
+    final result = results[0];
+    final penaltiesResult = results[1];
     setState(() {
       _loading = false;
       if (result['success'] == true && result['data'] is Map) {
@@ -115,6 +126,47 @@ class _CycleContributionPageState extends State<CycleContributionPage> {
         _error =
             result['message']?.toString() ??
             AppLocalizations.t('tontine_contribution_load_error');
+      }
+      if (penaltiesResult['success'] == true &&
+          penaltiesResult['data'] is Map) {
+        final rows =
+            (penaltiesResult['data'] as Map)['penalites'];
+        _penalties =
+            rows is List
+                ? rows
+                    .whereType<Map>()
+                    .map(Map<String, dynamic>.from)
+                    .toList(growable: false)
+                : const [];
+        _penaltiesError = null;
+      } else {
+        _penaltiesError =
+            penaltiesResult['message']?.toString() ??
+            AppLocalizations.t('cycle_penalties_load_error');
+      }
+    });
+  }
+
+  Future<void> _loadPenalties() async {
+    final cycleId = _cycleId;
+    if (cycleId == null || cycleId.isEmpty) return;
+    final result = await CyclePenaltyController.getForCycle(cycleId);
+    if (!mounted) return;
+    setState(() {
+      if (result['success'] == true && result['data'] is Map) {
+        final rows = (result['data'] as Map)['penalites'];
+        _penalties =
+            rows is List
+                ? rows
+                    .whereType<Map>()
+                    .map(Map<String, dynamic>.from)
+                    .toList(growable: false)
+                : const [];
+        _penaltiesError = null;
+      } else {
+        _penaltiesError =
+            result['message']?.toString() ??
+            AppLocalizations.t('cycle_penalties_load_error');
       }
     });
   }
@@ -185,6 +237,69 @@ class _CycleContributionPageState extends State<CycleContributionPage> {
         _showMessage(AppLocalizations.t('tontine_receipt_pick_error'));
       }
     }
+  }
+
+  void _selectPenalty(Map<String, dynamic> penalty) {
+    setState(() {
+      _selectedPenalty = penalty;
+      _paymentMode = null;
+      _receipt = null;
+      _referenceController.clear();
+      _penaltyAmountController.text =
+          penalty['montant_restant']?.toString() ?? '';
+    });
+  }
+
+  Future<void> _submitPenaltyPayment() async {
+    final cycleId = _cycleId;
+    final penaltyId = _selectedPenalty?['id']?.toString();
+    final amount = int.tryParse(_penaltyAmountController.text.trim());
+    if (cycleId == null ||
+        penaltyId == null ||
+        amount == null ||
+        amount <= 0 ||
+        _paymentMode == null ||
+        _submitting) {
+      _showMessage(AppLocalizations.t('cycle_penalty_payment_error'));
+      return;
+    }
+    if (_paymentMode == 'MOBILE_MONEY' &&
+        _referenceController.text.trim().isEmpty) {
+      _showMessage(AppLocalizations.t('tontine_reference_required'));
+      return;
+    }
+    if (_paymentMode == 'ESPECES' && _receipt == null) {
+      _showMessage(AppLocalizations.t('tontine_receipt_required'));
+      return;
+    }
+
+    setState(() => _submitting = true);
+    final result = await CyclePenaltyController.submitPayment(
+      cycleId: cycleId,
+      penaltyId: penaltyId,
+      amount: amount,
+      paymentMode: _paymentMode!,
+      operator: _paymentMode == 'MOBILE_MONEY' ? _operator : null,
+      paymentReference:
+          _paymentMode == 'MOBILE_MONEY' ? _referenceController.text : null,
+      receipt: _paymentMode == 'ESPECES' ? _receipt : null,
+    );
+    if (!mounted) return;
+    setState(() {
+      _submitting = false;
+      if (result['success'] == true) {
+        _selectedPenalty = null;
+        _paymentMode = null;
+        _receipt = null;
+        _referenceController.clear();
+        _penaltyAmountController.clear();
+      }
+    });
+    _showMessage(
+      result['message']?.toString() ??
+          AppLocalizations.t('cycle_penalty_payment_error'),
+    );
+    if (result['success'] == true) await _loadPenalties();
   }
 
   Future<void> _submit() async {
@@ -452,6 +567,7 @@ class _CycleContributionPageState extends State<CycleContributionPage> {
   Widget _buildPaymentSection({
     required String submitLabel,
     required VoidCallback onSubmit,
+    bool allowTestPayment = true,
   }) {
     return _SectionCard(
       title: AppLocalizations.t('payment_method_label'),
@@ -477,7 +593,8 @@ class _CycleContributionPageState extends State<CycleContributionPage> {
                 _referenceController.clear();
               }),
         ),
-        if (_contextData?['paiement_simulation_active'] == true) ...[
+        if (allowTestPayment &&
+            _contextData?['paiement_simulation_active'] == true) ...[
           SizedBox(height: AppDimensions.spaceSm.h),
           _ChoiceTile(
             title: AppLocalizations.t('payment_in_app_test'),
@@ -579,6 +696,82 @@ class _CycleContributionPageState extends State<CycleContributionPage> {
             onPressed: _submitting ? null : onSubmit,
           ),
         ],
+      ],
+    );
+  }
+
+  Widget _buildPenaltiesSection() {
+    final selectedId = _selectedPenalty?['id']?.toString();
+    return Column(
+      children: [
+        SizedBox(height: AppDimensions.spaceLg.h),
+        _SectionCard(
+          title: AppLocalizations.t('cycle_penalties_title'),
+          children: [
+            if (_penaltiesError != null)
+              _OperationStatus(
+                message: _penaltiesError!,
+                icon: Icons.error_outline,
+              )
+            else if (_penalties.isEmpty)
+              Text(AppLocalizations.t('cycle_penalties_none'))
+            else
+              for (final penalty in _penalties) ...[
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    AppLocalizations.t(
+                      penalty['type'] == 'RETARD'
+                          ? 'cycle_penalty_late'
+                          : 'cycle_penalty_indiscipline',
+                    ),
+                  ),
+                  subtitle: Text(
+                    '${penalty['motif'] ?? ''}\n'
+                    '${AppLocalizations.t('penalty_remaining_amount')}: '
+                    '${_formatAmount(penalty['montant_restant'])} '
+                    '${_value(_contextData?['devise'], fallback: 'XAF')}',
+                  ),
+                  isThreeLine: true,
+                  trailing:
+                      penalty['paiement_en_attente'] == true
+                          ? Text(
+                            AppLocalizations.t(
+                              'cycle_penalty_payment_pending',
+                            ),
+                            textAlign: TextAlign.end,
+                          )
+                          : TextButton(
+                            onPressed: () => _selectPenalty(penalty),
+                            child: Text(
+                              AppLocalizations.t('cycle_penalty_pay_button'),
+                            ),
+                          ),
+                ),
+                if (selectedId == penalty['id']?.toString() &&
+                    penalty['paiement_en_attente'] != true) ...[
+                  AppTextField(
+                    label: AppLocalizations.t('penalty_payment_amount_label'),
+                    hint: penalty['montant_restant']?.toString() ?? '0',
+                    controller: _penaltyAmountController,
+                    keyboardType: TextInputType.number,
+                    suffixText: _value(
+                      _contextData?['devise'],
+                      fallback: 'XAF',
+                    ),
+                  ),
+                  SizedBox(height: AppDimensions.spaceMd.h),
+                  _buildPaymentSection(
+                    submitLabel: AppLocalizations.t(
+                      'cycle_penalty_pay_button',
+                    ),
+                    onSubmit: _submitPenaltyPayment,
+                    allowTestPayment: false,
+                  ),
+                ],
+              ],
+          ],
+        ),
       ],
     );
   }
@@ -721,6 +914,15 @@ class _CycleContributionPageState extends State<CycleContributionPage> {
           if (operation != null) ...[
             SizedBox(height: AppDimensions.spaceMd.h),
             _OperationStatus(operation: operation),
+          ],
+          if (data['etat_fenetre_cotisation'] == 'EN_RETARD') ...[
+            SizedBox(height: AppDimensions.spaceMd.h),
+            _OperationStatus(
+              message: AppLocalizations.t(
+                'tontine_contribution_late_still_open',
+              ),
+              icon: Icons.warning_amber_outlined,
+            ),
           ],
           if (cyclePending && !tontineWindowOpen) ...[
             SizedBox(height: AppDimensions.spaceMd.h),
@@ -971,6 +1173,7 @@ class _CycleContributionPageState extends State<CycleContributionPage> {
                     onSubmit: _submit,
                   ),
                 ],
+                _buildPenaltiesSection(),
               ],
               SizedBox(height: AppDimensions.spaceXl.h),
             ],

@@ -7,6 +7,7 @@ import '../../Controllers_distant/CycleActivityController.dart';
 import '../../Controllers_distant/CycleController.dart';
 import '../../Controllers_distant/CycleDashboardPrioritiesController.dart';
 import '../../Controllers_distant/CycleLoanDashboardController.dart';
+import '../../Controllers_distant/CycleMemberComplianceController.dart';
 import '../../Controllers_distant/CycleTontineContributionController.dart';
 import '../../Controllers_distant/CycleTontineTourController.dart';
 import '../../Models/Cycle.dart';
@@ -64,9 +65,6 @@ class CommunityShell extends StatefulWidget {
     required this.onActionPay,
     required this.onActionTap,
     // Trésorerie
-    required this.financialPosition,
-    required this.receipt,
-    required this.history,
     required this.collection,
     required this.memberContributions,
     required this.loan,
@@ -75,7 +73,6 @@ class CommunityShell extends StatefulWidget {
     required this.repaymentHistory,
     required this.onSeeReceipt,
     required this.onHistoryItemTap,
-    required this.onSeeAllHistory,
     required this.onOpenDetailedReport,
     required this.onRequestLoan,
     required this.currentBeneficiary,
@@ -89,7 +86,6 @@ class CommunityShell extends StatefulWidget {
     required this.adminDirectory,
     required this.memberDirectory,
     required this.growth,
-    required this.trustScore,
     required this.onInviteMember,
     required this.onMemberUrgentAction,
     required this.onAdminMemberTap,
@@ -122,18 +118,14 @@ class CommunityShell extends StatefulWidget {
   final ValueChanged<RequiredActionItem> onActionPay;
   final ValueChanged<RequiredActionItem> onActionTap;
 
-  final FinancialPosition financialPosition;
-  final ContributionReceipt receipt;
-  final List<ContributionHistoryItem> history;
   final CollectionStatus collection;
   final List<MemberContribution> memberContributions;
   final LoanInfo? loan;
   final LoanDueInfo? loanDue;
   final LoanEligibility eligibility;
   final List<MemberContribution> repaymentHistory;
-  final VoidCallback onSeeReceipt;
-  final ValueChanged<ContributionHistoryItem> onHistoryItemTap;
-  final VoidCallback onSeeAllHistory;
+  final ValueChanged<ContributionReceipt> onSeeReceipt;
+  final ValueChanged<CycleHistoryItem> onHistoryItemTap;
   final VoidCallback onOpenDetailedReport;
   final VoidCallback onRequestLoan;
   final CurrentBeneficiary currentBeneficiary;
@@ -147,7 +139,6 @@ class CommunityShell extends StatefulWidget {
   final List<AdminMemberEntry> adminDirectory;
   final List<MemberDirectoryEntry> memberDirectory;
   final GrowthStats growth;
-  final TrustScore trustScore;
   final VoidCallback onInviteMember;
   final ValueChanged<AdminMemberEntry> onMemberUrgentAction;
   final ValueChanged<AdminMemberEntry> onAdminMemberTap;
@@ -175,9 +166,11 @@ class _CommunityShellState extends State<CommunityShell> with RouteAware {
   String? _cycleId;
   CycleDashboardPriorities? _dashboardPriorities;
   CycleGroupHealth? _groupHealth;
+  CycleMemberComplianceOverview? _memberCompliance;
   bool _isLoadingGroupHealth = true;
   bool _groupHealthLoadError = false;
   int _groupHealthLoadGeneration = 0;
+  int _memberComplianceLoadGeneration = 0;
   LoanStats _loanStats = LoanStats.loading;
   int _loanStatsLoadGeneration = 0;
   String _cycleCurrency = 'XAF';
@@ -202,6 +195,12 @@ class _CommunityShellState extends State<CommunityShell> with RouteAware {
   String? _passageOrderError;
   double? _tontineProgressPercent;
   int _passageOrderLoadGeneration = 0;
+  List<CycleHistoryItem> _treasuryCycleHistory = const [];
+  ContributionReceipt? _latestTontineReceipt;
+  bool _isLoadingTreasuryOverview = true;
+  String? _treasuryOverviewError;
+  String? _treasuryReceiptError;
+  int _treasuryOverviewLoadGeneration = 0;
 
   @override
   void initState() {
@@ -210,6 +209,8 @@ class _CommunityShellState extends State<CommunityShell> with RouteAware {
     _profileUser = widget.user;
     _loadProfileUser();
     _loadPassageOrder();
+    unawaited(_loadTreasuryOverview());
+    unawaited(_loadMemberCompliance());
     unawaited(_loadActivity());
     unawaited(_loadCashBalance());
     if (_isTreasurer) unawaited(_loadLoanDashboard());
@@ -232,12 +233,72 @@ class _CommunityShellState extends State<CommunityShell> with RouteAware {
   @override
   void didPopNext() {
     unawaited(_loadCashBalance());
+    unawaited(_loadTreasuryOverview());
     unawaited(_loadActivity());
     unawaited(_loadPassageOrder());
+    unawaited(_loadMemberCompliance());
     if (_isTreasurer) unawaited(_loadLoanDashboard());
     if (_isAdmin) unawaited(_loadDashboardPriorities());
     if (!_isAdmin) unawaited(_loadGroupHealth());
     if (!_isAdmin) unawaited(_loadMemberRequiredActions());
+  }
+
+  Future<void> _loadTreasuryOverview() async {
+    final generation = ++_treasuryOverviewLoadGeneration;
+    if (mounted) {
+      setState(() {
+        _isLoadingTreasuryOverview = true;
+        _treasuryOverviewError = null;
+        _treasuryReceiptError = null;
+      });
+    }
+
+    final cycles = await CycleController.getForGroup(widget.community.id);
+    if (!mounted || generation != _treasuryOverviewLoadGeneration) return;
+    if (cycles == null) {
+      setState(() {
+        _isLoadingTreasuryOverview = false;
+        _treasuryOverviewError = AppLocalizations.t('cycle_history_load_error');
+        _treasuryReceiptError = AppLocalizations.t(
+          'latest_contribution_load_error',
+        );
+      });
+      return;
+    }
+
+    final history = cycleHistoryFromCycles(cycles);
+    final currentCycles =
+        cycles
+            .where((cycle) => cycle.status == 'EN_COURS' && cycle.id != null)
+            .toList();
+    currentCycles.sort(
+      (first, second) => (second.number ?? 0).compareTo(first.number ?? 0),
+    );
+    final currentCycle = currentCycles.isEmpty ? null : currentCycles.first;
+
+    ContributionReceipt? receipt;
+    String? receiptError;
+    if (currentCycle?.id != null) {
+      final result =
+          await CycleTontineContributionController.getLatestValidated(
+            currentCycle!.id!,
+          );
+      if (!mounted || generation != _treasuryOverviewLoadGeneration) return;
+      if (result['success'] == true) {
+        final latestReceipt = result['receipt'];
+        if (latestReceipt is ContributionReceipt) receipt = latestReceipt;
+      } else {
+        receiptError = AppLocalizations.t('latest_contribution_load_error');
+      }
+    }
+
+    if (!mounted || generation != _treasuryOverviewLoadGeneration) return;
+    setState(() {
+      _treasuryCycleHistory = history;
+      _latestTontineReceipt = receipt;
+      _treasuryReceiptError = receiptError;
+      _isLoadingTreasuryOverview = false;
+    });
   }
 
   Future<void> _loadActivity() async {
@@ -476,6 +537,101 @@ class _CommunityShellState extends State<CommunityShell> with RouteAware {
       _isLoadingGroupHealth = false;
       _groupHealthLoadError = health == null;
     });
+  }
+
+  Future<void> _loadMemberCompliance() async {
+    final generation = ++_memberComplianceLoadGeneration;
+    final cycles = await CycleController.getForGroup(widget.community.id);
+    if (!mounted || generation != _memberComplianceLoadGeneration) return;
+    if (cycles == null) {
+      setState(() => _memberCompliance = null);
+      return;
+    }
+
+    Cycle? activeCycle;
+    for (final cycle in cycles) {
+      if (cycle.status == 'EN_COURS' &&
+          cycle.id != null &&
+          cycle.id!.isNotEmpty) {
+        activeCycle = cycle;
+        break;
+      }
+    }
+    final cycleId =
+        activeCycle?.id ??
+        widget.community.cycleId ??
+        (cycles.isNotEmpty ? cycles.first.id : null);
+    if (cycleId == null || cycleId.isEmpty) {
+      setState(() => _memberCompliance = null);
+      return;
+    }
+
+    final compliance = await CycleMemberComplianceController.getForCycle(
+      cycleId,
+    );
+    if (!mounted || generation != _memberComplianceLoadGeneration) return;
+    setState(() {
+      _cycleId = cycleId;
+      _memberCompliance = compliance;
+    });
+  }
+
+  FinancialPosition get _financialPositionForCycle {
+    final overview = _memberCompliance;
+    final userId = _profileUser.userId;
+    final member =
+        overview == null || userId == null
+            ? null
+            : overview.members
+                .where((candidate) => candidate.userId == userId)
+                .firstOrNull;
+
+    if (overview == null || member == null) {
+      return FinancialPosition(
+        participationPercent: 0,
+        statusLabel: AppLocalizations.t('compliance_unavailable'),
+        totalContributed: '—',
+        activeLoanLabel: '—',
+        nextDueDate: '—',
+      );
+    }
+
+    final compliance = member.compliance;
+    final isUpToDate = member.isUpToDate;
+    final dueDate = DateTime.tryParse(overview.currentDueDate ?? '');
+    final isPastDue =
+        dueDate != null &&
+        DateUtils.dateOnly(
+          dueDate,
+        ).isBefore(DateUtils.dateOnly(DateTime.now()));
+    final statusLabel =
+        isUpToDate
+            ? AppLocalizations.t('up_to_date')
+            : compliance.loans.isNotEmpty ||
+                compliance.contributionStatus == 'REJETE'
+            ? AppLocalizations.t('needs_regularization')
+            : isPastDue
+            ? AppLocalizations.t('overdue_label')
+            : AppLocalizations.t('pending_label');
+    final loanCount = compliance.loans.length;
+
+    return FinancialPosition(
+      participationPercent: isUpToDate ? 100 : 0,
+      statusLabel: statusLabel,
+      totalContributed:
+          '${NumberFormat.decimalPattern(AppLocalizations.locale.value).format(compliance.totalTontineContribution)} ${overview.currency}',
+      activeLoanLabel:
+          loanCount == 0
+              ? AppLocalizations.t('none_label')
+              : '$loanCount ${AppLocalizations.t(loanCount == 1 ? 'active_loan_singular' : 'active_loan_plural')}',
+      nextDueDate:
+          dueDate == null
+              ? '—'
+              : DateFormat(
+                'd MMM',
+                AppLocalizations.locale.value,
+              ).format(dueDate),
+    );
   }
 
   Future<void> _loadMemberRequiredActions() async {
@@ -1318,6 +1474,182 @@ class _CommunityShellState extends State<CommunityShell> with RouteAware {
       ['ADMIN', 'CO_ADMIN'].contains(widget.community.role?.toUpperCase());
   bool get _isTreasurer => widget.community.role?.toUpperCase() == 'TRESORIER';
 
+  List<String?> get _oldestMemberPhotoUrls =>
+      _memberCompliance?.members
+          .take(3)
+          .map((member) => member.photoUrl)
+          .toList(growable: false) ??
+      const [];
+
+  CommunitySummary get _memberSummaryForCycle =>
+      _summaryForCycle(widget.memberSummary, includeLateCount: false);
+
+  CommunitySummary get _adminSummaryForCycle =>
+      _summaryForCycle(widget.adminSummary, includeLateCount: true);
+
+  CommunitySummary _summaryForCycle(
+    CommunitySummary fallback, {
+    required bool includeLateCount,
+  }) {
+    final members = _memberCompliance?.members;
+    if (members == null) return fallback;
+    return CommunitySummary(
+      totalMembers: members.length,
+      adminCount:
+          members
+              .where((member) => ['ADMIN', 'CO_ADMIN'].contains(member.role))
+              .length,
+      activeCount: members.length,
+      cycleLabel: fallback.cycleLabel,
+      lateCount:
+          includeLateCount
+              ? (_dashboardPriorities?.membersOverdue ??
+                  _groupHealth?.membersOverdue ??
+                  0)
+              : null,
+    );
+  }
+
+  List<MemberDirectoryEntry> get _memberDirectoryForCycle {
+    final members = _memberCompliance?.members;
+    if (members == null) {
+      return widget.memberDirectory
+          .map(
+            (entry) => MemberDirectoryEntry(
+              name: entry.name,
+              role: entry.role,
+              memberSinceLabel: entry.memberSinceLabel,
+              status: MemberRowStatus.unknown,
+              isHighlighted: entry.isHighlighted,
+              details: entry.details.copyWith(compliance: null),
+            ),
+          )
+          .toList(growable: false);
+    }
+    final existingByUserId = {
+      for (final entry in widget.memberDirectory)
+        if (entry.details.userId != null) entry.details.userId!: entry,
+    };
+    return members
+        .map((member) {
+          final existing = existingByUserId[member.userId];
+          return MemberDirectoryEntry(
+            name: member.name,
+            role: member.role == 'MEMBRE' ? null : member.role,
+            memberSinceLabel: member.memberSince?.split('T').first ?? '',
+            status:
+                member.isUpToDate
+                    ? MemberRowStatus.upToDate
+                    : MemberRowStatus.late,
+            isHighlighted: existing?.isHighlighted ?? false,
+            details: _detailsForCycleMember(member, existing?.details),
+          );
+        })
+        .toList(growable: false);
+  }
+
+  List<AdminMemberEntry> get _adminDirectoryForCycle {
+    final members = _memberCompliance?.members;
+    if (members == null) {
+      return widget.adminDirectory
+          .map(
+            (entry) => AdminMemberEntry(
+              name: entry.name,
+              role: entry.role,
+              statusLine: AppLocalizations.t('compliance_unavailable'),
+              statusIcon: Icons.help_outline,
+              statusColor: AppColors.textSecondary,
+              isHighlighted: entry.isHighlighted,
+              hasUrgentAction: entry.hasUrgentAction,
+              details: entry.details.copyWith(compliance: null),
+            ),
+          )
+          .toList(growable: false);
+    }
+    final existingByUserId = {
+      for (final entry in widget.adminDirectory)
+        if (entry.details.userId != null) entry.details.userId!: entry,
+    };
+    return members
+        .map((member) {
+          final existing = existingByUserId[member.userId];
+          return AdminMemberEntry(
+            name: member.name,
+            role: member.role == 'MEMBRE' ? null : member.role,
+            statusLine: AppLocalizations.t(
+              member.isUpToDate ? 'up_to_date' : 'needs_regularization',
+            ),
+            statusIcon:
+                member.isUpToDate
+                    ? Icons.check_circle_outline
+                    : Icons.warning_amber_rounded,
+            statusColor:
+                member.isUpToDate ? AppColors.primary : AppColors.alertRed,
+            isHighlighted: existing?.isHighlighted ?? false,
+            hasUrgentAction: existing?.hasUrgentAction ?? false,
+            details: _detailsForCycleMember(member, existing?.details),
+          );
+        })
+        .toList(growable: false);
+  }
+
+  MemberPersonalDetails _detailsForCycleMember(
+    CycleMemberCompliance member,
+    MemberPersonalDetails? existing,
+  ) {
+    return MemberPersonalDetails(
+      userId: member.userId,
+      role: member.role,
+      status: existing?.status ?? 'ACTIF',
+      memberSince: member.memberSince ?? existing?.memberSince,
+      phone: existing?.phone,
+      email: existing?.email,
+      gender: existing?.gender,
+      photoUrl: existing?.photoUrl ?? _memberPhotoUrl(member.photoUrl),
+      address: existing?.address,
+      city: existing?.city,
+      country: existing?.country,
+      createdAt: existing?.createdAt,
+      cniFront: existing?.cniFront,
+      cniBack: existing?.cniBack,
+      passport: existing?.passport,
+      drivingLicense: existing?.drivingLicense,
+      compliance: member.compliance,
+    );
+  }
+
+  String? _memberPhotoUrl(String? path) {
+    final value = path?.trim();
+    if (value == null || value.isEmpty) return null;
+    if (value.startsWith('http')) return value;
+    return '${AppConstants.imageBaseUrl}${value.replaceFirst(RegExp(r'^/+'), '')}';
+  }
+
+  TrustScore get _currentTourTrustScore {
+    final health = _groupHealth;
+    if (health?.score == null || health?.currentTourContributors == null) {
+      final hasNoCurrentTour =
+          _memberCompliance != null && _memberCompliance!.currentPeriod == null;
+      return TrustScore(
+        percent: 0,
+        summary: AppLocalizations.t(
+          hasNoCurrentTour
+              ? 'trust_score_no_current_tour'
+              : 'trust_score_unavailable',
+        ),
+        isAvailable: false,
+      );
+    }
+
+    return TrustScore(
+      percent: health!.score!.clamp(0, 100).toDouble() / 100,
+      summary: AppLocalizations.t(
+        'trust_score_current_tour_summary',
+        args: [health.currentTourContributors!, health.totalMembers],
+      ),
+    );
+  }
+
   GroupHealthStats get _healthWithCommunityCount {
     final priorities = _dashboardPriorities;
     final memberHealth = _groupHealth;
@@ -1540,9 +1872,12 @@ class _CommunityShellState extends State<CommunityShell> with RouteAware {
             TreasuryPage(
               isAdmin: _isAdmin,
               isTreasurer: _isTreasurer,
-              financialPosition: widget.financialPosition,
-              receipt: widget.receipt,
-              history: widget.history,
+              financialPosition: _financialPositionForCycle,
+              receipt: _latestTontineReceipt,
+              history: _treasuryCycleHistory,
+              isLoadingOverview: _isLoadingTreasuryOverview,
+              overviewError: _treasuryOverviewError,
+              receiptError: _treasuryReceiptError,
               collection: widget.collection,
               memberContributions: widget.memberContributions,
               loan: widget.loan,
@@ -1551,7 +1886,6 @@ class _CommunityShellState extends State<CommunityShell> with RouteAware {
               repaymentHistory: widget.repaymentHistory,
               onSeeReceipt: widget.onSeeReceipt,
               onHistoryItemTap: widget.onHistoryItemTap,
-              onSeeAllHistory: widget.onSeeAllHistory,
               onOpenDetailedReport: widget.onOpenDetailedReport,
               onSeeAllMembers: () => _goToTab(2),
               onRequestLoan: widget.onRequestLoan,
@@ -1561,7 +1895,13 @@ class _CommunityShellState extends State<CommunityShell> with RouteAware {
               passageOrderLoading: _isLoadingPassageOrder,
               passageOrderError: _passageOrderError,
               onReorderPassageOrder: _savePassageOrder,
-              onRefresh: _loadPassageOrder,
+              onRefresh: () async {
+                await Future.wait([
+                  _loadPassageOrder(),
+                  _loadTreasuryOverview(),
+                  _loadMemberCompliance(),
+                ]);
+              },
               showPassageOrderToMembers: widget.community.tontineNextVisible,
               payoutHistory: widget.payoutHistory,
               onDisburse: widget.onDisburse,
@@ -1569,20 +1909,22 @@ class _CommunityShellState extends State<CommunityShell> with RouteAware {
             ),
             _isAdmin
                 ? AdminMembersPage(
-                  summary: widget.adminSummary,
+                  summary: _adminSummaryForCycle,
                   groupId: widget.community.id,
                   currentUserRole: widget.community.role ?? '',
-                  directory: widget.adminDirectory,
+                  directory: _adminDirectoryForCycle,
                   growth: widget.growth,
                   onInviteMember: widget.onInviteMember,
                   onMemberUrgentAction: widget.onMemberUrgentAction,
                   onMemberTap: widget.onAdminMemberTap,
+                  previewMemberPhotoUrls: _oldestMemberPhotoUrls,
                 )
                 : MembersPage(
-                  summary: widget.memberSummary,
-                  directory: widget.memberDirectory,
-                  trustScore: widget.trustScore,
+                  summary: _memberSummaryForCycle,
+                  directory: _memberDirectoryForCycle,
+                  trustScore: _currentTourTrustScore,
                   onMemberTap: widget.onMemberTap,
+                  previewMemberPhotoUrls: _oldestMemberPhotoUrls,
                 ),
             ProfilePage(
               user: _profileUser,

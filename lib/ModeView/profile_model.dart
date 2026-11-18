@@ -18,6 +18,7 @@ class UserProfile {
     required this.memberSinceLabel,
     required this.isPhoneVerified,
     required this.roleSummaryLabel,
+    this.userId,
     this.photoUrl,
     this.cniRecto,
     this.cniVerso,
@@ -31,6 +32,7 @@ class UserProfile {
   final String memberSinceLabel;
   final bool isPhoneVerified;
   final String roleSummaryLabel; // ex: "Administrateur de 2 communautés"
+  final String? userId;
   final String? photoUrl;
   final String? cniRecto;
   final String? cniVerso;
@@ -63,6 +65,7 @@ class UserProfile {
       memberSinceLabel: user.createdAt ?? '',
       isPhoneVerified: user.statut == 1,
       roleSummaryLabel: '',
+      userId: user.id,
       photoUrl: photoUrl,
       cniRecto: user.cniRecto,
       cniVerso: user.cniVerso,

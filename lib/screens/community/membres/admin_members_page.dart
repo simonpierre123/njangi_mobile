@@ -30,6 +30,7 @@ class AdminMembersPage extends StatefulWidget {
     required this.onInviteMember,
     required this.onMemberUrgentAction,
     this.onMemberTap,
+    this.previewMemberPhotoUrls = const [],
   });
 
   final CommunitySummary summary;
@@ -40,6 +41,7 @@ class AdminMembersPage extends StatefulWidget {
   final VoidCallback onInviteMember;
   final ValueChanged<AdminMemberEntry> onMemberUrgentAction;
   final ValueChanged<AdminMemberEntry>? onMemberTap;
+  final List<String?> previewMemberPhotoUrls;
 
   @override
   State<AdminMembersPage> createState() => _AdminMembersPageState();
@@ -227,7 +229,10 @@ class _AdminMembersPageState extends State<AdminMembersPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CommunitySummaryCard(summary: _summary),
+          CommunitySummaryCard(
+            summary: _summary,
+            previewMemberPhotoUrls: widget.previewMemberPhotoUrls,
+          ),
           SizedBox(height: AppDimensions.spaceLg.h),
           GrowthStatsCard(growth: widget.growth),
           SizedBox(height: AppDimensions.spaceLg.h),

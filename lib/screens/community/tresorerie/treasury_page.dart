@@ -5,6 +5,7 @@ import '../../../ModeView/beneficiary_model.dart';
 import '../../../ModeView/treasury_model.dart';
 import '../../../common/basewidget/app_segmented_control.dart';
 import '../../../common/basewidget/member_filter_chips.dart';
+import '../../../common/basewidget/shimmer_loading.dart';
 import '../../../localization/app_localizations.dart';
 import '../../../utils/app_colors.dart';
 import '../../../utils/app_dimensions.dart';
@@ -33,9 +34,8 @@ import 'widgets/request_loan_button.dart';
 /// Ne possède plus de Scaffold/AppBar/bottom nav propres : c'est
 /// [CommunityShell] qui les fournit désormais.
 ///
-/// TODO (Njoya) : remplacer les paramètres par le vrai flux de l'API —
-/// alimenté pour l'instant par datasource/community_treasury_mock_datasource.dart
-/// et datasource/community_beneficiary_mock_datasource.dart.
+/// L'historique des cycles et le reçu personnel sont chargés depuis l'API;
+/// les autres sections conservent leurs sources de données existantes.
 class TreasuryPage extends StatefulWidget {
   const TreasuryPage({
     super.key,
@@ -44,6 +44,9 @@ class TreasuryPage extends StatefulWidget {
     required this.financialPosition,
     required this.receipt,
     required this.history,
+    required this.isLoadingOverview,
+    required this.overviewError,
+    required this.receiptError,
     required this.collection,
     required this.memberContributions,
     required this.loan,
@@ -61,7 +64,6 @@ class TreasuryPage extends StatefulWidget {
     required this.payoutHistory,
     required this.onSeeReceipt,
     required this.onHistoryItemTap,
-    required this.onSeeAllHistory,
     required this.onSeeAllMembers,
     required this.onOpenDetailedReport,
     required this.onRequestLoan,
@@ -76,8 +78,11 @@ class TreasuryPage extends StatefulWidget {
   final bool isTreasurer;
 
   final FinancialPosition financialPosition;
-  final ContributionReceipt receipt;
-  final List<ContributionHistoryItem> history;
+  final ContributionReceipt? receipt;
+  final List<CycleHistoryItem> history;
+  final bool isLoadingOverview;
+  final String? overviewError;
+  final String? receiptError;
   final CollectionStatus collection;
   final List<MemberContribution> memberContributions;
   // null = aucun prêt en cours (affiche l'état d'éligibilité).
@@ -97,9 +102,8 @@ class TreasuryPage extends StatefulWidget {
   final Future<void> Function() onRefresh;
   final bool showPassageOrderToMembers;
   final List<PayoutHistoryEntry> payoutHistory;
-  final VoidCallback onSeeReceipt;
-  final ValueChanged<ContributionHistoryItem> onHistoryItemTap;
-  final VoidCallback onSeeAllHistory;
+  final ValueChanged<ContributionReceipt> onSeeReceipt;
+  final ValueChanged<CycleHistoryItem> onHistoryItemTap;
   final VoidCallback onSeeAllMembers;
   final VoidCallback onOpenDetailedReport;
   final VoidCallback onRequestLoan;
@@ -158,9 +162,11 @@ class _TreasuryPageState extends State<TreasuryPage> {
           position: widget.financialPosition,
           receipt: widget.receipt,
           history: widget.history,
+          isLoadingOverview: widget.isLoadingOverview,
+          overviewError: widget.overviewError,
+          receiptError: widget.receiptError,
           onSeeReceipt: widget.onSeeReceipt,
           onHistoryItemTap: widget.onHistoryItemTap,
-          onSeeAllHistory: widget.onSeeAllHistory,
         );
       case 1:
         return _ContributionsTab(
@@ -198,61 +204,94 @@ class _TreasuryPageState extends State<TreasuryPage> {
   }
 }
 
-class _MyTreasuryTab extends StatelessWidget {
+class _MyTreasuryTab extends StatefulWidget {
   const _MyTreasuryTab({
     required this.position,
     required this.receipt,
     required this.history,
+    required this.isLoadingOverview,
+    required this.overviewError,
+    required this.receiptError,
     required this.onSeeReceipt,
     required this.onHistoryItemTap,
-    required this.onSeeAllHistory,
   });
 
   final FinancialPosition position;
-  final ContributionReceipt receipt;
-  final List<ContributionHistoryItem> history;
-  final VoidCallback onSeeReceipt;
-  final ValueChanged<ContributionHistoryItem> onHistoryItemTap;
-  final VoidCallback onSeeAllHistory;
+  final ContributionReceipt? receipt;
+  final List<CycleHistoryItem> history;
+  final bool isLoadingOverview;
+  final String? overviewError;
+  final String? receiptError;
+  final ValueChanged<ContributionReceipt> onSeeReceipt;
+  final ValueChanged<CycleHistoryItem> onHistoryItemTap;
+
+  @override
+  State<_MyTreasuryTab> createState() => _MyTreasuryTabState();
+}
+
+class _MyTreasuryTabState extends State<_MyTreasuryTab> {
+  bool _historyExpanded = false;
 
   @override
   Widget build(BuildContext context) {
+    final visibleHistory = visibleCycleHistory(
+      widget.history,
+      expanded: _historyExpanded,
+    );
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          FinancialPositionCard(position: position),
+          FinancialPositionCard(position: widget.position),
           SizedBox(height: AppDimensions.spaceLg.h),
-          ContributionReceiptCard(receipt: receipt, onSeeReceipt: onSeeReceipt),
+          ContributionReceiptCard(
+            receipt: widget.receipt,
+            isLoading: widget.isLoadingOverview,
+            error: widget.receiptError,
+            onSeeReceipt: () {
+              final receipt = widget.receipt;
+              if (receipt != null) widget.onSeeReceipt(receipt);
+            },
+          ),
           SizedBox(height: AppDimensions.spaceLg.h),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                AppLocalizations.t('contribution_history'),
+                AppLocalizations.t('cycle_history_title'),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                 ),
               ),
-              GestureDetector(
-                onTap: onSeeAllHistory,
-                child: Text(
-                  AppLocalizations.t('see_all_link'),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.secondaryGreen,
-                    decoration: TextDecoration.underline,
+              if (widget.history.length > 3)
+                GestureDetector(
+                  onTap: () {
+                    setState(() => _historyExpanded = !_historyExpanded);
+                  },
+                  child: Text(
+                    AppLocalizations.t(
+                      _historyExpanded ? 'see_less_link' : 'see_all_link',
+                    ),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.secondaryGreen,
+                      decoration: TextDecoration.underline,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
           SizedBox(height: AppDimensions.spaceSm.h),
-          ContributionHistoryList(items: history, onItemTap: onHistoryItemTap),
+          ContributionHistoryList(
+            items: visibleHistory,
+            onItemTap: widget.onHistoryItemTap,
+            isLoading: widget.isLoadingOverview,
+            error: widget.overviewError,
+          ),
           SizedBox(height: AppDimensions.spaceXl.h),
         ],
       ),
@@ -612,7 +651,34 @@ class _BeneficiairesTabState extends State<_BeneficiairesTab> {
             ),
             SizedBox(height: AppDimensions.spaceSm.h),
             if (widget.passageOrderLoading)
-              const Center(child: CircularProgressIndicator())
+              Shimmer(
+                child: Column(
+                  children: [
+                    for (var index = 0; index < 3; index++)
+                      Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: [
+                            SkeletonBox(width: 32, height: 32, isCircle: true),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SkeletonBox(width: 150, height: 14),
+                                  SizedBox(height: 8),
+                                  SkeletonBox(width: 100, height: 11),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            SkeletonBox(width: 20, height: 20),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              )
             else if (_order.isEmpty)
               Padding(
                 padding: EdgeInsets.symmetric(

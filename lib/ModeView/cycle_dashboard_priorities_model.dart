@@ -67,6 +67,7 @@ class CycleGroupHealth {
     required this.pendingContributions,
     required this.membersPending,
     required this.membersOverdue,
+    this.currentTourContributors,
   });
 
   final int? score;
@@ -76,6 +77,7 @@ class CycleGroupHealth {
   final int pendingContributions;
   final int membersPending;
   final int membersOverdue;
+  final int? currentTourContributors;
 
   factory CycleGroupHealth.fromJson(Map<String, dynamic> json) {
     final score =
@@ -97,8 +99,17 @@ class CycleGroupHealth {
         json['membres_en_retard'],
         'membres_en_retard',
       ),
+      currentTourContributors: _optionalInt(
+        json['membres_ayant_cotise_tour_courant'],
+      ),
     );
   }
+}
+
+int? _optionalInt(dynamic value) {
+  if (value == null) return null;
+  if (value is int) return value;
+  return int.tryParse(value.toString());
 }
 
 int? _healthMetric(

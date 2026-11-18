@@ -14,8 +14,6 @@ import 'widgets/trust_score_card.dart';
 /// Ne possède plus de Scaffold/AppBar/bottom nav propres : c'est
 /// [CommunityShell] qui les fournit désormais.
 ///
-/// TODO (Njoya) : remplacer les paramètres par le vrai flux de l'API —
-/// alimenté pour l'instant par datasource/community_members_mock_datasource.dart.
 class MembersPage extends StatefulWidget {
   const MembersPage({
     super.key,
@@ -23,12 +21,14 @@ class MembersPage extends StatefulWidget {
     required this.directory,
     required this.trustScore,
     required this.onMemberTap,
+    this.previewMemberPhotoUrls = const [],
   });
 
   final CommunitySummary summary;
   final List<MemberDirectoryEntry> directory;
   final TrustScore trustScore;
   final ValueChanged<MemberDirectoryEntry> onMemberTap;
+  final List<String?> previewMemberPhotoUrls;
 
   @override
   State<MembersPage> createState() => _MembersPageState();
@@ -69,7 +69,10 @@ class _MembersPageState extends State<MembersPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CommunitySummaryCard(summary: widget.summary),
+          CommunitySummaryCard(
+            summary: widget.summary,
+            previewMemberPhotoUrls: widget.previewMemberPhotoUrls,
+          ),
           SizedBox(height: AppDimensions.spaceLg.h),
           AppSearchField(
             hint: AppLocalizations.t('search_member_hint'),

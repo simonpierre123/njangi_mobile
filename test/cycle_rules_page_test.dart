@@ -78,6 +78,38 @@ void main() {
       );
     },
   );
+
+  testWidgets('penalty rules remain readable on a narrow screen', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final previousAdapter = ApiService.dio.httpClientAdapter;
+    ApiService.dio.httpClientAdapter = _CycleRulesAdapter();
+    addTearDown(() => ApiService.dio.httpClientAdapter = previousAdapter);
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: CycleRulesPage(
+          args: CycleRulesRouteArgs(cycleId: 'cycle-id', isAdmin: false),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.text('penalty_mode_admin_attendance'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('cycle_rules_penalties'), findsOneWidget);
+    expect(find.text('cycle_rule_mode_penalite_indiscipline'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _CycleRulesAdapter implements HttpClientAdapter {
@@ -124,6 +156,9 @@ class _CycleRulesAdapter implements HttpClientAdapter {
             'module_pret_actif': '0',
             'validation_pret_colectif': '1',
             'appliquer_penalites': '1',
+            'montant_penalite_retard': 2000,
+            'montant_penalite_indiscipline': 1000,
+            'mode_penalite_indiscipline': 'POINTAGE_ADMIN',
             'epargne_active': true,
             'epargne_mode': 'FIXE',
             'epargne_montant_fixe': 5000,

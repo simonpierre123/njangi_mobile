@@ -203,6 +203,7 @@ class CycleTontineTourController {
           membershipId:
               tour['beneficiaire_membre_id']?.toString() ??
               beneficiary?['id']?.toString(),
+          tourId: tour['id']?.toString(),
           order: _toInt(tour['ordre']) ?? 0,
           name: name,
           photoUrl: photoUrl,
@@ -210,6 +211,8 @@ class CycleTontineTourController {
           dateBadge: _dateBadge(date),
           isCurrent: false,
           isPaid: isPaid,
+          dueDate: DateTime.tryParse(tour['date_echeance']?.toString() ?? ''),
+          tourStatus: status,
         );
       })
       .toList(growable: false)..sort((a, b) => a.order.compareTo(b.order));

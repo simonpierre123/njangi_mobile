@@ -14,6 +14,7 @@ import '../Models/Notification.dart' as app_notification;
 import '../ModeView/community_model.dart';
 import '../ModeView/community_members_model.dart';
 import '../ModeView/create_community_model.dart';
+import '../ModeView/treasury_model.dart';
 import '../ModeView/kyc_model.dart';
 import '../common/basewidget/coming_soon_page.dart';
 import '../datasource/community_admin_mock_datasource.dart';
@@ -51,10 +52,12 @@ import '../screens/community/creation/invite/invite_phone_page.dart';
 import '../screens/community/membres/member_details_page.dart';
 import '../screens/community/rapport/detailed_report_page.dart';
 import '../screens/community/rapport/cycle_history_page.dart';
+import '../screens/community/rapport/cycle_detail_page.dart';
 import '../screens/community/regles/cycle_rules_page.dart';
 import '../screens/community/rapport/financial_summary_page.dart';
 import '../screens/community/tresorerie/contribution_detail_page.dart';
 import '../screens/community/tresorerie/cycle_contribution_page.dart';
+import '../screens/community/tresorerie/contribution_receipt_page.dart';
 import '../screens/community/tresorerie/cycle_completed_page.dart';
 import '../screens/community/tresorerie/disburse_funds_sheet.dart';
 import '../screens/community/tresorerie/loan_request_page.dart';
@@ -853,10 +856,6 @@ class AppRouter {
             onActionTap:
                 (item) => _push(AppRoutes.comingSoon, arguments: item.title),
             // Trésorerie
-            financialPosition:
-                CommunityTreasuryMockDatasource.financialPosition,
-            receipt: CommunityTreasuryMockDatasource.receipt,
-            history: CommunityTreasuryMockDatasource.history,
             collection: CommunityTreasuryMockDatasource.collection,
             memberContributions:
                 CommunityTreasuryMockDatasource.memberContributions,
@@ -866,11 +865,19 @@ class AppRouter {
             loanDue: null,
             eligibility: CommunityTreasuryMockDatasource.eligibility,
             repaymentHistory: CommunityTreasuryMockDatasource.repaymentHistory,
-            onSeeReceipt: () => _push(AppRoutes.comingSoon, arguments: 'Reçu'),
+            onSeeReceipt:
+                (receipt) => _push(
+                  AppRoutes.contributionReceipt,
+                  arguments: receipt,
+                ),
             onHistoryItemTap:
-                (item) =>
-                    _push(AppRoutes.comingSoon, arguments: item.cycleLabel),
-            onSeeAllHistory: () => _showCycleHistoryMenu(community),
+                (item) => _push(
+                  AppRoutes.cycleDetail,
+                  arguments: CycleDetailRouteArgs(
+                    community: community,
+                    cycle: item,
+                  ),
+                ),
             onOpenDetailedReport:
                 () => _push(AppRoutes.detailedReport, arguments: community),
             onRequestLoan:
@@ -890,7 +897,6 @@ class AppRouter {
             adminDirectory: adminDirectory,
             memberDirectory: memberDirectory,
             growth: CommunityMembersMockDatasource.growth,
-            trustScore: CommunityMembersMockDatasource.trustScore,
             onInviteMember:
                 () => _push(AppRoutes.inviteMembers, arguments: community),
             onMemberUrgentAction:
@@ -1235,6 +1241,13 @@ class AppRouter {
           ),
         );
 
+      case AppRoutes.contributionReceipt:
+        final receipt = settings.arguments;
+        if (receipt is! ContributionReceipt) {
+          return page(const _MissingCommunityRedirect());
+        }
+        return page(ContributionReceiptPage(receipt: receipt));
+
       case AppRoutes.tontineManagement:
         final community = settings.arguments as CommunityModel?;
         if (community == null) return page(const _MissingCommunityRedirect());
@@ -1280,6 +1293,27 @@ class AppRouter {
             community: arguments.community,
             type: arguments.type,
             onBack: _pop,
+          ),
+        );
+
+      case AppRoutes.cycleDetail:
+        final arguments = settings.arguments;
+        if (arguments is! CycleDetailRouteArgs) {
+          return page(const _MissingCommunityRedirect());
+        }
+        return page(
+          CycleDetailPage(
+            community: arguments.community,
+            selectedCycle: arguments.cycle,
+            onBack: _pop,
+            onOpenTontineReport: () {
+              _push(
+                AppRoutes.tontineHistory,
+                arguments: arguments.community.copyWith(
+                  cycleId: arguments.cycle.id,
+                ),
+              );
+            },
           ),
         );
 

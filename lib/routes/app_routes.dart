@@ -60,12 +60,14 @@ class AppRoutes {
 
   static const contributionDetail = '/community/contribution/detail';
   static const cycleContribution = '/community/contribution';
+  static const contributionReceipt = '/community/contribution/receipt';
   static const tontineManagement = '/community/tontine/management';
   static const tontineHistory = '/community/tontine/history';
   static const savingsManagement = '/community/savings/management';
   static const savingsHistory = '/community/savings/history';
   static const cycleHistoryCategories = '/community/history';
   static const cycleHistoryDetail = '/community/history/detail';
+  static const cycleDetail = '/community/cycle/detail';
 
   static const financialSummary = '/community/report/summary';
   static const detailedReport = '/community/report/detailed';

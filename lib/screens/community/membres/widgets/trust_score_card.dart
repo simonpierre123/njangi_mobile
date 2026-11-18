@@ -22,12 +22,19 @@ class TrustScoreCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          PercentRing(
-            percent: score.percent,
-            size: 48,
-            strokeWidth: 5,
-            color: AppColors.primaryDark,
-          ),
+          if (score.isAvailable)
+            PercentRing(
+              percent: score.percent,
+              size: 48,
+              strokeWidth: 5,
+              color: AppColors.primaryDark,
+            )
+          else
+            const Icon(
+              Icons.bar_chart_rounded,
+              size: 48,
+              color: AppColors.textSecondary,
+            ),
           SizedBox(width: AppDimensions.spaceMd.w),
           Expanded(
             child: Column(

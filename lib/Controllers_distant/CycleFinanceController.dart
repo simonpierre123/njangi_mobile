@@ -5,6 +5,38 @@ import 'package:njangi/localization/app_localizations.dart';
 import 'package:njangi/utils/app_constants.dart';
 
 class CycleFinanceController {
+  static Future<List<Map<String, dynamic>>?> getEmergencyRequests({
+    required String cycleId,
+    int page = 1,
+  }) async {
+    try {
+      final response = await ApiService.dio.get(
+        '${AppConstants.cycles}/$cycleId/secours/demandes',
+        queryParameters: {'page': page, 'per_page': 25},
+      );
+      final body = response.data;
+      final data = body is Map ? body['data'] : null;
+      final items = data is Map ? data['data'] : null;
+      if (body is! Map || body['success'] != true || items is! List) {
+        debugPrint('[API] Emergency requests returned an invalid response: $body');
+        return null;
+      }
+      return items
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList(growable: false);
+    } on DioException catch (error) {
+      ApiService.logServerError(error);
+      return null;
+    } catch (error) {
+      ApiService.logUnexpectedError(
+        'CycleFinanceController.getEmergencyRequests',
+        error,
+      );
+      return null;
+    }
+  }
+
   static Future<Map<String, dynamic>> createEmergencyRequest({
     required String cycleId,
     required String motif,

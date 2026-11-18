@@ -52,10 +52,16 @@ class _CreateCommunityStep3PageState extends State<CreateCommunityStep3Page> {
       TextEditingController(text: widget.draft.savingsMaxAmount);
   late final TextEditingController _savingsFixedController =
       TextEditingController(text: widget.draft.savingsFixedAmount);
+  late final TextEditingController _latePenaltyController =
+      TextEditingController(text: widget.draft.latePenaltyAmount);
+  late final TextEditingController _indisciplinePenaltyController =
+      TextEditingController(text: widget.draft.indisciplinePenaltyAmount);
 
   late bool _allowLoans = widget.draft.allowLoans;
   late bool _adminValidation = widget.draft.adminValidationRequired;
   late bool _penalties = widget.draft.penaltiesEnabled;
+  late String _indisciplinePenaltyMode =
+      widget.draft.indisciplinePenaltyMode;
   late int _maxAdmins = widget.draft.maxAdminCount;
   late bool _collectiveValidation = widget.draft.collectiveValidation;
   late bool _savingsActive = widget.draft.savingsActive;
@@ -77,6 +83,8 @@ class _CreateCommunityStep3PageState extends State<CreateCommunityStep3Page> {
     _savingsMinController.dispose();
     _savingsMaxController.dispose();
     _savingsFixedController.dispose();
+    _latePenaltyController.dispose();
+    _indisciplinePenaltyController.dispose();
     super.dispose();
   }
 
@@ -90,6 +98,9 @@ class _CreateCommunityStep3PageState extends State<CreateCommunityStep3Page> {
       maxSimultaneousLoans: _maxSimultaneousController.text,
       adminValidationRequired: _adminValidation,
       penaltiesEnabled: _penalties,
+      latePenaltyAmount: _latePenaltyController.text,
+      indisciplinePenaltyAmount: _indisciplinePenaltyController.text,
+      indisciplinePenaltyMode: _indisciplinePenaltyMode,
       maxAdminCount: _maxAdmins,
       collectiveValidation: _collectiveValidation,
       savingsActive: _savingsActive,
@@ -249,22 +260,101 @@ class _CreateCommunityStep3PageState extends State<CreateCommunityStep3Page> {
                           ],
                         ),
                       ),
-                      SizedBox(height: AppDimensions.spaceMd.h),
-                      ToggleSettingRow(
-                        bordered: false,
-                        leading: const Icon(
-                          Icons.gavel_outlined,
-                          size: 18,
-                          color: AppColors.textSecondary,
-                        ),
-                        title: AppLocalizations.t('apply_penalties_title'),
-                        subtitle: AppLocalizations.t(
-                          'apply_penalties_subtitle',
-                        ),
-                        value: _penalties,
-                        onChanged: (v) => setState(() => _penalties = v),
-                      ),
                     ],
+                    SizedBox(height: AppDimensions.spaceMd.h),
+                    Container(
+                      padding: EdgeInsets.all(AppDimensions.spaceMd.w),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(
+                          AppDimensions.radiusLg,
+                        ),
+                        border: Border.all(color: AppColors.inputBorder),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ToggleSettingRow(
+                            bordered: false,
+                            leading: const Icon(
+                              Icons.gavel_outlined,
+                              size: 18,
+                              color: AppColors.textSecondary,
+                            ),
+                            title: AppLocalizations.t('apply_penalties_title'),
+                            subtitle: AppLocalizations.t(
+                              'apply_penalties_subtitle',
+                            ),
+                            value: _penalties,
+                            onChanged: (value) {
+                              setState(() => _penalties = value);
+                            },
+                          ),
+                          if (_penalties) ...[
+                            SizedBox(height: AppDimensions.spaceMd.h),
+                            AppTextField(
+                              label: AppLocalizations.t(
+                                'late_penalty_amount_label',
+                              ),
+                              hint: '0',
+                              controller: _latePenaltyController,
+                              keyboardType: TextInputType.number,
+                              suffixText: 'FCFA',
+                            ),
+                            SizedBox(height: AppDimensions.spaceMd.h),
+                            AppTextField(
+                              label: AppLocalizations.t(
+                                'indiscipline_penalty_amount_label',
+                              ),
+                              hint: '0',
+                              controller: _indisciplinePenaltyController,
+                              keyboardType: TextInputType.number,
+                              suffixText: 'FCFA',
+                            ),
+                            SizedBox(height: AppDimensions.spaceMd.h),
+                            DropdownButtonFormField<String>(
+                              value: _indisciplinePenaltyMode,
+                              isExpanded: true,
+                              decoration: InputDecoration(
+                                labelText: AppLocalizations.t(
+                                  'indiscipline_penalty_mode_label',
+                                ),
+                                border: const OutlineInputBorder(),
+                              ),
+                              items: [
+                                DropdownMenuItem(
+                                  value: 'POINTAGE_ADMIN',
+                                  child: Text(
+                                    AppLocalizations.t(
+                                      'penalty_mode_admin_attendance',
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'COTISATION_NON_VALIDEE',
+                                  child: Text(
+                                    AppLocalizations.t(
+                                      'penalty_mode_unpaid_due',
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(
+                                    () => _indisciplinePenaltyMode = value,
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                     SizedBox(height: AppDimensions.spaceLg.h),
                     Text(
                       AppLocalizations.t('cycle_modules_section'),

@@ -76,11 +76,6 @@ class CommunityMembersMockDatasource {
     ),
   ];
 
-  static const trustScore = TrustScore(
-    percent: 0.98,
-    summary: 'Excellent, 14 membres sur 15 sont à jour.',
-  );
-
   static const growth = GrowthStats(
     newMembersLabel: '+2 Nouveaux',
     percent: 0.94,

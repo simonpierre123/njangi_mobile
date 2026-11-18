@@ -118,6 +118,7 @@ class CommunityDraft {
     this.maxLoanAmount = '',
     this.maxLoanDurationMonths = '',
     this.maxSimultaneousLoans = '',
+    this.minLoanSeniorityMonths = '0',
     this.adminValidationRequired = true,
     this.penaltiesEnabled = false,
     this.latePenaltyAmount = '',
@@ -161,6 +162,7 @@ class CommunityDraft {
   final String maxLoanAmount;
   final String maxLoanDurationMonths;
   final String maxSimultaneousLoans;
+  final String minLoanSeniorityMonths;
   final bool adminValidationRequired;
   final bool penaltiesEnabled;
   final String latePenaltyAmount;
@@ -203,6 +205,7 @@ class CommunityDraft {
     String? maxLoanAmount,
     String? maxLoanDurationMonths,
     String? maxSimultaneousLoans,
+    String? minLoanSeniorityMonths,
     bool? adminValidationRequired,
     bool? penaltiesEnabled,
     String? latePenaltyAmount,
@@ -245,6 +248,8 @@ class CommunityDraft {
       maxLoanDurationMonths:
           maxLoanDurationMonths ?? this.maxLoanDurationMonths,
       maxSimultaneousLoans: maxSimultaneousLoans ?? this.maxSimultaneousLoans,
+      minLoanSeniorityMonths:
+          minLoanSeniorityMonths ?? this.minLoanSeniorityMonths,
       adminValidationRequired:
           adminValidationRequired ?? this.adminValidationRequired,
       penaltiesEnabled: penaltiesEnabled ?? this.penaltiesEnabled,

@@ -15,6 +15,7 @@ class Cycle {
     this.maxLoanAmount,
     this.maxLoanDuration,
     this.maxSimultaneousLoans,
+    this.minLoanSeniorityMonths = 0,
     this.frequency,
     this.dueDay,
     this.meetingTime,
@@ -60,6 +61,7 @@ class Cycle {
   final int? maxLoanAmount;
   final int? maxLoanDuration;
   final int? maxSimultaneousLoans;
+  final int minLoanSeniorityMonths;
   final String? frequency;
   final String? dueDay;
   final String? meetingTime;
@@ -108,6 +110,8 @@ class Cycle {
       maxLoanAmount: _toInt(json['montant_max_pret']),
       maxLoanDuration: _toInt(json['duree_max_pret']),
       maxSimultaneousLoans: _toInt(json['nombre_max_pret_simultane']),
+      minLoanSeniorityMonths:
+          _toInt(json['anciennete_min_pret_mois']) ?? 0,
       frequency: json['frequence_cycle']?.toString(),
       dueDay: json['jour_echeance']?.toString(),
       meetingTime: json['heure_reunion']?.toString(),
@@ -157,6 +161,7 @@ class Cycle {
     'montant_max_pret': maxLoanAmount,
     'duree_max_pret': maxLoanDuration,
     'nombre_max_pret_simultane': maxSimultaneousLoans,
+    'anciennete_min_pret_mois': minLoanSeniorityMonths,
     'frequence_cycle': frequency,
     'jour_echeance': dueDay,
     'heure_reunion': meetingTime,

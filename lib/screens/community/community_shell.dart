@@ -18,8 +18,12 @@ import '../../ModeView/community_admin_dashboard_model.dart';
 import '../../ModeView/community_member_dashboard_model.dart';
 import '../../ModeView/community_members_model.dart';
 import '../../ModeView/community_model.dart';
+import '../../ModeView/member_savings_dashboard_model.dart';
+import '../../ModeView/member_loan_dashboard_model.dart';
 import '../../ModeView/profile_model.dart';
 import '../../ModeView/treasury_model.dart';
+import '../../Controllers_distant/MemberSavingsDashboardController.dart';
+import '../../Controllers_distant/member_loan_dashboard_controller.dart';
 import '../../common/basewidget/app_bottom_nav_bar.dart';
 import '../../localization/app_localizations.dart';
 import '../../routes/app_route_observer.dart';
@@ -201,6 +205,14 @@ class _CommunityShellState extends State<CommunityShell> with RouteAware {
   String? _treasuryOverviewError;
   String? _treasuryReceiptError;
   int _treasuryOverviewLoadGeneration = 0;
+  MemberSavingsDashboard? _memberSavingsDashboard;
+  bool _isLoadingMemberSavings = true;
+  bool _memberSavingsLoadError = false;
+  int _memberSavingsLoadGeneration = 0;
+  MemberLoanDashboard? _memberLoanDashboard;
+  bool _isLoadingMemberLoanDashboard = true;
+  bool _memberLoanDashboardLoadError = false;
+  int _memberLoanDashboardLoadGeneration = 0;
 
   @override
   void initState() {
@@ -210,6 +222,8 @@ class _CommunityShellState extends State<CommunityShell> with RouteAware {
     _loadProfileUser();
     _loadPassageOrder();
     unawaited(_loadTreasuryOverview());
+    unawaited(_loadMemberSavingsDashboard());
+    unawaited(_loadMemberLoanDashboard());
     unawaited(_loadMemberCompliance());
     unawaited(_loadActivity());
     unawaited(_loadCashBalance());
@@ -234,6 +248,8 @@ class _CommunityShellState extends State<CommunityShell> with RouteAware {
   void didPopNext() {
     unawaited(_loadCashBalance());
     unawaited(_loadTreasuryOverview());
+    unawaited(_loadMemberSavingsDashboard());
+    unawaited(_loadMemberLoanDashboard());
     unawaited(_loadActivity());
     unawaited(_loadPassageOrder());
     unawaited(_loadMemberCompliance());
@@ -298,6 +314,82 @@ class _CommunityShellState extends State<CommunityShell> with RouteAware {
       _latestTontineReceipt = receipt;
       _treasuryReceiptError = receiptError;
       _isLoadingTreasuryOverview = false;
+    });
+  }
+
+  Future<void> _loadMemberSavingsDashboard() async {
+    final generation = ++_memberSavingsLoadGeneration;
+    if (mounted) {
+      setState(() {
+        _isLoadingMemberSavings = true;
+        _memberSavingsLoadError = false;
+      });
+    }
+
+    final cycles = await CycleController.getForGroup(widget.community.id);
+    if (!mounted || generation != _memberSavingsLoadGeneration) return;
+    final activeCycles =
+        cycles?.where((cycle) => cycle.status == 'EN_COURS').toList() ?? [];
+    final cycleId =
+        (activeCycles.isNotEmpty ? activeCycles.first.id : null) ??
+        widget.community.cycleId ??
+        _cycleId ??
+        (cycles != null && cycles.isNotEmpty ? cycles.first.id : null);
+
+    if (cycleId == null || cycleId.isEmpty) {
+      setState(() {
+        _memberSavingsDashboard = null;
+        _isLoadingMemberSavings = false;
+        _memberSavingsLoadError = false;
+      });
+      return;
+    }
+
+    _cycleId = cycleId;
+    final dashboard = await MemberSavingsDashboardController.load(cycleId);
+    if (!mounted || generation != _memberSavingsLoadGeneration) return;
+    setState(() {
+      _memberSavingsDashboard = dashboard;
+      _isLoadingMemberSavings = false;
+      _memberSavingsLoadError = dashboard == null;
+    });
+  }
+
+  Future<void> _loadMemberLoanDashboard() async {
+    final generation = ++_memberLoanDashboardLoadGeneration;
+    if (mounted) {
+      setState(() {
+        _isLoadingMemberLoanDashboard = true;
+        _memberLoanDashboardLoadError = false;
+      });
+    }
+
+    final cycles = await CycleController.getForGroup(widget.community.id);
+    if (!mounted || generation != _memberLoanDashboardLoadGeneration) return;
+    final activeCycles =
+        cycles?.where((cycle) => cycle.status == 'EN_COURS').toList() ?? [];
+    final cycleId =
+        (activeCycles.isNotEmpty ? activeCycles.first.id : null) ??
+        widget.community.cycleId ??
+        _cycleId ??
+        (cycles != null && cycles.isNotEmpty ? cycles.first.id : null);
+
+    if (cycleId == null || cycleId.isEmpty) {
+      setState(() {
+        _memberLoanDashboard = null;
+        _isLoadingMemberLoanDashboard = false;
+        _memberLoanDashboardLoadError = false;
+      });
+      return;
+    }
+
+    _cycleId = cycleId;
+    final dashboard = await MemberLoanDashboardController.load(cycleId);
+    if (!mounted || generation != _memberLoanDashboardLoadGeneration) return;
+    setState(() {
+      _memberLoanDashboard = dashboard;
+      _isLoadingMemberLoanDashboard = false;
+      _memberLoanDashboardLoadError = dashboard == null;
     });
   }
 
@@ -1878,12 +1970,14 @@ class _CommunityShellState extends State<CommunityShell> with RouteAware {
               isLoadingOverview: _isLoadingTreasuryOverview,
               overviewError: _treasuryOverviewError,
               receiptError: _treasuryReceiptError,
+              savingsDashboard: _memberSavingsDashboard,
+              isLoadingSavings: _isLoadingMemberSavings,
+              savingsLoadError: _memberSavingsLoadError,
+              loanDashboard: _memberLoanDashboard,
+              isLoadingLoanDashboard: _isLoadingMemberLoanDashboard,
+              loanDashboardLoadError: _memberLoanDashboardLoadError,
               collection: widget.collection,
               memberContributions: widget.memberContributions,
-              loan: widget.loan,
-              loanDue: widget.loanDue,
-              eligibility: widget.eligibility,
-              repaymentHistory: widget.repaymentHistory,
               onSeeReceipt: widget.onSeeReceipt,
               onHistoryItemTap: widget.onHistoryItemTap,
               onOpenDetailedReport: widget.onOpenDetailedReport,
@@ -1899,6 +1993,8 @@ class _CommunityShellState extends State<CommunityShell> with RouteAware {
                 await Future.wait([
                   _loadPassageOrder(),
                   _loadTreasuryOverview(),
+                  _loadMemberSavingsDashboard(),
+                  _loadMemberLoanDashboard(),
                   _loadMemberCompliance(),
                 ]);
               },

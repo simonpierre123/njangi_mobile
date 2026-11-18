@@ -46,6 +46,8 @@ class _CreateCommunityStep3PageState extends State<CreateCommunityStep3Page> {
                 ? '1'
                 : widget.draft.maxSimultaneousLoans,
       );
+  late final TextEditingController _minSeniorityController =
+      TextEditingController(text: widget.draft.minLoanSeniorityMonths);
   late final TextEditingController _savingsMinController =
       TextEditingController(text: widget.draft.savingsMinAmount);
   late final TextEditingController _savingsMaxController =
@@ -80,6 +82,7 @@ class _CreateCommunityStep3PageState extends State<CreateCommunityStep3Page> {
     _maxAmountController.dispose();
     _maxDurationController.dispose();
     _maxSimultaneousController.dispose();
+    _minSeniorityController.dispose();
     _savingsMinController.dispose();
     _savingsMaxController.dispose();
     _savingsFixedController.dispose();
@@ -90,12 +93,24 @@ class _CreateCommunityStep3PageState extends State<CreateCommunityStep3Page> {
 
   Future<void> _continue() async {
     if (_isSaving) return;
+    final minimumSeniority = int.tryParse(_minSeniorityController.text.trim());
+    if (_allowLoans && (minimumSeniority == null || minimumSeniority < 0)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.t('min_loan_seniority_invalid'),
+          ),
+        ),
+      );
+      return;
+    }
 
     final updatedDraft = widget.draft.copyWith(
       allowLoans: _allowLoans,
       maxLoanAmount: _maxAmountController.text,
       maxLoanDurationMonths: _maxDurationController.text,
       maxSimultaneousLoans: _maxSimultaneousController.text,
+      minLoanSeniorityMonths: _minSeniorityController.text,
       adminValidationRequired: _adminValidation,
       penaltiesEnabled: _penalties,
       latePenaltyAmount: _latePenaltyController.text,
@@ -243,6 +258,19 @@ class _CreateCommunityStep3PageState extends State<CreateCommunityStep3Page> {
                               hint: '1',
                               controller: _maxSimultaneousController,
                               keyboardType: TextInputType.number,
+                            ),
+                            SizedBox(height: AppDimensions.spaceMd.h),
+                            AppTextField(
+                              label:
+                                  AppLocalizations.t(
+                                    'min_loan_seniority_label',
+                                  ).toUpperCase(),
+                              hint: '0',
+                              controller: _minSeniorityController,
+                              keyboardType: TextInputType.number,
+                              suffixText: AppLocalizations.t(
+                                'duration_suffix_months',
+                              ),
                             ),
                             SizedBox(height: AppDimensions.spaceMd.h),
                             ToggleSettingRow(

@@ -343,6 +343,48 @@ class AppRouter {
     );
   }
 
+  static Future<void> _openCurrentCycleReport(CommunityModel community) async {
+    final navigator = navigatorKey.currentState;
+    final messenger =
+        navigator == null ? null : ScaffoldMessenger.maybeOf(navigator.context);
+    final cycles = await CycleController.getForGroup(community.id);
+    if (cycles == null) {
+      final currentMessenger = messenger;
+      if (currentMessenger != null && currentMessenger.mounted) {
+        currentMessenger.showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.t('cycle_history_load_error')),
+          ),
+        );
+      }
+      return;
+    }
+
+    final history = cycleHistoryFromCycles(cycles);
+    if (history.isEmpty) {
+      final currentMessenger = messenger;
+      if (currentMessenger != null && currentMessenger.mounted) {
+        currentMessenger.showSnackBar(
+          SnackBar(content: Text(AppLocalizations.t('cycle_report_no_cycles'))),
+        );
+      }
+      return;
+    }
+
+    final selectedCycle = history.firstWhere(
+      (cycle) => cycle.isCurrent,
+      orElse: () => history.first,
+    );
+    if (navigatorKey.currentState == null) return;
+    _push(
+      AppRoutes.cycleDetail,
+      arguments: CycleDetailRouteArgs(
+        community: community,
+        cycle: selectedCycle,
+      ),
+    );
+  }
+
   static void _toggleLanguage() {
     final next = AppLocalizations.locale.value == 'fr' ? 'en' : 'fr';
     AppLocalizations.setLocale(next);
@@ -827,7 +869,7 @@ class AppRouter {
                 return;
               }
               if (action == 'reports') {
-                _push(AppRoutes.financialSummary, arguments: community);
+                unawaited(_openCurrentCycleReport(community));
                 return;
               }
               if (action == 'rules') {
@@ -866,10 +908,8 @@ class AppRouter {
             eligibility: CommunityTreasuryMockDatasource.eligibility,
             repaymentHistory: CommunityTreasuryMockDatasource.repaymentHistory,
             onSeeReceipt:
-                (receipt) => _push(
-                  AppRoutes.contributionReceipt,
-                  arguments: receipt,
-                ),
+                (receipt) =>
+                    _push(AppRoutes.contributionReceipt, arguments: receipt),
             onHistoryItemTap:
                 (item) => _push(
                   AppRoutes.cycleDetail,

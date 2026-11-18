@@ -55,6 +55,7 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
     'montant_max_pret',
     'duree_max_pret',
     'nombre_max_pret_simultane',
+    'anciennete_min_pret_mois',
   };
   static const _penaltyRuleKeys = {
     'appliquer_penalites',
@@ -85,6 +86,7 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
     'montant_max_pret',
     'duree_max_pret',
     'nombre_max_pret_simultane',
+    'anciennete_min_pret_mois',
     'epargne_montant_fixe',
     'epargne_montant_min',
     'epargne_montant_max',
@@ -203,6 +205,7 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
       'montant_max_pret': cycle.maxLoanAmount,
       'duree_max_pret': cycle.maxLoanDuration,
       'nombre_max_pret_simultane': cycle.maxSimultaneousLoans,
+      'anciennete_min_pret_mois': cycle.minLoanSeniorityMonths,
       'epargne_montant_fixe': cycle.savingsFixedAmount,
       'epargne_montant_min': cycle.savingsMinAmount,
       'epargne_montant_max': cycle.savingsMaxAmount,
@@ -319,6 +322,14 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
         return AppLocalizations.t('tontine_start_date_rule_mismatch');
       }
     }
+    if (_toggles['module_pret_actif'] == true) {
+      final minimumSeniority = int.tryParse(
+        _controllers['anciennete_min_pret_mois']!.text.trim(),
+      );
+      if (minimumSeniority == null || minimumSeniority < 0) {
+        return AppLocalizations.t('min_loan_seniority_invalid');
+      }
+    }
     if (_toggles['epargne_active'] == true &&
         _savingsMode == 'FIXE' &&
         (int.tryParse(_controllers['epargne_montant_fixe']!.text) ?? 0) <= 0) {
@@ -425,6 +436,10 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
       cycle.maxSimultaneousLoans?.toString() ?? '—',
     ),
     MapEntry(
+      'anciennete_min_pret_mois',
+      cycle.minLoanSeniorityMonths.toString(),
+    ),
+    MapEntry(
       'appliquer_penalites',
       _booleanLabel(cycle.penaltiesEnabled == '1'),
     ),
@@ -511,6 +526,12 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
           loansActive
               ? int.tryParse(_controllers['nombre_max_pret_simultane']!.text)
               : null,
+      'anciennete_min_pret_mois':
+          loansActive
+              ? int.tryParse(
+                _controllers['anciennete_min_pret_mois']!.text.trim(),
+              )
+              : cycle.minLoanSeniorityMonths,
       'frequence_cycle': _frequencyToApi(_frequency),
       'jour_echeance': weekdayLabel,
       'heure_reunion': _meetingTime,
@@ -564,6 +585,7 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
       'montant_max_pret': cycle.maxLoanAmount,
       'duree_max_pret': cycle.maxLoanDuration,
       'nombre_max_pret_simultane': cycle.maxSimultaneousLoans,
+      'anciennete_min_pret_mois': cycle.minLoanSeniorityMonths,
       'frequence_cycle': cycle.frequency,
       'jour_echeance': cycle.dueDay,
       'heure_reunion': cycle.meetingTime,
@@ -1156,6 +1178,18 @@ class _CycleRulesPageState extends State<CycleRulesPage> {
                       hint: '1',
                       controller: _controllers['nombre_max_pret_simultane'],
                       keyboardType: TextInputType.number,
+                    ),
+                    SizedBox(height: AppDimensions.spaceMd.h),
+                    AppTextField(
+                      label:
+                          AppLocalizations.t(
+                            'min_loan_seniority_label',
+                          ).toUpperCase(),
+                      hint: '0',
+                      controller:
+                          _controllers['anciennete_min_pret_mois'],
+                      keyboardType: TextInputType.number,
+                      suffixText: AppLocalizations.t('duration_suffix_months'),
                     ),
                     SizedBox(height: AppDimensions.spaceMd.h),
                     ToggleSettingRow(

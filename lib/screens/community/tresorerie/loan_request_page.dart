@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:njangi/Controllers_distant/CycleController.dart';
 import 'package:njangi/Controllers_distant/CycleLoanRequestController.dart';
+import 'package:njangi/Controllers_distant/member_loan_dashboard_controller.dart';
 import 'package:njangi/Models/Cycle.dart';
 import 'package:njangi/ModeView/community_model.dart';
+import 'package:njangi/ModeView/member_loan_dashboard_model.dart';
 import 'package:njangi/common/basewidget/app_button.dart';
 import 'package:njangi/localization/app_localizations.dart';
 import 'package:njangi/utils/app_colors.dart';
@@ -23,6 +25,7 @@ class _LoanRequestPageState extends State<LoanRequestPage> {
   final _amountController = TextEditingController();
   final _reasonController = TextEditingController();
   Cycle? _cycle;
+  MemberLoanDashboard? _memberLoanDashboard;
   DateTime? _repaymentDate;
   bool _isLoadingCycle = true;
   bool _isSubmitting = false;
@@ -66,11 +69,17 @@ class _LoanRequestPageState extends State<LoanRequestPage> {
       }
     }
     if (!mounted) return;
+    final dashboard =
+        cycle?.id == null
+            ? null
+            : await MemberLoanDashboardController.load(cycle!.id!);
+    if (!mounted) return;
     setState(() {
       _cycle = cycle;
+      _memberLoanDashboard = dashboard;
       _isLoadingCycle = false;
       _loadError =
-          cycle == null
+          cycle == null || dashboard == null
               ? AppLocalizations.t('loan_request_cycle_load_error')
               : null;
     });
@@ -88,6 +97,23 @@ class _LoanRequestPageState extends State<LoanRequestPage> {
   }
 
   bool get _loanModuleAvailable => _cycle?.loanModuleActive == '1';
+  bool get _canRequestLoan =>
+      _loanModuleAvailable &&
+      (_memberLoanDashboard?.canRequestLoan ?? false);
+
+  String get _eligibilityMessage {
+    final dashboard = _memberLoanDashboard;
+    if (dashboard == null) {
+      return AppLocalizations.t('member_loan_dashboard_error');
+    }
+    if (dashboard.activeLoan != null) {
+      return AppLocalizations.t('loan_request_active_loan');
+    }
+    return AppLocalizations.t(
+      'loan_request_seniority_required',
+      args: [dashboard.minimumSeniorityMonths, dashboard.seniorityMonths],
+    );
+  }
 
   Future<void> _chooseRepaymentDate() async {
     final maxDate = _maximumRepaymentDate;
@@ -117,6 +143,12 @@ class _LoanRequestPageState extends State<LoanRequestPage> {
         amount == null ||
         date == null ||
         maxDate == null) {
+      return;
+    }
+    if (!_canRequestLoan) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(_eligibilityMessage)));
       return;
     }
 
@@ -183,6 +215,20 @@ class _LoanRequestPageState extends State<LoanRequestPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (!_canRequestLoan) ...[
+              Container(
+                padding: EdgeInsets.all(AppDimensions.spaceMd.w),
+                decoration: BoxDecoration(
+                  color: AppColors.warningBg,
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusMd),
+                ),
+                child: Text(
+                  _eligibilityMessage,
+                  style: const TextStyle(color: AppColors.warningText),
+                ),
+              ),
+              SizedBox(height: AppDimensions.spaceLg.h),
+            ],
             if (maxAmount != null &&
                 maxAmount > 0 &&
                 cycle.maxLoanDuration != null &&
@@ -289,7 +335,10 @@ class _LoanRequestPageState extends State<LoanRequestPage> {
             AppButton(
               label: AppLocalizations.t('loan_request_submit'),
               onPressed:
-                  _isSubmitting || maxDate == null || _repaymentDate == null
+                  _isSubmitting ||
+                          maxDate == null ||
+                          _repaymentDate == null ||
+                          !_canRequestLoan
                       ? null
                       : _submit,
               isLoading: _isSubmitting,

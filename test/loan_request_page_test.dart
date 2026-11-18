@@ -45,7 +45,13 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    expect(adapter.requestPath, '/api/cycles/cycle-enabled');
+    expect(
+      adapter.requestPaths,
+      containsAll([
+        '/api/cycles/cycle-enabled',
+        '/api/cycles/cycle-enabled/dashboard/member-loans',
+      ]),
+    );
     expect(find.text('loan_request_amount_label'), findsOneWidget);
     expect(find.text('loan_request_duration_not_configured'), findsOneWidget);
     expect(find.text('loan_request_unavailable'), findsNothing);
@@ -53,7 +59,7 @@ void main() {
 }
 
 class _CycleDetailsAdapter implements HttpClientAdapter {
-  String? requestPath;
+  final List<String> requestPaths = [];
 
   @override
   Future<ResponseBody> fetch(
@@ -61,7 +67,32 @@ class _CycleDetailsAdapter implements HttpClientAdapter {
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
   ) async {
-    requestPath = options.uri.path;
+    final requestPath = options.uri.path;
+    requestPaths.add(requestPath);
+    if (requestPath == '/api/cycles/cycle-enabled/dashboard/member-loans') {
+      return ResponseBody.fromString(
+        jsonEncode({
+          'success': true,
+          'data': {
+            'cycle': {'numero': 1, 'groupe_nom': 'Groupe'},
+            'profil': {'nom': 'Membre'},
+            'module_pret_actif': true,
+            'anciennete_min_pret_mois': 0,
+            'anciennete_mois': 0,
+            'montant_max_pret': 0,
+            'historique_exemplaire': false,
+            'pret_actif': null,
+            'prochaine_echeance': null,
+            'operations': [],
+          },
+        }),
+        200,
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
+      );
+    }
+
     expect(requestPath, '/api/cycles/cycle-enabled');
     return ResponseBody.fromString(
       jsonEncode({

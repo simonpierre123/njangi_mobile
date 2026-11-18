@@ -142,6 +142,14 @@ class CycleController {
   }
 
   static String? _validateDraft(CommunityDraft draft) {
+    if (draft.allowLoans) {
+      final minimumSeniority = int.tryParse(
+        draft.minLoanSeniorityMonths.trim(),
+      );
+      if (minimumSeniority == null || minimumSeniority < 0) {
+        return AppLocalizations.t('min_loan_seniority_invalid');
+      }
+    }
     if (draft.tontineActive) {
       final contributionAmount = _parseAmount(draft.contributionAmount);
       if (contributionAmount == null || contributionAmount <= 0) {
@@ -221,6 +229,10 @@ class CycleController {
           draft.allowLoans
               ? int.tryParse(draft.maxSimultaneousLoans.trim())
               : null,
+      minLoanSeniorityMonths:
+          draft.allowLoans
+              ? int.parse(draft.minLoanSeniorityMonths.trim())
+              : 0,
       frequency: frequency == null ? null : _apiFrequency(frequency),
       dueDay:
           usesWeekdaySchedule
